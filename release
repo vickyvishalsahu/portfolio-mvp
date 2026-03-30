@@ -1,0 +1,676 @@
+#!/bin/bash
+# src/check_os.sh
+set -o allexport
+
+# shellcheck disable=SC2034
+_OS="Unknown"
+
+if [[ "$(uname)" == "Linux" ]]; then
+  _OS="Linux"
+elif [[ "$(uname)" == "Darwin" ]]; then
+  _OS="OSX"
+elif [[ $(uname) == *"MINGW"* ]]; then
+  _OS="Windows"
+fi
+
+# src/colors.sh
+set -o allexport
+
+export COLOR_RED="\033[1;31m"
+export COLOR_GREEN="\033[1;32m"
+export COLOR_YELLOW="\033[1;33m"
+export COLOR_BLUE="\033[1;34m"
+export COLOR_PURPLE="\033[1;35m"
+export COLOR_CYAN="\033[1;36m"
+export COLOR_ORANGE="\033[38;5;214m"
+export COLOR_RESET="\033[0m"
+
+# src/compare.sh
+set -euo pipefail
+
+# shellcheck disable=SC2005
+
+function compare::source_with_target() {
+  local source=$1
+  local target=$2
+
+  echo -e "Comparing ${COLOR_ORANGE}$source${COLOR_RESET} with ${COLOR_ORANGE}$target${COLOR_RESET}"
+  echo -e "${COLOR_BLUE}------------------------------------------------------------------${COLOR_RESET}"
+  echo -e "Commits to include in the release (into ${COLOR_ORANGE}$target${COLOR_RESET}):"
+  echo "$(git log --color --oneline "$target".."$source")"
+  echo -e "${COLOR_BLUE}------------------------------------------------------------------${COLOR_RESET}"
+  echo -e "Changed files between '${COLOR_ORANGE}$target${COLOR_RESET}' and '${COLOR_ORANGE}$source${COLOR_RESET}':"
+  compare::render_changed_files "$source" "$target"
+}
+
+function compare::render_changed_files() {
+  local source=$1
+  local target=$2
+
+  local added_files=()
+  local modified_files=()
+  local deleted_files=()
+
+  # Collect files based on their status
+  while read -r status file; do
+      case "$status" in
+          A) # Added (created)
+              added_files+=("$file")
+              ;;
+          M) # Modified (updated)
+              modified_files+=("$file")
+              ;;
+          D) # Deleted
+              deleted_files+=("$file")
+              ;;
+      esac
+  done < <(git diff --name-status "$target".."$source")
+
+  # Output the files, sorted by status
+
+  # Added (created) files
+  if [ "${#added_files[@]}" -gt 0 ]; then
+    for file in "${added_files[@]}"; do
+        echo -e "${COLOR_GREEN}+ $file${COLOR_RESET}"
+    done
+  fi
+
+  # Modified (updated) files
+  if [ "${#modified_files[@]}" -gt 0 ]; then
+    for file in "${modified_files[@]}"; do
+        echo -e "${COLOR_YELLOW}~ $file${COLOR_RESET}"
+    done
+  fi
+
+
+  # Deleted files
+  if [ "${#deleted_files[@]}" -gt 0 ]; then
+    for file in "${deleted_files[@]}"; do
+        echo -e "${COLOR_RED}- $file${COLOR_RESET}"
+    done
+  fi
+}
+
+# src/console_header.sh
+set -o allexport
+
+function console_header::print_version() {
+  printf "%s\n" "$RELEASE_VERSION"
+}
+
+function console_header::print_help() {
+  cat <<EOL
+Usage: release [arguments] [options]
+
+Arguments:
+  source-branch        The branch name to release.
+
+Options:
+  --debug               Enable debug mode (set -x)
+  -d, --dry-run         Simulate the release process without making any changes
+  -f, --force           Ignore that your current local branch has ahead commits
+  -e, --env             Load a custom env file overriding the .env environment variables
+  -h, --help            Print Help (this message) and exit
+  -v, --version         Print version information and exit
+  --source branch       Specify the source branch
+  --target branch       Specify the target branch (default: "prod")
+  --develop branch      Specify the develop branch (default: source-branch)
+
+Examples:
+  release main
+  release main --dry-run
+  release fix/... --force
+  release fix/... --dry-run --force
+EOL
+}
+
+# src/env.sh
+# shellcheck disable=SC2155
+
+# shellcheck source=/dev/null
+[[ -f ".env" ]] && source .env set
+set +o allexport
+
+_DEFAULT_SOURCE_BRANCH="dev"
+_DEFAULT_TARGET_BRANCH="main"
+_DEFAULT_DEVELOPMENT_BRANCH="dev"
+_DEFAULT_SUCCESSFUL_TEXT=""
+
+: "${RELEASE_SOURCE_BRANCH:=${SOURCE_BRANCH:=$_DEFAULT_SOURCE_BRANCH}}"
+: "${RELEASE_TARGET_BRANCH:=${TARGET_BRANCH:=$_DEFAULT_TARGET_BRANCH}}"
+: "${RELEASE_DEVELOPMENT_BRANCH:=${DEVELOPMENT_BRANCH:=$_DEFAULT_DEVELOPMENT_BRANCH}}"
+: "${RELEASE_SUCCESSFUL_TEXT:=${SUCCESSFUL_TEXT:=$_DEFAULT_SUCCESSFUL_TEXT}}"
+
+function env::run_extra_confirmation() {
+  local changed_files=$1
+
+  if [[ -z "${RELEASE_EXTRA_CONFIRMATION:-}" ]]; then
+    return 0
+  fi
+
+  local confirmation_msg filepath
+  while IFS= read -r filepath; do
+    confirmation_msg=$(json::parse_text "$RELEASE_EXTRA_CONFIRMATION" "$filepath")
+    if [[ -n "$confirmation_msg" ]]; then
+      break
+    fi
+  done <<< "$changed_files"
+
+  if [[ -n "$confirmation_msg" ]]; then
+    echo -e "> ${COLOR_BLUE}Extra confirmation${COLOR_RESET} found for '$filepath'..."
+    # shellcheck disable=SC2116
+    local question="$(echo "${COLOR_RED}$confirmation_msg${COLOR_RESET}")"
+    io::confirm_or_exit "$question"
+  fi
+}
+
+function env::run_extra_commands() {
+  local changed_files=$1
+
+  # Return early if no extra run commands are defined
+  if [[ -z "${RELEASE_EXTRA_RUN_COMMANDS:-}" ]]; then
+    return 0
+  fi
+
+  local extra_command filepath
+  local executed_commands=()
+
+  # Iterate over each filepath and find the first applicable extra command
+  while IFS= read -r filepath; do
+    extra_command=$(json::parse_text "$RELEASE_EXTRA_RUN_COMMANDS" "$filepath")
+
+    # Check if the command has already been executed
+    local already_executed=false
+    for cmd in "${executed_commands[@]:-}"; do
+      if [[ "$cmd" == "$extra_command" ]]; then
+        already_executed=true
+        break
+      fi
+    done
+
+    if [[ -n "$extra_command" && "$already_executed" == false ]]; then
+      echo -e "> ${COLOR_BLUE}Extra command${COLOR_RESET} found for '$filepath'..."
+      eval "$extra_command"
+      executed_commands+=("$extra_command")
+    fi
+  done <<< "$changed_files"
+}
+
+function env::render_successful_text() {
+  if [ -n "${RELEASE_SUCCESSFUL_TEXT:-}" ]; then
+    echo -e "$RELEASE_SUCCESSFUL_TEXT"
+  fi
+}
+
+# src/git.sh
+# shellcheck disable=SC2155
+
+function git::status() {
+  git status
+}
+
+function git::fetch_origin() {
+  git fetch origin
+}
+
+function git::pull_origin() {
+  local branch="${1:-}"
+
+  if [[ -z "$branch" ]]; then
+    # If an upstream is configured, just pull with ff-only
+    if git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
+      git pull --ff-only
+      return
+    fi
+
+    # Fallback to current branch name against origin
+    branch="$(git rev-parse --abbrev-ref HEAD)"
+  fi
+
+  git pull --ff-only origin "$branch"
+}
+
+function git::changed_files() {
+  git diff --name-only "$1".."$2"
+}
+
+function git::extract_max_version_number() {
+  local tags="$1"
+  local max_version=0
+
+  while IFS= read -r tag; do
+    if [[ "$tag" =~ ^v([0-9]+)$ ]]; then
+      local version="${BASH_REMATCH[1]}"
+      if (( version > max_version )); then
+        max_version="$version"
+      fi
+    fi
+  done <<< "$tags"
+
+  echo "$max_version"
+}
+
+function git::latest_tag() {
+  local all_tags
+  all_tags=$(git tag -l 2>/dev/null)
+
+  local max_version
+  max_version=$(git::extract_max_version_number "$all_tags")
+
+  echo "v$max_version"
+}
+
+function git::check_current_branch_and_pull() {
+  git::fetch_origin
+  # Check if the branch is behind
+  local status_output=$(git status)
+
+  if [[ "$status_output" == *"Your branch is behind"* ]]; then
+    echo -e "${COLOR_RED}Your local branch is not up to date!${COLOR_RESET}"
+    local question=$(echo -e "${COLOR_ORANGE}You have to have the latest changes.${COLOR_RESET} Apply git pull now?")
+    io::confirm_or_exit "$question"
+    echo -e "${COLOR_GREEN}Pulling updates...${COLOR_RESET}"
+    git::pull_origin
+  else
+    echo -e "${COLOR_GREEN}Your branch is up to date!${COLOR_RESET}"
+  fi
+
+  git::status
+}
+
+function git::force_checkout() {
+  local branch_name="${1#origin/}"  # Remove 'origin/' prefix if present
+
+  if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${COLOR_CYAN}--dry-run enabled. Skipping git fetch & checkout${COLOR_RESET}" \
+      "${COLOR_ORANGE}origin/$branch_name${COLOR_RESET}"
+    return
+  fi
+
+  git config advice.detachedHead false
+  [ -f .git/hooks/post-checkout ] && mv .git/hooks/post-checkout .git/hooks/post-checkout.bak
+
+  git::fetch_origin
+
+  if git rev-parse --verify "$branch_name" >/dev/null 2>&1; then
+    # If branch exists locally, force checkout it
+    git checkout -f "$branch_name"
+  else
+    # If branch doesn't exist, create a new local branch from the remote
+    git checkout -b "$branch_name" origin/"$branch_name"
+  fi
+
+  # Ensure upstream is configured (avoid "did not specify a branch" error)
+  git branch --set-upstream-to=origin/"$branch_name" "$branch_name" >/dev/null 2>&1 || true
+
+  git::pull_origin "$branch_name"
+
+  [ -f .git/hooks/post-checkout.bak ] && mv .git/hooks/post-checkout.bak .git/hooks/post-checkout
+  git config advice.detachedHead true
+}
+
+function git::update_develop() {
+  local develop=$1
+  local target=$2
+
+  echo -e "Merging ${COLOR_ORANGE}$target${COLOR_RESET} back to" \
+    "${COLOR_ORANGE}$develop${COLOR_RESET} (increase the release contains hotfixes" \
+    "that are not in ${COLOR_ORANGE}$develop${COLOR_RESET})"
+
+  git::force_checkout "$develop"
+  git::merge_source_to_target "$target" "$develop"
+}
+
+function git::merge_source_to_target() {
+  local source=$1
+  local target=$2
+
+  echo -e "Merging ${COLOR_ORANGE}$source${COLOR_RESET} release to ${COLOR_ORANGE}$target${COLOR_RESET}"
+
+  if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${COLOR_CYAN}--dry-run enabled. Skipping git merge ($source into $target)${COLOR_RESET}"
+    return
+  fi
+
+  if ! git merge "$source"; then
+    echo -e "${COLOR_RED}Merge failed. Please resolve conflicts and try again.${COLOR_RESET}"
+    exit 1
+  fi
+
+  git push origin "$target" --no-verify
+}
+
+# src/io.sh
+
+# shellcheck disable=SC2155
+function io::confirm_or_exit() {
+  local txt=$(echo -e "$1 [N/y]:")
+  read -p "$txt " -r
+  if [[ ! "${REPLY:0:1}" =~ ^[Yy]$ ]]; then
+    echo "Input given not positive: '$REPLY' Exiting..."
+    exit 1
+  fi
+}
+
+# src/json.sh
+# shellcheck disable=SC2155
+set -euo pipefail
+
+# Render the value str where the key is matching on the given json
+#
+# $1 full json as str
+# $2 the filepath
+#
+# Example: '{"src/dev": "are you sure you want to change the files in this dir?"}'
+function json::parse_text() {
+    local json_str="$1"
+    local filepath="$2"
+
+    # Start with the full path and progressively reduce it to parent directories
+    local dir_path="$filepath"
+
+    while [[ -n "$dir_path" ]]; do
+        # Escape special characters in the directory path for `sed`
+        local escaped_dir_path=$(echo "$dir_path" | sed 's/[\/&]/\\&/g')
+
+        # Extract and return the message for the current directory path if it exists in the JSON string
+        local text=$(echo "$json_str" | sed -n "s/.*\"$escaped_dir_path\":\"\([^\"]*\)\".*/\1/p")
+
+        if [[ -n "$text" ]]; then
+            echo "$text"
+            return
+        fi
+
+        # Remove the last directory level
+        dir_path=$(dirname "$dir_path")
+
+        # Break if we reach the root
+        if [[ "$dir_path" == "." ]]; then
+            break
+        fi
+    done
+}
+
+# src/main.sh
+# shellcheck disable=SC2155
+set -euo pipefail
+
+function main::action() {
+  local force_release=${1:-false}
+
+  local source=${RELEASE_SOURCE_BRANCH:-main}
+  local target=${RELEASE_TARGET_BRANCH:-prod}
+  local develop=${RELEASE_DEVELOPMENT_BRANCH:-$source}
+
+  # Ensure 'origin/' prefix
+  if [[ $target != origin/* ]]; then
+    target="origin/$target"
+  fi
+
+  main::render_steps "$source" "$target" "$develop"
+
+  echo -e "${COLOR_PURPLE}------------------------------------------------------------------${COLOR_RESET}"
+  git::check_current_branch_and_pull
+  echo -e "${COLOR_BLUE}------------------------------------------------------------------${COLOR_RESET}"
+
+  echo -e "Using source branch: ${COLOR_ORANGE}$source${COLOR_RESET}"
+  validate::no_diff_between_local_and_origin "$source" "$target" "$force_release"
+
+  local changed_files=$(git::changed_files "$target" "$source")
+  local latest_tag=$(git::latest_tag)
+
+  echo -e "Current latest tag: ${COLOR_CYAN}$latest_tag${COLOR_RESET}"
+  local new_tag=$(release::generate_new_tag "$latest_tag" "$changed_files")
+  compare::source_with_target "$source" "$target"
+
+  # shellcheck disable=SC2116
+  local question=$(echo "Force checkout ${COLOR_ORANGE}$target${COLOR_RESET}" \
+    "and create new tag ${COLOR_CYAN}$new_tag${COLOR_RESET}... Ready to start?")
+  io::confirm_or_exit "$question"
+
+  if [ -z "$changed_files" ]; then
+    echo -e "${COLOR_YELLOW}No files changed between branches, skipping merge.${COLOR_RESET}"
+    exit 0
+  fi
+
+  env::run_extra_confirmation "$changed_files"
+  env::run_extra_commands "$changed_files"
+
+  git::force_checkout "$target"
+  git::merge_source_to_target "$source" "$target"
+
+  release::create_tag "$target" "$new_tag" "$changed_files"
+  release::create_github_release "$latest_tag" "$new_tag"
+
+  git::update_develop "$develop" "$target"
+}
+
+function main::render_steps() {
+  local source=$1
+  local target=$2
+  local develop=$3
+
+  echo -e "This script will automate the release process and follow the following steps:"
+  echo -e "- Define the branch to release: ${COLOR_YELLOW}$source${COLOR_RESET}"
+  echo -e "- Fetch latest remote changes"
+  echo -e "- Compare the branch with ${COLOR_YELLOW}$target${COLOR_RESET} to view the commits that will be released"
+  echo -e "- Confirm you wish to proceed"
+  echo -e "- Merge the selected branch (${COLOR_YELLOW}$source${COLOR_RESET}) to ${COLOR_YELLOW}$target${COLOR_RESET}"
+  echo -e "- Create a tag and release"
+  echo -e "- Merge the target (${COLOR_YELLOW}$target${COLOR_RESET}) back to ${COLOR_YELLOW}$develop${COLOR_RESET}"
+  echo -e ""
+  echo -e "This script must use your local git environment."
+
+  if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${COLOR_BLUE}--dry-run enabled${COLOR_RESET}"
+  fi
+}
+
+# src/release.sh
+set -euo pipefail
+
+function release::generate_new_tag() {
+  local latest_tag=$1
+  local changed_files=$2
+
+  local tag_number
+  if [[ $latest_tag =~ ^v([0-9]+)$ ]]; then
+    tag_number="${BASH_REMATCH[1]}"
+    tag_number=$((tag_number + 1))
+  else
+    tag_number=1
+  fi
+
+  echo "v$tag_number"
+}
+
+function release::create_tag() {
+  local branch_name="${1#origin/}"  # Remove 'origin/' prefix if present
+  local new_tag=$2
+  local changed_files=$3
+
+  if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${COLOR_CYAN}--dry-run enabled. Skipping creating a tag ($new_tag)${COLOR_RESET}"
+    echo -e "${COLOR_CYAN}--dry-run enabled. Skipping pushing changes ($branch_name)${COLOR_RESET}"
+    return
+  fi
+
+  git tag -a "$new_tag" -m "Release $new_tag
+
+Changes:
+$changed_files"
+
+  git push origin "$new_tag" --no-verify
+  git push origin "$branch_name" --no-verify
+}
+
+# shellcheck disable=SC2155
+function release::create_github_release() {
+  if [ "$GH_CLI_INSTALLED" = false ]; then
+    return
+  fi
+
+  local previous_tag=$1
+  local new_tag=$2
+
+  if [ "$previous_tag" = "v0" ]; then
+    previous_tag="main"
+  fi
+
+  local release_name=$(release::generate_release_name)
+  local remote_url=$(git remote get-url origin)
+  # Handle both SSH and HTTPS URLs
+  local repo_info=$(echo "$remote_url" | sed -E \
+      -e 's|git@github\.com:|github.com/|' \
+      -e 's|https://||' \
+      -e 's|github.com/||' \
+      -e 's|\.git$||')
+
+  local changelog_url="https://github.com/$repo_info/compare/$previous_tag...$new_tag"
+  local full_changelog="**Full Changelog**: $changelog_url"
+
+  if [[ "$DRY_RUN" == true ]]; then
+    new_tag=main
+  fi
+
+  local commits=$(git log --oneline "$previous_tag".."$new_tag")
+
+  if [[ "$DRY_RUN" == false ]]; then
+    gh release create "$new_tag" \
+      --title "$release_name" \
+      --notes "$(echo -e "$commits\n\n$full_changelog")"
+  else
+    echo -e "${COLOR_CYAN}--dry-run enabled. Skipping creating a release ($release_name)${COLOR_RESET}"
+  fi
+
+}
+
+# shellcheck disable=SC2155
+function release::generate_release_name() {
+  local current_date=$(date +"%Y-%m-%d")
+  # Use xargs to trim leading/trailing whitespace
+  local latest_release=$(gh release list | head -n 1 | awk -F 'Latest' '{print $1}' | xargs)
+
+  local release_number
+  if [[ "$latest_release" =~ ^$current_date\ #([0-9]+)$ ]]; then
+    release_number=$((BASH_REMATCH[1] + 1))
+  else
+    release_number=1
+  fi
+
+  echo "$current_date #$release_number"
+}
+
+# src/validate.sh
+set -euo pipefail
+
+function validate::no_diff_between_local_and_origin() {
+  local source=$1
+  local target=$2
+  local force_release=$3
+
+  # Check the status of the local branch compared to origin/main
+  ahead_commits=$(git rev-list --count HEAD ^origin/"$source")
+
+  if [[ "$ahead_commits" -gt 0 && "$force_release" == false ]]; then
+    echo -e "${COLOR_RED}Error: Your $source is ahead of 'origin/$source'" \
+      "by $ahead_commits commit(s)${COLOR_RESET}."
+
+    echo -e "${COLOR_YELLOW}Please push your changes or reset \
+your${COLOR_RESET} ${COLOR_ORANGE}$source${COLOR_RESET}."
+
+    exit 1
+  fi
+
+  if [[ "$ahead_commits" -gt 0 && "$force_release" == true ]]; then
+    echo -e "Your local ${COLOR_ORANGE}$source${COLOR_RESET} is ahead" \
+      "of ${COLOR_ORANGE}origin/$source${COLOR_RESET}" \
+      "by ${COLOR_RED}$ahead_commits${COLOR_RESET} commit(s)${COLOR_RESET}."
+
+    # shellcheck disable=SC2155
+    # shellcheck disable=SC2116
+    local question=$(echo "${COLOR_YELLOW}Are you sure you want to push them" \
+      "to 'origin/$target' as part of the release?${COLOR_RESET}")
+
+    io::confirm_or_exit "$question"
+  fi
+}
+
+#!/bin/bash
+set -euo pipefail
+
+# shellcheck disable=SC2034
+declare -r RELEASE_VERSION="0.8.5"
+
+RELEASE_ROOT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+export RELEASE_ROOT_DIR
+
+[ -f "$RELEASE_ROOT_DIR/src/dev/dumper.sh" ] && source "$RELEASE_ROOT_DIR/src/dev/dumper.sh"
+
+DRY_RUN=false
+FORCE_DEPLOY=false
+GH_CLI_INSTALLED=false
+
+while [[ $# -gt 0 ]]; do
+  argument="$1"
+  case $argument in
+    --debug)
+      set -x
+      ;;
+    -d|--dry-run)
+      DRY_RUN=true
+      ;;
+    -f|--force)
+      FORCE_DEPLOY=true
+      ;;
+    -h|--help)
+      console_header::print_help
+      exit 0
+      ;;
+    -e|--env)
+      # shellcheck disable=SC1090
+      source "$2"
+      shift
+      ;;
+    -v|--version)
+      console_header::print_version
+      exit 0
+      ;;
+    --source)
+      RELEASE_SOURCE_BRANCH="$2"
+      shift
+      ;;
+    --target)
+      RELEASE_TARGET_BRANCH="$2"
+      shift
+      ;;
+    --develop)
+      RELEASE_DEVELOPMENT_BRANCH="$2"
+      shift
+      ;;
+    *)
+      RELEASE_SOURCE_BRANCH=$argument
+  esac
+  shift
+done
+
+if command -v gh &> /dev/null; then
+    GH_CLI_INSTALLED=true
+fi
+
+#######################################################
+
+export DRY_RUN
+export FORCE_DEPLOY
+export GH_CLI_INSTALLED
+export RELEASE_SOURCE_BRANCH
+export RELEASE_TARGET_BRANCH
+export RELEASE_DEVELOPMENT_BRANCH
+
+# Always return to dev branch on exit (success or failure)
+trap 'git checkout dev 2>/dev/null || true' EXIT
+
+main::action "$FORCE_DEPLOY"
+
+echo -e "${COLOR_GREEN}Script completed${COLOR_RESET}"
+env::render_successful_text
