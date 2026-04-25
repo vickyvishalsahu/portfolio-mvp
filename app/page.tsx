@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface Holding {
   ticker: string;
@@ -23,11 +23,14 @@ interface Summary {
   total_pnl_pct: number;
   holdings_count: number;
   transaction_count: number;
+  delta_30d: number | null;
+  delta_7d: number | null;
 }
 
 interface PortfolioData {
   summary: Summary;
   holdings: Holding[];
+  broker_allocation: Record<string, number>;
 }
 
 const ASSET_COLORS: Record<string, string> = {
@@ -60,6 +63,8 @@ function pct(n: number): string {
 export default function Dashboard() {
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [snapshots, setSnapshots] = useState<{ date: string; total_value_eur: number }[]>([]);
+  const [allocView, setAllocView] = useState<'type' | 'broker'>('type');
 
   useEffect(() => {
     fetch('/api/portfolio')
@@ -67,6 +72,11 @@ export default function Dashboard() {
       .then((d) => { if (d.summary) setData(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    fetch('/api/snapshots')
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d)) setSnapshots(d); })
+      .catch(() => {});
   }, []);
 
   if (loading) {
@@ -100,7 +110,8 @@ export default function Dashboard() {
 
   const { summary, holdings } = data;
 
-  // Allocation by asset type
+  const BROKER_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+
   const allocationByType = Object.entries(
     holdings.reduce<Record<string, number>>((acc, h) => {
       acc[h.asset_type] = (acc[h.asset_type] || 0) + h.current_value_eur;
@@ -111,6 +122,14 @@ export default function Dashboard() {
     value: Math.round(value * 100) / 100,
     color: ASSET_COLORS[type] || '#6b7280',
   }));
+
+  const allocationByBroker = Object.entries(data.broker_allocation || {}).map(([broker, value], i) => ({
+    name: broker,
+    value: Math.round((value as number) * 100) / 100,
+    color: BROKER_COLORS[i % BROKER_COLORS.length],
+  }));
+
+  const allocationData = allocView === 'type' ? allocationByType : allocationByBroker;
 
   // Top holdings for mini table
   const topHoldings = holdings.slice(0, 5);
@@ -124,6 +143,16 @@ export default function Dashboard() {
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <p className="text-gray-400 text-sm">Total Value</p>
           <p className="text-2xl font-bold text-white">{fmt(summary.total_value_eur)}</p>
+          {summary.delta_30d !== null && (
+            <p className={`text-xs mt-1 ${summary.delta_30d >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {summary.delta_30d >= 0 ? '↑' : '↓'} {fmt(Math.abs(summary.delta_30d))} vs 30d ago
+            </p>
+          )}
+          {summary.delta_30d === null && summary.delta_7d !== null && (
+            <p className={`text-xs mt-1 ${summary.delta_7d >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {summary.delta_7d >= 0 ? '↑' : '↓'} {fmt(Math.abs(summary.delta_7d))} vs 7d ago
+            </p>
+          )}
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <p className="text-gray-400 text-sm">Total P&L</p>
@@ -147,11 +176,27 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Allocation Chart */}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Allocation</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Allocation</h2>
+            <div className="flex text-xs rounded overflow-hidden border border-gray-700">
+              <button
+                onClick={() => setAllocView('type')}
+                className={`px-3 py-1 transition ${allocView === 'type' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                By Type
+              </button>
+              <button
+                onClick={() => setAllocView('broker')}
+                className={`px-3 py-1 transition ${allocView === 'broker' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                By Broker
+              </button>
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
-                data={allocationByType}
+                data={allocationData}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
@@ -161,7 +206,7 @@ export default function Dashboard() {
                 paddingAngle={2}
                 label={({ name, percent }: any) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
               >
-                {allocationByType.map((entry, i) => (
+                {allocationData.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
@@ -208,6 +253,44 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {snapshots.length > 1 && (
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Net Worth Over Time</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={snapshots} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: '#9ca3af', fontSize: 11 }}
+                tickFormatter={(d) => {
+                  const [, month, day] = d.split('-');
+                  return `${day}/${month}`;
+                }}
+              />
+              <YAxis
+                tick={{ fill: '#9ca3af', fontSize: 11 }}
+                tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`}
+                width={48}
+              />
+              <Tooltip
+                formatter={(value: any) => [fmt(Number(value)), 'Portfolio']}
+                contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
+                labelStyle={{ color: '#e5e7eb' }}
+                itemStyle={{ color: '#3b82f6' }}
+              />
+              <Line
+                type="monotone"
+                dataKey="total_value_eur"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, fill: '#3b82f6' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
