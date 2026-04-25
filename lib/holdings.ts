@@ -42,10 +42,10 @@ export async function computeHoldings(): Promise<Holding[]> {
         totalCostEur += tx.quantity * priceEur;
         totalQty += tx.quantity;
       } else if (tx.transaction_type === 'sell') {
-        // Reduce quantity; adjust cost proportionally
+        // Reduce quantity; clamp to 0 so an oversell never corrupts subsequent buys
         if (totalQty > 0) {
           const avgCost = totalCostEur / totalQty;
-          totalQty -= tx.quantity;
+          totalQty = Math.max(0, totalQty - tx.quantity);
           totalCostEur = totalQty * avgCost;
         }
       }
