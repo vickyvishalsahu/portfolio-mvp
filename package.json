@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "release": "./release dev"
+    "release": "./release dev",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -45,5 +47,8 @@
     "onlyBuiltDependencies": [
       "better-sqlite3"
     ]
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
   }
 }
