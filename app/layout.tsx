@@ -24,6 +24,11 @@ export default function RootLayout({
         <main className="max-w-6xl mx-auto px-6 py-8">
           {children}
         </main>
+        <footer className="border-t border-gray-800 mt-12 py-4">
+          <p className="text-center text-xs text-gray-600">
+            Your data stays on your device — nothing is uploaded except during Gmail sync and live price lookups.
+          </p>
+        </footer>
       </body>
     </html>
   );
