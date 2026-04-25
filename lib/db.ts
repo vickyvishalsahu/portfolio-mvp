@@ -48,6 +48,13 @@ function initializeDb(db: Database.Database) {
       currency TEXT,
       updated_at TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS snapshots (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT UNIQUE,
+      total_value_eur REAL,
+      created_at TEXT
+    );
   `);
 }
 
@@ -117,4 +124,10 @@ export function getParsedEmailCount() {
   const db = getDb();
   const row = db.prepare('SELECT COUNT(*) as count FROM raw_emails WHERE parsed = 1').get() as { count: number };
   return row.count;
+}
+
+export function getPriceCacheAge(): string | null {
+  const db = getDb();
+  const row = db.prepare('SELECT MAX(updated_at) as latest FROM price_cache').get() as { latest: string | null };
+  return row.latest;
 }
