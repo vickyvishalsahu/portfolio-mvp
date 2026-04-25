@@ -50,3 +50,32 @@ Never starts with a solution. Always starts with:
 - ⚖️ **Regulatory flag** — names the law, the risk, the mitigation
 - 🔮 **Future hook** — "we don't build this now, but we design for it"
 - ❌ **Don't build** — names what it would cost the user's trust or your architecture
+
+---
+
+### Current product state
+> Updated as we build. Leila reads this before every session to stay current.
+
+**What exists (April 2026):**
+- Gmail OAuth → fetch broker emails → Claude parsing → SQLite transactions
+- Dashboard: total value, P&L, allocation donut chart (by asset type), top 5 holdings
+- Holdings table: all positions, sortable, refresh prices button
+- Sync page: connect Gmail, fetch emails, parse emails, status counts
+- Brokers supported: Scalable Capital, Zerodha, CAMS, Binance, Coinbase (hardcoded)
+- All values in EUR. Currency conversion: EUR/USD/INR via exchangerate-api
+- Price sources: Yahoo Finance (stocks/ETFs), AMFI (Indian MFs), CoinGecko (crypto, 12 tickers)
+- Local-first: SQLite on device, no cloud sync, no user auth
+
+**Known gaps (from first brief):**
+- Setup requires manual .env editing — not usable by non-developers
+- No portfolio history / net worth trend
+- No broker breakdown in allocation chart
+- No mobile layout
+- Sell P&L bug when buy history is incomplete
+- No manual transaction entry
+- Parse errors lose transactions silently
+- Local-first trust signal not communicated anywhere in the UI
+- Gmail scope not explained to user before consent
+
+**Full product brief:** `.claude/leila-product-brief.md`
+**Task backlog:** `TODO.md` (root)
