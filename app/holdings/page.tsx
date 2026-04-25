@@ -31,6 +31,20 @@ function pct(n: number): string {
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 }
 
+function fmtLocal(amount: number, currency: string): string {
+  if (currency === 'INR') {
+    // Compact Indian notation: ₹7.6L, ₹1.2Cr
+    if (amount >= 10_000_000) return `₹${(amount / 10_000_000).toFixed(2)}Cr`;
+    if (amount >= 100_000)    return `₹${(amount / 100_000).toFixed(1)}L`;
+    return `₹${Math.round(amount).toLocaleString('en-IN')}`;
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 const TYPE_BADGE: Record<string, string> = {
   stock: 'bg-blue-900 text-blue-300',
   etf: 'bg-purple-900 text-purple-300',
@@ -38,15 +52,29 @@ const TYPE_BADGE: Record<string, string> = {
   crypto: 'bg-emerald-900 text-emerald-300',
 };
 
+function formatAge(updatedAt: string | null): string {
+  if (!updatedAt) return 'never';
+  const mins = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins === 1) return '1 min ago';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  return hrs === 1 ? '1 hour ago' : `${hrs} hours ago`;
+}
+
 export default function HoldingsPage() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('current_value_eur');
   const [sortAsc, setSortAsc] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [priceAge, setPriceAge] = useState<string | null>(null);
+  const [failedTickers, setFailedTickers] = useState<string[]>([]);
+  const [rates, setRates] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchHoldings();
+    fetch('/api/rates').then(r => r.json()).then(setRates).catch(() => {});
   }, []);
 
   async function fetchHoldings() {
@@ -54,14 +82,18 @@ export default function HoldingsPage() {
       const res = await fetch('/api/portfolio');
       const data = await res.json();
       if (data.holdings) setHoldings(data.holdings);
+      if ('price_cache_updated_at' in data) setPriceAge(data.price_cache_updated_at);
     } catch {}
     setLoading(false);
   }
 
   async function handleRefreshPrices() {
     setRefreshing(true);
+    setFailedTickers([]);
     try {
-      await fetch('/api/prices', { method: 'POST' });
+      const res = await fetch('/api/prices', { method: 'POST' });
+      const data = await res.json();
+      if (data.failed?.length) setFailedTickers(data.failed);
       await fetchHoldings();
     } catch {}
     setRefreshing(false);
@@ -120,14 +152,25 @@ export default function HoldingsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Holdings</h1>
-        <button
-          onClick={handleRefreshPrices}
-          disabled={refreshing}
-          className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm px-4 py-2 rounded transition"
-        >
-          {refreshing ? 'Refreshing...' : 'Refresh Prices'}
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-500">
+            {refreshing ? 'Updating...' : `Prices: ${formatAge(priceAge)}`}
+          </span>
+          <button
+            onClick={handleRefreshPrices}
+            disabled={refreshing}
+            className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm px-4 py-2 rounded transition"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh Prices'}
+          </button>
+        </div>
       </div>
+
+      {failedTickers.length > 0 && (
+        <div className="bg-amber-950 border border-amber-800 rounded p-3 mb-4 text-sm text-amber-400">
+          Failed to update prices for: {failedTickers.join(', ')}
+        </div>
+      )}
 
       <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
@@ -160,7 +203,14 @@ export default function HoldingsPage() {
                   </td>
                   <td className="py-3 text-right text-gray-400">{fmt(h.avg_cost_eur)}</td>
                   <td className="py-3 text-right text-gray-300">{fmt(h.current_price_eur)}</td>
-                  <td className="py-3 text-right text-white font-medium">{fmt(h.current_value_eur)}</td>
+                  <td className="py-3 text-right">
+                    <div className="text-white font-medium">{fmt(h.current_value_eur)}</div>
+                    {h.currency !== 'EUR' && rates[h.currency] && (
+                      <div className="text-gray-500 text-xs">
+                        {fmtLocal(h.current_value_eur * rates[h.currency], h.currency)}
+                      </div>
+                    )}
+                  </td>
                   <td className={`py-3 text-right font-medium ${h.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     <div>{pct(h.pnl_pct)}</div>
                     <div className="text-xs opacity-70">{fmt(h.pnl)}</div>
