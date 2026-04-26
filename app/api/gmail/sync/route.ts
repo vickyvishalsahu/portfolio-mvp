@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchBrokerEmails } from '@/lib/gmail';
-import { insertRawEmail, getRawEmailCount, getParsedEmailCount } from '@/lib/db';
+import { insertRawEmail, getRawEmailCount, getParsedEmailCount, getSelectedBrokerIds } from '@/lib/db';
+import { getBrokersByIds } from '@/lib/brokers';
 
 export async function POST() {
   try {
@@ -11,14 +12,21 @@ export async function POST() {
       );
     }
 
-    const emails = await fetchBrokerEmails(100);
+    const selectedIds = getSelectedBrokerIds();
+    if (selectedIds.length === 0) {
+      return NextResponse.json(
+        { error: 'No brokers selected. Choose at least one broker on the Sync page.' },
+        { status: 400 }
+      );
+    }
+
+    const brokers = getBrokersByIds(selectedIds);
+    const emails = await fetchBrokerEmails(brokers, 100);
 
     let newCount = 0;
     for (const email of emails) {
       const result = insertRawEmail(email);
-      if (result.changes > 0) {
-        newCount++;
-      }
+      if (result.changes > 0) newCount++;
     }
 
     return NextResponse.json({

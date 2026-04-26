@@ -57,6 +57,11 @@ function initializeDb(db: Database.Database) {
       total_value_eur REAL,
       created_at TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
 }
 
@@ -126,6 +131,32 @@ export function getParsedEmailCount() {
   const db = getDb();
   const row = db.prepare('SELECT COUNT(*) as count FROM raw_emails WHERE parsed = 1').get() as { count: number };
   return row.count;
+}
+
+export function getSetting(key: string): string | null {
+  const db = getDb();
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
+  return row?.value ?? null;
+}
+
+export function setSetting(key: string, value: string): void {
+  const db = getDb();
+  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value);
+}
+
+export function getSelectedBrokerIds(): string[] {
+  const raw = getSetting('selected_brokers');
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function setSelectedBrokerIds(ids: string[]): void {
+  setSetting('selected_brokers', JSON.stringify(ids));
 }
 
 export function getPriceCacheAge(): string | null {

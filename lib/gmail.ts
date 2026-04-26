@@ -1,26 +1,8 @@
 import { google } from 'googleapis';
+import { getAllSenderDomains, getAllSubjectKeywords } from './brokers';
+import type { BrokerDefinition } from './brokers';
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
-
-const BROKER_SENDERS = [
-  'scalable.capital',
-  'zerodha.com',
-  'camsonline.com',
-  'binance.com',
-  'coinbase.com',
-];
-
-const SUBJECT_KEYWORDS = [
-  'confirmation',
-  'contract note',
-  'purchase',
-  'SIP',
-  'bought',
-  'sold',
-  'order',
-  'execution',
-  'transaction',
-];
 
 export function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -47,9 +29,9 @@ export function getAuthenticatedClient() {
   return oauth2Client;
 }
 
-function buildSearchQuery(): string {
-  const senderPart = BROKER_SENDERS.map(s => `from:${s}`).join(' OR ');
-  const subjectPart = SUBJECT_KEYWORDS.map(k => `subject:${k}`).join(' OR ');
+function buildSearchQuery(brokers: BrokerDefinition[]): string {
+  const senderPart = getAllSenderDomains(brokers).map(s => `from:${s}`).join(' OR ');
+  const subjectPart = getAllSubjectKeywords(brokers).map(k => `subject:${k}`).join(' OR ');
   return `(${senderPart}) (${subjectPart})`;
 }
 
@@ -58,31 +40,23 @@ function decodeBase64Url(data: string): string {
 }
 
 function extractBody(payload: any): string {
-  // Simple text/plain body
   if (payload.mimeType === 'text/plain' && payload.body?.data) {
     return decodeBase64Url(payload.body.data);
   }
-
-  // text/html fallback
   if (payload.mimeType === 'text/html' && payload.body?.data) {
     return decodeBase64Url(payload.body.data);
   }
-
-  // Multipart — recurse into parts
   if (payload.parts) {
     for (const part of payload.parts) {
       const body = extractBody(part);
       if (body) return body;
     }
   }
-
   return '';
 }
 
 function getHeader(headers: any[], name: string): string {
-  const header = headers?.find(
-    (h: any) => h.name.toLowerCase() === name.toLowerCase()
-  );
+  const header = headers?.find((h: any) => h.name.toLowerCase() === name.toLowerCase());
   return header?.value || '';
 }
 
@@ -94,15 +68,18 @@ export interface FetchedEmail {
   received_at: string;
 }
 
-export async function fetchBrokerEmails(maxResults = 50): Promise<FetchedEmail[]> {
+export async function fetchBrokerEmails(
+  brokers: BrokerDefinition[],
+  maxResults = 50
+): Promise<FetchedEmail[]> {
+  if (brokers.length === 0) return [];
+
   const auth = getAuthenticatedClient();
   const gmail = google.gmail({ version: 'v1', auth });
 
-  const query = buildSearchQuery();
-
   const listResponse = await gmail.users.messages.list({
     userId: 'me',
-    q: query,
+    q: buildSearchQuery(brokers),
     maxResults,
   });
 
@@ -127,7 +104,7 @@ export async function fetchBrokerEmails(maxResults = 50): Promise<FetchedEmail[]
         id: msg.id!,
         sender,
         subject,
-        body: body.substring(0, 10000), // limit body size
+        body: body.substring(0, 10000),
         received_at: date ? new Date(date).toISOString() : new Date().toISOString(),
       });
     }

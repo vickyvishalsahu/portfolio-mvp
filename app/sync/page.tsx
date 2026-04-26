@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { BrokerDefinition } from '@/lib/brokers';
 
 interface SyncStatus {
   total_raw: number;
@@ -22,8 +23,18 @@ interface ParseResult {
   errors: { email_id: string; subject: string; error: string }[];
 }
 
+const REGION_LABEL: Record<string, string> = {
+  EU: 'Europe',
+  IN: 'India',
+  US: 'US',
+  GLOBAL: 'Global',
+};
+
 export default function SyncPage() {
   const [status, setStatus] = useState<SyncStatus | null>(null);
+  const [catalog, setCatalog] = useState<BrokerDefinition[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [savingBrokers, setSavingBrokers] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
@@ -32,6 +43,7 @@ export default function SyncPage() {
 
   useEffect(() => {
     fetchStatus();
+    fetchBrokerSettings();
   }, []);
 
   async function fetchStatus() {
@@ -45,11 +57,38 @@ export default function SyncPage() {
     }
   }
 
+  async function fetchBrokerSettings() {
+    try {
+      const res = await fetch('/api/settings/brokers');
+      const data = await res.json();
+      setCatalog(data.catalog ?? []);
+      setSelectedIds(data.selected ?? []);
+    } catch {
+      // non-fatal
+    }
+  }
+
+  async function handleToggleBroker(id: string) {
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter((x) => x !== id)
+      : [...selectedIds, id];
+    setSelectedIds(next);
+    setSavingBrokers(true);
+    try {
+      await fetch('/api/settings/brokers', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected: next }),
+      });
+    } finally {
+      setSavingBrokers(false);
+    }
+  }
+
   async function handleSync() {
     setSyncing(true);
     setError(null);
     setSyncResult(null);
-
     try {
       const res = await fetch('/api/gmail/sync', { method: 'POST' });
       const data = await res.json();
@@ -70,7 +109,6 @@ export default function SyncPage() {
     setParsing(true);
     setError(null);
     setParseResult(null);
-
     try {
       const res = await fetch('/api/parse', { method: 'POST' });
       const data = await res.json();
@@ -88,12 +126,64 @@ export default function SyncPage() {
   }
 
   const unparsedCount = status ? status.total_raw - status.total_parsed : 0;
+  const selectedNames = catalog.filter((b) => selectedIds.includes(b.id)).map((b) => b.name);
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Email Sync</h1>
 
-      {/* Connection Status */}
+      {/* Broker Selection */}
+      <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Your Brokers</h2>
+          {savingBrokers && <span className="text-xs text-gray-500">Saving...</span>}
+        </div>
+        {catalog.length === 0 ? (
+          <p className="text-gray-500 text-sm">Loading...</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+              {catalog.map((broker) => {
+                const selected = selectedIds.includes(broker.id);
+                return (
+                  <button
+                    key={broker.id}
+                    onClick={() => handleToggleBroker(broker.id)}
+                    className={`text-left p-3 rounded-lg border transition ${
+                      selected
+                        ? 'border-blue-500 bg-blue-950'
+                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`w-3 h-3 rounded-sm border flex-shrink-0 flex items-center justify-center text-[10px] ${
+                          selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-500'
+                        }`}
+                      >
+                        {selected ? '✓' : ''}
+                      </span>
+                      <span className="text-sm font-medium text-white truncate">{broker.name}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 pl-5">
+                      <span className="text-[10px] text-gray-500">{REGION_LABEL[broker.region]}</span>
+                      <span className="text-[10px] text-gray-600">·</span>
+                      <span className="text-[10px] text-gray-500">
+                        {broker.assetTypes.join(', ')}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-500">
+              Only emails from selected brokers will be fetched from Gmail.
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Gmail Connection */}
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Gmail Connection</h2>
         {status === null ? (
@@ -113,7 +203,11 @@ export default function SyncPage() {
               <p className="mb-1 font-medium text-gray-300">Before you connect</p>
               <p>
                 We request <span className="text-white">read-only</span> Gmail access to find broker confirmation emails.
-                Only emails from known senders — Scalable Capital, Zerodha, CAMS, Binance, and Coinbase — are stored locally.
+                {selectedNames.length > 0 ? (
+                  <> Only emails from <span className="text-white">{selectedNames.join(', ')}</span> will be stored locally.</>
+                ) : (
+                  <> Select at least one broker above before connecting.</>
+                )}{' '}
                 No other emails are read, stored, or transmitted.
               </p>
             </div>
@@ -127,13 +221,13 @@ export default function SyncPage() {
         )}
       </div>
 
-      {/* Sync + Parse Controls */}
+      {/* Pipeline */}
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Pipeline</h2>
         <div className="flex gap-3">
           <button
             onClick={handleSync}
-            disabled={syncing || !status?.gmail_connected}
+            disabled={syncing || !status?.gmail_connected || selectedIds.length === 0}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
           >
             {syncing ? 'Fetching...' : '1. Fetch Emails'}
@@ -146,6 +240,9 @@ export default function SyncPage() {
             {parsing ? 'Parsing...' : `2. Parse Emails (${unparsedCount} pending)`}
           </button>
         </div>
+        {selectedIds.length === 0 && status?.gmail_connected && (
+          <p className="text-xs text-yellow-500 mt-3">Select at least one broker to enable fetching.</p>
+        )}
 
         {syncResult && (
           <div className="mt-4 bg-gray-800 rounded p-4">
