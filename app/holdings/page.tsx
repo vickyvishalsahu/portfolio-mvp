@@ -156,6 +156,13 @@ export default function HoldingsPage() {
           <span className="text-xs text-gray-500">
             {refreshing ? 'Updating...' : `Prices: ${formatAge(priceAge)}`}
           </span>
+          <a
+            href="/api/export"
+            download
+            className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition"
+          >
+            Export CSV
+          </a>
           <button
             onClick={handleRefreshPrices}
             disabled={refreshing}
