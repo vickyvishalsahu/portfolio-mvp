@@ -1,0 +1,22 @@
+import { getAllTransactions } from '@/lib/db';
+import { buildCsv } from '@/lib/export';
+
+export async function GET() {
+  try {
+    const transactions = getAllTransactions();
+    const csv = buildCsv(transactions);
+    const filename = `portfolio-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    return new Response(csv, {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      },
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
