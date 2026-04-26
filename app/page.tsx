@@ -11,6 +11,7 @@ interface Holding {
   avg_cost_eur: number;
   current_price_eur: number;
   current_value_eur: number;
+  prev_value_eur: number | null;
   pnl: number;
   pnl_pct: number;
   broker: string;
@@ -134,6 +135,18 @@ export default function Dashboard() {
   // Top holdings for mini table
   const topHoldings = holdings.slice(0, 5);
 
+  // Biggest movers — only holdings where previous price data exists
+  const withChange = holdings
+    .filter((h) => h.prev_value_eur !== null)
+    .map((h) => ({
+      ...h,
+      change: h.current_value_eur - h.prev_value_eur!,
+      change_pct: ((h.current_value_eur - h.prev_value_eur!) / h.prev_value_eur!) * 100,
+    }))
+    .sort((a, b) => b.change - a.change);
+  const topGainers = withChange.slice(0, 3);
+  const topLosers = [...withChange].reverse().slice(0, 3).filter((h) => h.change < 0);
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
@@ -253,6 +266,64 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {withChange.length > 0 && (
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Biggest Movers</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Gainers</p>
+              {topGainers.length === 0 ? (
+                <p className="text-gray-600 text-sm">No gains since last refresh</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <tbody>
+                    {topGainers.map((h) => (
+                      <tr key={h.ticker} className="border-b border-gray-800/50">
+                        <td className="py-2">
+                          <span className="text-white">{h.name}</span>
+                          <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
+                        </td>
+                        <td className="text-right text-green-400 font-medium">
+                          +{fmt(h.change)}
+                        </td>
+                        <td className="text-right text-green-500 text-xs w-16">
+                          +{h.change_pct.toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Losers</p>
+              {topLosers.length === 0 ? (
+                <p className="text-gray-600 text-sm">No losses since last refresh</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <tbody>
+                    {topLosers.map((h) => (
+                      <tr key={h.ticker} className="border-b border-gray-800/50">
+                        <td className="py-2">
+                          <span className="text-white">{h.name}</span>
+                          <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
+                        </td>
+                        <td className="text-right text-red-400 font-medium">
+                          {fmt(h.change)}
+                        </td>
+                        <td className="text-right text-red-500 text-xs w-16">
+                          {h.change_pct.toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {snapshots.length > 1 && (
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
