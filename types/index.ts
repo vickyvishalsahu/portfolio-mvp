@@ -39,6 +39,7 @@ export interface Holding {
   avg_cost_eur: number;
   current_price_eur: number;
   current_value_eur: number;
+  prev_value_eur: number | null;
   pnl: number;
   pnl_pct: number;
   currency: string;

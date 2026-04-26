@@ -6,10 +6,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mutable rows so each test can set its own transaction data
 let mockRows: Record<string, unknown>[] = [];
+let mockPrevPriceEur: number | null = null;
 
 vi.mock('@/lib/db', () => ({
   getDb: () => ({
-    prepare: () => ({ all: () => mockRows }),
+    prepare: () => ({
+      all: () => mockRows,
+      get: () => ({ prev_price_eur: mockPrevPriceEur }),
+    }),
   }),
 }));
 
@@ -54,7 +58,7 @@ function makeTx(overrides: Partial<Record<string, unknown>> = {}): Record<string
 // ---------------------------------------------------------------------------
 describe('computeHoldings', () => {
 
-  beforeEach(() => { mockRows = []; });
+  beforeEach(() => { mockRows = []; mockPrevPriceEur = null; });
 
   it('simple buy — creates holding with correct qty and avg cost', async () => {
     mockRows = [makeTx({ quantity: 10, price: 10 })];
@@ -154,6 +158,25 @@ describe('computeHoldings', () => {
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(20);
     expect(holdings[0].avg_cost_eur).toBeCloseTo(15);
+  });
+
+  it('prev_value_eur is null when no previous price exists', async () => {
+    mockRows = [makeTx({ quantity: 10, price: 10 })];
+    mockPrevPriceEur = null;
+
+    const holdings = await computeHoldings();
+
+    expect(holdings[0].prev_value_eur).toBeNull();
+  });
+
+  it('prev_value_eur is qty × prev_price_eur when previous price exists', async () => {
+    mockRows = [makeTx({ quantity: 10, price: 10 })];
+    mockPrevPriceEur = 80;
+
+    const holdings = await computeHoldings();
+
+    // 10 qty × €80 previous price
+    expect(holdings[0].prev_value_eur).toBe(800);
   });
 
 });

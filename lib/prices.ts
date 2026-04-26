@@ -27,10 +27,11 @@ function getCachedPrice(ticker: string): CachedPrice | null {
 
 function setCachedPrice(ticker: string, priceEur: number, priceLocal: number, currency: string) {
   const db = getDb();
+  const existing = db.prepare('SELECT price_eur FROM price_cache WHERE ticker = ?').get(ticker) as { price_eur: number } | undefined;
   db.prepare(`
-    INSERT OR REPLACE INTO price_cache (ticker, price_eur, price_local, currency, updated_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(ticker, priceEur, priceLocal, currency, new Date().toISOString());
+    INSERT OR REPLACE INTO price_cache (ticker, price_eur, prev_price_eur, price_local, currency, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(ticker, priceEur, existing?.price_eur ?? null, priceLocal, currency, new Date().toISOString());
 }
 
 // Yahoo Finance for stocks and ETFs

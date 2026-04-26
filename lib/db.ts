@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import type { Transaction } from '@/types';
 
 const DB_PATH = path.join(process.cwd(), 'portfolio.db');
 
@@ -44,6 +45,7 @@ function initializeDb(db: Database.Database) {
     CREATE TABLE IF NOT EXISTS price_cache (
       ticker TEXT PRIMARY KEY,
       price_eur REAL,
+      prev_price_eur REAL,
       price_local REAL,
       currency TEXT,
       updated_at TEXT
@@ -109,9 +111,9 @@ export function insertTransaction(tx: {
   );
 }
 
-export function getAllTransactions() {
+export function getAllTransactions(): Transaction[] {
   const db = getDb();
-  return db.prepare('SELECT * FROM transactions ORDER BY transaction_date DESC').all();
+  return db.prepare('SELECT * FROM transactions ORDER BY transaction_date DESC').all() as Transaction[];
 }
 
 export function getRawEmailCount() {
