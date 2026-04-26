@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { getAllSenderDomains, getAllSubjectKeywords } from './brokers';
+import { getGmailSearchTerms, getAllSubjectKeywords } from './brokers';
 import type { BrokerDefinition } from './brokers';
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
@@ -30,7 +30,7 @@ export function getAuthenticatedClient() {
 }
 
 function buildSearchQuery(brokers: BrokerDefinition[]): string {
-  const senderPart = getAllSenderDomains(brokers).map(s => `from:${s}`).join(' OR ');
+  const senderPart = getGmailSearchTerms(brokers).map(s => `from:${s}`).join(' OR ');
   const subjectPart = getAllSubjectKeywords(brokers).map(k => `subject:${k}`).join(' OR ');
   return `(${senderPart}) (${subjectPart})`;
 }

@@ -63,6 +63,12 @@ function initializeDb(db: Database.Database) {
       value TEXT NOT NULL
     );
   `);
+
+  // Migrations — safe to run on every startup (idempotent)
+  const priceCacheCols = db.prepare('PRAGMA table_info(price_cache)').all() as { name: string }[];
+  if (!priceCacheCols.some((c) => c.name === 'prev_price_eur')) {
+    db.exec('ALTER TABLE price_cache ADD COLUMN prev_price_eur REAL');
+  }
 }
 
 export function insertRawEmail(email: {
@@ -157,6 +163,21 @@ export function getSelectedBrokerIds(): string[] {
 
 export function setSelectedBrokerIds(ids: string[]): void {
   setSetting('selected_brokers', JSON.stringify(ids));
+}
+
+export function getBrokerCustomDomains(): Record<string, string[]> {
+  const raw = getSetting('broker_custom_domains');
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function setBrokerCustomDomains(overrides: Record<string, string[]>): void {
+  setSetting('broker_custom_domains', JSON.stringify(overrides));
 }
 
 export function getPriceCacheAge(): string | null {

@@ -1,17 +1,33 @@
 import { NextResponse } from 'next/server';
 import { BROKER_CATALOG } from '@/lib/brokers';
-import { getSelectedBrokerIds, setSelectedBrokerIds } from '@/lib/db';
+import { getSelectedBrokerIds, setSelectedBrokerIds, getBrokerCustomDomains, setBrokerCustomDomains } from '@/lib/db';
 
 export async function GET() {
   const selected = getSelectedBrokerIds();
-  return NextResponse.json({ catalog: BROKER_CATALOG, selected });
+  const customDomains = getBrokerCustomDomains();
+  return NextResponse.json({ catalog: BROKER_CATALOG, selected, customDomains });
 }
 
 export async function PUT(req: Request) {
   const body = await req.json();
-  const incoming: string[] = Array.isArray(body.selected) ? body.selected : [];
   const validIds = new Set(BROKER_CATALOG.map((b) => b.id));
-  const selected = incoming.filter((id) => validIds.has(id));
-  setSelectedBrokerIds(selected);
-  return NextResponse.json({ selected });
+
+  if (body.selected !== undefined) {
+    const incoming: string[] = Array.isArray(body.selected) ? body.selected : [];
+    setSelectedBrokerIds(incoming.filter((id) => validIds.has(id)));
+  }
+
+  if (body.customDomains !== undefined) {
+    const incoming: Record<string, string[]> = body.customDomains ?? {};
+    // Only keep entries for valid broker IDs
+    const filtered = Object.fromEntries(
+      Object.entries(incoming).filter(([id]) => validIds.has(id))
+    );
+    setBrokerCustomDomains(filtered);
+  }
+
+  return NextResponse.json({
+    selected: getSelectedBrokerIds(),
+    customDomains: getBrokerCustomDomains(),
+  });
 }

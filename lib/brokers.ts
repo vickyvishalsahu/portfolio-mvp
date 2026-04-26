@@ -1,7 +1,8 @@
 export interface BrokerDefinition {
   id: string;
   name: string;
-  senderDomains: string[];
+  senderDomains: string[];       // used by parser pre-filter (precise)
+  gmailSearchTerms?: string[];   // used in Gmail query (can be broader). Defaults to senderDomains.
   subjectKeywords?: string[];
   assetTypes: Array<'stock' | 'etf' | 'mf' | 'crypto'>;
   region: 'EU' | 'IN' | 'US' | 'GLOBAL';
@@ -32,7 +33,11 @@ export const BROKER_CATALOG: BrokerDefinition[] = [
   {
     id: 'zerodha',
     name: 'Zerodha',
-    senderDomains: ['zerodha.com', 'kite.zerodha.com'],
+    // senderDomains: precise list for parser pre-filter
+    senderDomains: ['zerodha.com', 'kite.zerodha.com', 'zerodha.net'],
+    // gmailSearchTerms: zerodha.com catches *.zerodha.com subdomains (substring match);
+    // zerodha.net catches reportsmailer/mailer/alertsmailer etc. (confirmed from support.zerodha.com)
+    gmailSearchTerms: ['zerodha.com', 'zerodha.net'],
     assetTypes: ['stock', 'etf', 'mf'],
     region: 'IN',
   },
@@ -72,9 +77,11 @@ export const BROKER_CATALOG: BrokerDefinition[] = [
     region: 'IN',
   },
   {
-    id: 'angelbroking',
-    name: 'Angel Broking',
-    senderDomains: ['angelbroking.com'],
+    // Rebranded from Angel Broking to Angel One in 2021
+    id: 'angelone',
+    name: 'Angel One',
+    senderDomains: ['angelone.in', 'angelbroking.com'],
+    gmailSearchTerms: ['angelone.in', 'angelbroking.com'],
     assetTypes: ['stock', 'etf'],
     region: 'IN',
   },
@@ -95,6 +102,10 @@ export function getBrokersByIds(ids: string[]): BrokerDefinition[] {
 
 export function getAllSenderDomains(brokers: BrokerDefinition[]): string[] {
   return brokers.flatMap((b) => b.senderDomains);
+}
+
+export function getGmailSearchTerms(brokers: BrokerDefinition[]): string[] {
+  return brokers.flatMap((b) => b.gmailSearchTerms ?? b.senderDomains);
 }
 
 export function getAllSubjectKeywords(brokers: BrokerDefinition[]): string[] {
