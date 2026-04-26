@@ -19,6 +19,7 @@ export default function RootLayout({
             <a href="/" className="text-lg font-bold text-white">Portfolio MVP</a>
             <a href="/sync" className="text-gray-400 hover:text-white transition">Sync</a>
             <a href="/holdings" className="text-gray-400 hover:text-white transition">Holdings</a>
+            <a href="/transactions/new" className="text-gray-400 hover:text-white transition">Add Transaction</a>
           </div>
         </nav>
         <main className="max-w-6xl mx-auto px-6 py-8">

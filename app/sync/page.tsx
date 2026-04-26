@@ -179,8 +179,9 @@ export default function SyncPage() {
                 <p className="text-red-400 text-sm mb-2">Errors ({parseResult.errors.length}):</p>
                 <ul className="text-red-300 text-sm space-y-1">
                   {parseResult.errors.map((e) => (
-                    <li key={e.email_id} className="truncate">
+                    <li key={e.email_id}>
                       <span className="text-red-500">{e.subject}</span> — {e.error}
+                      <a href="/transactions/new" className="text-blue-400 hover:underline ml-2 text-xs">Add manually →</a>
                     </li>
                   ))}
                 </ul>
