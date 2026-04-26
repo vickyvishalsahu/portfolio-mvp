@@ -59,7 +59,7 @@ export interface ParsedTransaction {
   confidence: 'high' | 'medium' | 'low';
 }
 
-export interface ClaudeParseResponse {
+export interface ParseResponse {
   transactions: ParsedTransaction[];
   unparseable: boolean;
   reason: string | null;
