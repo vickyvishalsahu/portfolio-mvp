@@ -6,16 +6,7 @@ const DB_PATH = path.join(process.cwd(), 'portfolio.db');
 
 let db: Database.Database | null = null;
 
-export function getDb(): Database.Database {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    initializeDb(db);
-  }
-  return db;
-}
-
-export function initializeDb(db: Database.Database) {
+export const initializeDb = (db: Database.Database) => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS raw_emails (
       id TEXT PRIMARY KEY,
@@ -91,20 +82,29 @@ export function initializeDb(db: Database.Database) {
       )
     `);
   }
-}
+};
 
-export function getSetting(key: string): string | null {
+export const getDb = (): Database.Database => {
+  if (!db) {
+    db = new Database(DB_PATH);
+    db.pragma('journal_mode = WAL');
+    initializeDb(db);
+  }
+  return db;
+};
+
+export const getSetting = (key: string): string | null => {
   const db = getDb();
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
   return row?.value ?? null;
-}
+};
 
-export function setSetting(key: string, value: string): void {
+export const setSetting = (key: string, value: string): void => {
   const db = getDb();
   db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value);
-}
+};
 
-export function insertTransaction(tx: {
+export const insertTransaction = (tx: {
   email_id: string;
   asset_type: string;
   ticker: string | null;
@@ -117,7 +117,7 @@ export function insertTransaction(tx: {
   broker: string;
   raw_text: string;
   confidence: string;
-}) {
+}) => {
   const db = getDb();
   const stmt = db.prepare(`
     INSERT INTO transactions (email_id, asset_type, ticker, name, quantity, price, currency, transaction_type, transaction_date, broker, raw_text, confidence)
@@ -128,15 +128,15 @@ export function insertTransaction(tx: {
     tx.currency, tx.transaction_type, tx.transaction_date, tx.broker,
     tx.raw_text, tx.confidence
   );
-}
+};
 
-export function getAllTransactions(): Transaction[] {
+export const getAllTransactions = (): Transaction[] => {
   const db = getDb();
   return db.prepare('SELECT * FROM transactions ORDER BY transaction_date DESC').all() as Transaction[];
-}
+};
 
-export function getPriceCacheAge(): string | null {
+export const getPriceCacheAge = (): string | null => {
   const db = getDb();
   const row = db.prepare('SELECT MAX(updated_at) as latest FROM price_cache').get() as { latest: string | null };
   return row.latest;
-}
+};

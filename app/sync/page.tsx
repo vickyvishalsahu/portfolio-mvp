@@ -18,7 +18,7 @@ const REGION_LABEL: Record<string, string> = {
   GLOBAL: 'Global',
 };
 
-export default function SyncPage() {
+const SyncPage = () => {
   const {
     status,
     syncing,
@@ -46,12 +46,12 @@ export default function SyncPage() {
   const [parseError, setParseError] = useState<string | null>(null);
   const domainInputRef = useRef<HTMLInputElement>(null);
 
-  function handleExpandWithFocus(id: string) {
+  const handleExpandWithFocus = (id: string) => {
     handleExpandBroker(id);
     setTimeout(() => domainInputRef.current?.focus(), 50);
-  }
+  };
 
-  async function handleParse() {
+  const handleParse = async () => {
     setParsing(true);
     setParseError(null);
     setParseResult(null);
@@ -68,7 +68,7 @@ export default function SyncPage() {
     } finally {
       setParsing(false);
     }
-  }
+  };
 
   const unparsedCount = status ? status.total_raw - status.total_parsed : 0;
   const selectedNames = catalog.filter((b) => selectedIds.includes(b.id)).map((b) => b.name);
@@ -327,4 +327,6 @@ export default function SyncPage() {
       )}
     </div>
   );
-}
+};
+
+export default SyncPage;

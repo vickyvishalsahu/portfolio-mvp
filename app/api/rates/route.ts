@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getExchangeRates } from '@/lib/currency';
 
-export async function GET() {
+export const GET = async () => {
   try {
     const rates = await getExchangeRates();
     return NextResponse.json(rates);

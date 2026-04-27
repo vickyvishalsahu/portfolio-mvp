@@ -12,7 +12,7 @@ const TRANSACTION_KEYWORDS = [
   'redemption', 'switch', 'transaction', 'investment', 'demat',
 ];
 
-function isLikelyTransaction(sender: string, subject: string): boolean {
+const isLikelyTransaction = (sender: string, subject: string): boolean => {
   const senderLower = sender.toLowerCase();
   const subjectLower = subject.toLowerCase();
 
@@ -20,13 +20,13 @@ function isLikelyTransaction(sender: string, subject: string): boolean {
   if (TRANSACTION_KEYWORDS.some((kw) => subjectLower.includes(kw))) return true;
 
   return false;
-}
+};
 
-export async function parseEmail(
+export const parseEmail = async (
   emailBody: string,
   sender: string,
   subject: string
-): Promise<ParseResponse> {
+): Promise<ParseResponse> => {
   if (!isLikelyTransaction(sender, subject)) {
     return {
       transactions: [],
@@ -37,4 +37,4 @@ export async function parseEmail(
 
   const parser = getParser();
   return parser.parse(emailBody, sender, subject);
-}
+};

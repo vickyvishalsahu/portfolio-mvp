@@ -15,17 +15,13 @@ interface SyncResult {
   total_parsed: number;
 }
 
-export function useGmailSync() {
+export const useGmailSync = () => {
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  async function fetchStatus() {
+  const fetchStatus = async () => {
     try {
       const res = await fetch('/api/gmail/sync');
       const data = await res.json();
@@ -34,9 +30,13 @@ export function useGmailSync() {
     } catch {
       setError('Failed to fetch status');
     }
-  }
+  };
 
-  async function handleSync() {
+  useEffect(() => {
+    fetchStatus();
+  }, []);
+
+  const handleSync = async () => {
     setSyncing(true);
     setError(null);
     setSyncResult(null);
@@ -54,7 +54,7 @@ export function useGmailSync() {
     } finally {
       setSyncing(false);
     }
-  }
+  };
 
   return { status, syncing, syncResult, error, setError, fetchStatus, handleSync };
-}
+};

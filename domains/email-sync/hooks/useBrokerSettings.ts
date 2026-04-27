@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import type { BrokerDefinition } from '@/domains/shared/types';
 
-function extractDomain(input: string): string {
+const extractDomain = (input: string): string => {
   const trimmed = input.trim().toLowerCase();
   if (trimmed.includes('@')) return trimmed.split('@')[1] ?? trimmed;
   return trimmed;
-}
+};
 
-export function useBrokerSettings() {
+export const useBrokerSettings = () => {
   const [catalog, setCatalog] = useState<BrokerDefinition[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [customDomains, setCustomDomains] = useState<Record<string, string[]>>({});
@@ -17,11 +17,7 @@ export function useBrokerSettings() {
   const [savingBrokers, setSavingBrokers] = useState(false);
   const [newDomainInput, setNewDomainInput] = useState('');
 
-  useEffect(() => {
-    fetchBrokerSettings();
-  }, []);
-
-  async function fetchBrokerSettings() {
+  const fetchBrokerSettings = async () => {
     try {
       const res = await fetch('/api/settings/brokers');
       const data = await res.json();
@@ -31,12 +27,12 @@ export function useBrokerSettings() {
     } catch {
       // non-fatal
     }
-  }
+  };
 
-  async function saveBrokerSettings(
+  const saveBrokerSettings = async (
     nextSelected: string[],
     nextCustomDomains: Record<string, string[]>
-  ) {
+  ) => {
     setSavingBrokers(true);
     try {
       await fetch('/api/settings/brokers', {
@@ -47,23 +43,27 @@ export function useBrokerSettings() {
     } finally {
       setSavingBrokers(false);
     }
-  }
+  };
 
-  function handleToggleBroker(id: string) {
+  useEffect(() => {
+    fetchBrokerSettings();
+  }, []);
+
+  const handleToggleBroker = (id: string) => {
     const next = selectedIds.includes(id)
       ? selectedIds.filter((x) => x !== id)
       : [...selectedIds, id];
     setSelectedIds(next);
     if (!next.includes(id)) setExpandedBroker(null);
     saveBrokerSettings(next, customDomains);
-  }
+  };
 
-  function handleExpandBroker(id: string) {
+  const handleExpandBroker = (id: string) => {
     setExpandedBroker(expandedBroker === id ? null : id);
     setNewDomainInput('');
-  }
+  };
 
-  function handleAddDomain(brokerId: string) {
+  const handleAddDomain = (brokerId: string) => {
     const domain = extractDomain(newDomainInput);
     if (!domain) return;
     const current = customDomains[brokerId] ?? [];
@@ -72,16 +72,16 @@ export function useBrokerSettings() {
     setCustomDomains(next);
     setNewDomainInput('');
     saveBrokerSettings(selectedIds, next);
-  }
+  };
 
-  function handleRemoveCustomDomain(brokerId: string, domain: string) {
+  const handleRemoveCustomDomain = (brokerId: string, domain: string) => {
     const next = {
       ...customDomains,
       [brokerId]: (customDomains[brokerId] ?? []).filter((d) => d !== domain),
     };
     setCustomDomains(next);
     saveBrokerSettings(selectedIds, next);
-  }
+  };
 
   return {
     catalog,
@@ -96,4 +96,4 @@ export function useBrokerSettings() {
     handleAddDomain,
     handleRemoveCustomDomain,
   };
-}
+};

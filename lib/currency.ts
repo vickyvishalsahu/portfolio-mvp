@@ -6,7 +6,7 @@ interface RateCache {
 let rateCache: RateCache | null = null;
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
-export async function getExchangeRates(): Promise<Record<string, number>> {
+export const getExchangeRates = async (): Promise<Record<string, number>> => {
   if (rateCache && Date.now() - rateCache.updated_at < CACHE_TTL) {
     return rateCache.rates;
   }
@@ -29,12 +29,12 @@ export async function getExchangeRates(): Promise<Record<string, number>> {
     // Fallback rates
     return { EUR: 1, USD: 1.08, INR: 90.5 };
   }
-}
+};
 
-export async function convertToEur(amount: number, fromCurrency: string): Promise<number> {
+export const convertToEur = async (amount: number, fromCurrency: string): Promise<number> => {
   if (fromCurrency === 'EUR') return amount;
   const rates = await getExchangeRates();
   const rate = rates[fromCurrency];
   if (!rate) return amount;
   return amount / rate;
-}
+};

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/domains/shared/db';
 import { refreshPrices } from '@/lib/prices';
 
-export async function POST() {
+export const POST = async () => {
   try {
     const db = getDb();
     const tickers = db.prepare(

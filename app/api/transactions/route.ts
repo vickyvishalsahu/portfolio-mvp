@@ -1,6 +1,6 @@
 import { insertTransaction } from '@/domains/shared/db';
 
-export async function POST(req: Request) {
+export const POST = async (req: Request) => {
   try {
     const body = await req.json();
     const { asset_type, ticker, name, quantity, price, currency, transaction_type, transaction_date, broker } = body;

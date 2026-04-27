@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import { BROKER_CATALOG } from '@/domains/shared/constants';
 import { getSelectedBrokerIds, setSelectedBrokerIds, getBrokerCustomDomains, setBrokerCustomDomains } from '@/domains/email-sync/db';
 
-export async function GET() {
+export const GET = async () => {
   const selected = getSelectedBrokerIds();
   const customDomains = getBrokerCustomDomains();
   return NextResponse.json({ catalog: BROKER_CATALOG, selected, customDomains });
 }
 
-export async function PUT(req: Request) {
+export const PUT = async (req: Request) => {
   const body = await req.json();
   const validIds = new Set(BROKER_CATALOG.map((b) => b.id));
 

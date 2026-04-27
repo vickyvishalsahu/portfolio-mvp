@@ -4,35 +4,34 @@ import { buildSearchQuery, extractBody, getHeader } from './utils';
 import type { FetchedEmail } from './types';
 import type { BrokerDefinition } from '@/domains/shared/types';
 
-export function getOAuth2Client() {
-  return new google.auth.OAuth2(
+export const getOAuth2Client = () =>
+  new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/gmail/callback`
   );
-}
 
-export function getAuthUrl() {
+export const getAuthUrl = () => {
   const oauth2Client = getOAuth2Client();
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: GMAIL_SCOPES,
     prompt: 'consent',
   });
-}
+};
 
-export function getAuthenticatedClient() {
+export const getAuthenticatedClient = () => {
   const oauth2Client = getOAuth2Client();
   oauth2Client.setCredentials({
     refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
   });
   return oauth2Client;
-}
+};
 
-export async function fetchBrokerEmails(
+export const fetchBrokerEmails = async (
   brokers: BrokerDefinition[],
   maxResults = DEFAULT_MAX_RESULTS
-): Promise<FetchedEmail[]> {
+): Promise<FetchedEmail[]> => {
   if (brokers.length === 0) return [];
 
   const auth = getAuthenticatedClient();
@@ -72,4 +71,4 @@ export async function fetchBrokerEmails(
   }
 
   return emails;
-}
+};

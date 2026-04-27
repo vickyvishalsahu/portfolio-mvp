@@ -14,7 +14,7 @@ interface CachedPrice {
   updated_at: string;
 }
 
-function getCachedPrice(ticker: string): CachedPrice | null {
+const getCachedPrice = (ticker: string): CachedPrice | null => {
   const db = getDb();
   const row = db.prepare('SELECT * FROM price_cache WHERE ticker = ?').get(ticker) as CachedPrice | undefined;
   if (!row) return null;
@@ -23,19 +23,19 @@ function getCachedPrice(ticker: string): CachedPrice | null {
   if (age > CACHE_TTL) return null;
 
   return row;
-}
+};
 
-function setCachedPrice(ticker: string, priceEur: number, priceLocal: number, currency: string) {
+const setCachedPrice = (ticker: string, priceEur: number, priceLocal: number, currency: string) => {
   const db = getDb();
   const existing = db.prepare('SELECT price_eur, price_local FROM price_cache WHERE ticker = ?').get(ticker) as { price_eur: number; price_local: number } | undefined;
   db.prepare(`
     INSERT OR REPLACE INTO price_cache (ticker, price_eur, prev_price_eur, price_local, prev_price_local, currency, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(ticker, priceEur, existing?.price_eur ?? null, priceLocal, existing?.price_local ?? null, currency, new Date().toISOString());
-}
+};
 
 // Yahoo Finance for stocks and ETFs
-async function fetchYahooPrice(ticker: string): Promise<{ price: number; currency: string } | null> {
+const fetchYahooPrice = async (ticker: string): Promise<{ price: number; currency: string } | null> => {
   try {
     const quote = await yahooFinance.quote(ticker);
     if (quote?.regularMarketPrice && quote?.currency) {
@@ -46,10 +46,10 @@ async function fetchYahooPrice(ticker: string): Promise<{ price: number; currenc
     console.error(`Yahoo Finance error for ${ticker}:`, error);
     return null;
   }
-}
+};
 
 // AMFI API for Indian mutual fund NAVs
-async function fetchMfNav(isinOrScheme: string): Promise<{ price: number; currency: string } | null> {
+const fetchMfNav = async (isinOrScheme: string): Promise<{ price: number; currency: string } | null> => {
   try {
     const res = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(isinOrScheme)}`);
     const results = await res.json();
@@ -68,7 +68,7 @@ async function fetchMfNav(isinOrScheme: string): Promise<{ price: number; curren
     console.error(`AMFI NAV error for ${isinOrScheme}:`, error);
     return null;
   }
-}
+};
 
 // CoinGecko for crypto
 const CRYPTO_ID_MAP: Record<string, string> = {
@@ -87,7 +87,7 @@ const CRYPTO_ID_MAP: Record<string, string> = {
   USDC: 'usd-coin',
 };
 
-async function fetchCryptoPrice(ticker: string): Promise<{ price: number; currency: string } | null> {
+const fetchCryptoPrice = async (ticker: string): Promise<{ price: number; currency: string } | null> => {
   const coinId = CRYPTO_ID_MAP[ticker.toUpperCase()];
   if (!coinId) return null;
 
@@ -105,13 +105,13 @@ async function fetchCryptoPrice(ticker: string): Promise<{ price: number; curren
     console.error(`CoinGecko error for ${ticker}:`, error);
     return null;
   }
-}
+};
 
-export async function getPrice(
+export const getPrice = async (
   ticker: string,
   assetType: string,
   originalCurrency: string
-): Promise<{ priceEur: number; priceLocal: number; currency: string } | null> {
+): Promise<{ priceEur: number; priceLocal: number; currency: string } | null> => {
   // Check cache first
   const cached = getCachedPrice(ticker);
   if (cached) {
@@ -145,11 +145,11 @@ export async function getPrice(
 
   setCachedPrice(ticker, priceEur, result.price, result.currency);
   return { priceEur, priceLocal: result.price, currency: result.currency };
-}
+};
 
-export async function refreshPrices(
+export const refreshPrices = async (
   tickers: { ticker: string; asset_type: string; currency: string }[]
-): Promise<{ updated: number; failed: string[] }> {
+): Promise<{ updated: number; failed: string[] }> => {
   let updated = 0;
   const failed: string[] = [];
 
@@ -163,4 +163,4 @@ export async function refreshPrices(
   }
 
   return { updated, failed };
-}
+};

@@ -14,7 +14,7 @@ interface TransactionRow {
   broker: string;
 }
 
-export async function computeHoldings(): Promise<Holding[]> {
+export const computeHoldings = async (): Promise<Holding[]> => {
   const db = getDb();
   const transactions = db.prepare(
     'SELECT ticker, name, asset_type, quantity, price, currency, transaction_type, broker FROM transactions ORDER BY transaction_date ASC'
@@ -101,4 +101,4 @@ export async function computeHoldings(): Promise<Holding[]> {
   // Sort by value descending
   holdings.sort((a, b) => b.current_value_eur - a.current_value_eur);
   return holdings;
-}
+};

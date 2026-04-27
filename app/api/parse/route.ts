@@ -4,7 +4,7 @@ import { insertTransaction } from '@/domains/shared/db';
 import { parseEmail } from '@/lib/parser';
 import type { RawEmail } from '@/domains/shared/types';
 
-export async function POST() {
+export const POST = async () => {
   try {
     const unparsed = getUnparsedEmails() as RawEmail[];
 

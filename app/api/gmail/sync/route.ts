@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { fetchBrokerEmails, insertRawEmail, getRawEmailCount, getParsedEmailCount, getSelectedBrokerIds, getBrokerCustomDomains, mergeCustomDomains } from '@/domains/email-sync';
 import { getBrokersByIds } from '@/domains/shared';
 
-export async function POST() {
+export const POST = async () => {
   try {
     if (!process.env.GOOGLE_REFRESH_TOKEN) {
       return NextResponse.json(
@@ -43,7 +43,7 @@ export async function POST() {
   }
 }
 
-export async function GET() {
+export const GET = async () => {
   try {
     return NextResponse.json({
       total_raw: getRawEmailCount(),

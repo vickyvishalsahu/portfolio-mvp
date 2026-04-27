@@ -1,13 +1,13 @@
 import type { Transaction } from '@/domains/shared/types';
 
-function escapeField(value: string): string {
+const escapeField = (value: string): string => {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;
-}
+};
 
-export function buildCsv(transactions: Transaction[]): string {
+export const buildCsv = (transactions: Transaction[]): string => {
   const header = 'date,broker,ticker,name,asset_type,transaction_type,quantity,price,currency';
   const rows = transactions.map((t) =>
     [
@@ -23,4 +23,4 @@ export function buildCsv(transactions: Transaction[]): string {
     ].join(',')
   );
   return [header, ...rows].join('\n');
-}
+};

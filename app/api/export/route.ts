@@ -1,7 +1,7 @@
 import { getAllTransactions } from '@/domains/shared/db';
 import { buildCsv } from '@/lib/export';
 
-export async function GET() {
+export const GET = async () => {
   try {
     const transactions = getAllTransactions();
     const csv = buildCsv(transactions);

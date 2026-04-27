@@ -3,7 +3,7 @@ import type { EmailParser } from './types';
 const SUPPORTED_PROVIDERS = ['groq', 'gemini'] as const;
 type Provider = (typeof SUPPORTED_PROVIDERS)[number];
 
-function getProvider(): Provider {
+const getProvider = (): Provider => {
   const provider = process.env.AI_PROVIDER?.toLowerCase();
 
   if (!provider) {
@@ -19,9 +19,9 @@ function getProvider(): Provider {
   }
 
   return provider as Provider;
-}
+};
 
-export function getParser(): EmailParser {
+export const getParser = (): EmailParser => {
   const provider = getProvider();
 
   switch (provider) {
@@ -34,4 +34,4 @@ export function getParser(): EmailParser {
       return new GeminiParser();
     }
   }
-}
+};

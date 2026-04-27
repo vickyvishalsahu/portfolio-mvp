@@ -30,7 +30,7 @@ const TYPE_BADGE: Record<string, string> = {
   crypto: 'bg-emerald-900 text-emerald-300',
 };
 
-function formatAge(updatedAt: string | null): string {
+const formatAge = (updatedAt: string | null): string => {
   if (!updatedAt) return 'never';
   const mins = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60000);
   if (mins < 1) return 'just now';
@@ -38,9 +38,9 @@ function formatAge(updatedAt: string | null): string {
   if (mins < 60) return `${mins} min ago`;
   const hrs = Math.floor(mins / 60);
   return hrs === 1 ? '1 hour ago' : `${hrs} hours ago`;
-}
+};
 
-export default function HoldingsPage() {
+const HoldingsPage = () => {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('current_value_eur');
@@ -49,11 +49,7 @@ export default function HoldingsPage() {
   const [priceAge, setPriceAge] = useState<string | null>(null);
   const [failedTickers, setFailedTickers] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchHoldings();
-  }, []);
-
-  async function fetchHoldings() {
+  const fetchHoldings = async () => {
     try {
       const res = await fetch('/api/portfolio');
       const data = await res.json();
@@ -61,9 +57,13 @@ export default function HoldingsPage() {
       if ('price_cache_updated_at' in data) setPriceAge(data.price_cache_updated_at);
     } catch {}
     setLoading(false);
-  }
+  };
 
-  async function handleRefreshPrices() {
+  useEffect(() => {
+    fetchHoldings();
+  }, []);
+
+  const handleRefreshPrices = async () => {
     setRefreshing(true);
     setFailedTickers([]);
     try {
@@ -73,16 +73,16 @@ export default function HoldingsPage() {
       await fetchHoldings();
     } catch {}
     setRefreshing(false);
-  }
+  };
 
-  function handleSort(key: SortKey) {
+  const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortAsc(!sortAsc);
     } else {
       setSortKey(key);
       setSortAsc(key === 'name' || key === 'broker' || key === 'asset_type');
     }
-  }
+  };
 
   const sorted = [...holdings].sort((a, b) => {
     let cmp: number;
@@ -99,7 +99,7 @@ export default function HoldingsPage() {
       className="text-left pb-3 cursor-pointer hover:text-white transition select-none"
       onClick={() => handleSort(field)}
     >
-      {label} {sortKey === field ? (sortAsc ? '\u25B2' : '\u25BC') : ''}
+      {label} {sortKey === field ? (sortAsc ? '▲' : '▼') : ''}
     </th>
   );
 
@@ -213,4 +213,6 @@ export default function HoldingsPage() {
       </div>
     </div>
   );
-}
+};
+
+export default HoldingsPage;

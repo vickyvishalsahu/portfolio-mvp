@@ -36,6 +36,25 @@ Rules:
 - quantity should be positive for both buys and sells
 - broker should be lowercase: "scalable", "zerodha", "cams", "coinbase", "binance", etc.`;
 
+const validateResponse = (parsed: ParseResponse): ParseResponse => {
+  if (parsed.unparseable) return parsed;
+
+  const validTypes = ['stock', 'etf', 'mf', 'crypto'];
+  const validTxTypes = ['buy', 'sell', 'dividend', 'sip'];
+  const validCurrencies = ['EUR', 'INR', 'USD'];
+
+  parsed.transactions = parsed.transactions.filter((tx: ParsedTransaction) => {
+    if (!validTypes.includes(tx.asset_type)) return false;
+    if (!validTxTypes.includes(tx.transaction_type)) return false;
+    if (!validCurrencies.includes(tx.currency)) return false;
+    if (!tx.name || tx.quantity <= 0 || tx.price <= 0) return false;
+    if (!tx.transaction_date?.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
+    return true;
+  });
+
+  return parsed;
+};
+
 export class GroqParser implements EmailParser {
   private client: Groq;
 
@@ -78,23 +97,4 @@ ${emailBody}`;
       };
     }
   }
-}
-
-function validateResponse(parsed: ParseResponse): ParseResponse {
-  if (parsed.unparseable) return parsed;
-
-  const validTypes = ['stock', 'etf', 'mf', 'crypto'];
-  const validTxTypes = ['buy', 'sell', 'dividend', 'sip'];
-  const validCurrencies = ['EUR', 'INR', 'USD'];
-
-  parsed.transactions = parsed.transactions.filter((tx: ParsedTransaction) => {
-    if (!validTypes.includes(tx.asset_type)) return false;
-    if (!validTxTypes.includes(tx.transaction_type)) return false;
-    if (!validCurrencies.includes(tx.currency)) return false;
-    if (!tx.name || tx.quantity <= 0 || tx.price <= 0) return false;
-    if (!tx.transaction_date?.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
-    return true;
-  });
-
-  return parsed;
 }

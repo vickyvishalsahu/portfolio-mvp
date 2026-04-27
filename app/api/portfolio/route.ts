@@ -3,7 +3,7 @@ import { getAllTransactions, getPriceCacheAge } from '@/domains/shared/db';
 import { computeHoldings } from '@/lib/holdings';
 import { recordSnapshot } from '@/lib/snapshots';
 
-export async function GET() {
+export const GET = async () => {
   try {
     const holdings = await computeHoldings();
     const transactions = getAllTransactions();
