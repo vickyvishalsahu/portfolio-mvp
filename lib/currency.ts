@@ -1,4 +1,4 @@
-interface RateCache {
+type RateCache = {
   rates: Record<string, number>;
   updated_at: number;
 }

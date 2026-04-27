@@ -51,7 +51,7 @@ export const useBrokerSettings = () => {
 
   const handleToggleBroker = (id: string) => {
     const next = selectedIds.includes(id)
-      ? selectedIds.filter((x) => x !== id)
+      ? selectedIds.filter((existingId) => existingId !== id)
       : [...selectedIds, id];
     setSelectedIds(next);
     if (!next.includes(id)) setExpandedBroker(null);
@@ -77,7 +77,7 @@ export const useBrokerSettings = () => {
   const handleRemoveCustomDomain = (brokerId: string, domain: string) => {
     const next = {
       ...customDomains,
-      [brokerId]: (customDomains[brokerId] ?? []).filter((d) => d !== domain),
+      [brokerId]: (customDomains[brokerId] ?? []).filter((existingDomain) => existingDomain !== domain),
     };
     setCustomDomains(next);
     saveBrokerSettings(selectedIds, next);

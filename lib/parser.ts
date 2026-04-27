@@ -3,7 +3,7 @@ import { getParser } from './parsers';
 import { BROKER_CATALOG } from '@/domains/shared/constants';
 
 // Derived from catalog — single source of truth
-const ALL_BROKER_DOMAINS = BROKER_CATALOG.flatMap((b) => b.senderDomains);
+const ALL_BROKER_DOMAINS = BROKER_CATALOG.flatMap((broker) => broker.senderDomains);
 
 // Subject keywords that signal a transaction email
 const TRANSACTION_KEYWORDS = [

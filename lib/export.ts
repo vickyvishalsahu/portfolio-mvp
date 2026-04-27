@@ -9,17 +9,17 @@ const escapeField = (value: string): string => {
 
 export const buildCsv = (transactions: Transaction[]): string => {
   const header = 'date,broker,ticker,name,asset_type,transaction_type,quantity,price,currency';
-  const rows = transactions.map((t) =>
+  const rows = transactions.map((transaction) =>
     [
-      t.transaction_date,
-      t.broker,
-      t.ticker ?? '',
-      escapeField(t.name),
-      t.asset_type,
-      t.transaction_type,
-      t.quantity,
-      t.price,
-      t.currency,
+      transaction.transaction_date,
+      transaction.broker,
+      transaction.ticker ?? '',
+      escapeField(transaction.name),
+      transaction.asset_type,
+      transaction.transaction_type,
+      transaction.quantity,
+      transaction.price,
+      transaction.currency,
     ].join(',')
   );
   return [header, ...rows].join('\n');

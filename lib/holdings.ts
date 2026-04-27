@@ -3,7 +3,7 @@ import { getPrice } from './prices';
 import { convertToEur } from './currency';
 import type { Holding, Transaction } from '@/domains/shared/types';
 
-interface TransactionRow {
+type TransactionRow = {
   ticker: string;
   name: string;
   asset_type: string;

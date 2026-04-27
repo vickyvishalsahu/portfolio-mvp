@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { fmtEur, fmtHolding, pct } from '@/lib/format';
 
-interface Holding {
+type Holding = {
   ticker: string;
   name: string;
   asset_type: string;
@@ -84,12 +84,12 @@ const HoldingsPage = () => {
     }
   };
 
-  const sorted = [...holdings].sort((a, b) => {
+  const sorted = [...holdings].sort((holdingA, holdingB) => {
     let cmp: number;
     if (sortKey === 'name' || sortKey === 'broker' || sortKey === 'asset_type') {
-      cmp = a[sortKey].localeCompare(b[sortKey]);
+      cmp = holdingA[sortKey].localeCompare(holdingB[sortKey]);
     } else {
-      cmp = a[sortKey] - b[sortKey];
+      cmp = holdingA[sortKey] - holdingB[sortKey];
     }
     return sortAsc ? cmp : -cmp;
   });
@@ -172,39 +172,39 @@ const HoldingsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((h) => (
-                <tr key={h.ticker} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
-                  <td className="py-3 pl-1 text-white font-medium">{h.name}</td>
-                  <td className="py-3 text-gray-400 font-mono text-xs">{h.ticker}</td>
+              {sorted.map((holding) => (
+                <tr key={holding.ticker} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
+                  <td className="py-3 pl-1 text-white font-medium">{holding.name}</td>
+                  <td className="py-3 text-gray-400 font-mono text-xs">{holding.ticker}</td>
                   <td className="py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded ${TYPE_BADGE[h.asset_type] || 'bg-gray-800 text-gray-400'}`}>
-                      {h.asset_type}
+                    <span className={`text-xs px-2 py-0.5 rounded ${TYPE_BADGE[holding.asset_type] || 'bg-gray-800 text-gray-400'}`}>
+                      {holding.asset_type}
                     </span>
                   </td>
                   <td className="py-3 text-right text-gray-300">
-                    {h.quantity < 1 ? h.quantity.toFixed(6) : h.quantity.toFixed(2)}
+                    {holding.quantity < 1 ? holding.quantity.toFixed(6) : holding.quantity.toFixed(2)}
                   </td>
                   <td className="py-3 text-right text-gray-400">
-                    {fmtHolding(h.avg_cost_local, h.avg_cost_eur, h.currency)}
+                    {fmtHolding(holding.avg_cost_local, holding.avg_cost_eur, holding.currency)}
                   </td>
                   <td className="py-3 text-right text-gray-300">
-                    {fmtHolding(h.current_price_local, h.current_price_eur, h.currency)}
+                    {fmtHolding(holding.current_price_local, holding.current_price_eur, holding.currency)}
                   </td>
                   <td className="py-3 text-right">
                     <div className="text-white font-medium">
-                      {fmtHolding(h.current_value_local, h.current_value_eur, h.currency)}
+                      {fmtHolding(holding.current_value_local, holding.current_value_eur, holding.currency)}
                     </div>
-                    {h.currency !== 'EUR' && (
-                      <div className="text-gray-600 text-xs">{fmtEur(h.current_value_eur)}</div>
+                    {holding.currency !== 'EUR' && (
+                      <div className="text-gray-600 text-xs">{fmtEur(holding.current_value_eur)}</div>
                     )}
                   </td>
-                  <td className={`py-3 text-right font-medium ${h.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    <div>{pct(h.pnl_pct)}</div>
+                  <td className={`py-3 text-right font-medium ${holding.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <div>{pct(holding.pnl_pct)}</div>
                     <div className="text-xs opacity-70">
-                      {fmtHolding(h.pnl_local, h.pnl, h.currency)}
+                      {fmtHolding(holding.pnl_local, holding.pnl, holding.currency)}
                     </div>
                   </td>
-                  <td className="py-3 text-gray-500 text-xs">{h.broker}</td>
+                  <td className="py-3 text-gray-500 text-xs">{holding.broker}</td>
                 </tr>
               ))}
             </tbody>

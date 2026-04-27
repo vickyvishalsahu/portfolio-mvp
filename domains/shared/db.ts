@@ -60,16 +60,16 @@ export const initializeDb = (db: Database.Database) => {
 
   // price_cache migrations
   const priceCacheCols = db.prepare('PRAGMA table_info(price_cache)').all() as { name: string }[];
-  if (!priceCacheCols.some((c) => c.name === 'prev_price_eur')) {
+  if (!priceCacheCols.some((column) => column.name === 'prev_price_eur')) {
     db.exec('ALTER TABLE price_cache ADD COLUMN prev_price_eur REAL');
   }
-  if (!priceCacheCols.some((c) => c.name === 'prev_price_local')) {
+  if (!priceCacheCols.some((column) => column.name === 'prev_price_local')) {
     db.exec('ALTER TABLE price_cache ADD COLUMN prev_price_local REAL');
   }
 
   // snapshots migration: old schema had total_value_eur — drop and recreate
   const snapshotCols = db.prepare('PRAGMA table_info(snapshots)').all() as { name: string }[];
-  if (snapshotCols.some((c) => c.name === 'total_value_eur')) {
+  if (snapshotCols.some((column) => column.name === 'total_value_eur')) {
     db.exec('DROP TABLE snapshots');
     db.exec(`
       CREATE TABLE snapshots (

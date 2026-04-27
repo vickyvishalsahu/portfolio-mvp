@@ -10,7 +10,7 @@ export const GET = async () => {
 
 export const PUT = async (req: Request) => {
   const body = await req.json();
-  const validIds = new Set(BROKER_CATALOG.map((b) => b.id));
+  const validIds = new Set(BROKER_CATALOG.map((broker) => broker.id));
 
   if (body.selected !== undefined) {
     const incoming: string[] = Array.isArray(body.selected) ? body.selected : [];

@@ -5,7 +5,7 @@ import { useState } from 'react';
 const FIELD_CLASS = 'w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500';
 const LABEL_CLASS = 'block text-xs text-gray-400 mb-1';
 
-export default function NewTransactionPage() {
+const NewTransactionPage = () => {
   const [form, setForm] = useState({
     asset_type: 'stock',
     ticker: '',
@@ -21,13 +21,13 @@ export default function NewTransactionPage() {
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  function set(field: string, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
+  const set = (field: string, value: string) => {
+    setForm((prevForm) => ({ ...prevForm, [field]: value }));
     setError(null);
-  }
+  };
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
     const qty = Number(form.quantity);
     const price = Number(form.price);
@@ -56,7 +56,7 @@ export default function NewTransactionPage() {
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
   if (success) {
     return (
@@ -67,7 +67,7 @@ export default function NewTransactionPage() {
         </div>
         <div className="flex gap-4">
           <button
-            onClick={() => { setSuccess(false); setForm((f) => ({ ...f, ticker: '', name: '', quantity: '', price: '' })); }}
+            onClick={() => { setSuccess(false); setForm((prevForm) => ({ ...prevForm, ticker: '', name: '', quantity: '', price: '' })); }}
             className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition"
           >
             Add Another
@@ -88,7 +88,7 @@ export default function NewTransactionPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={LABEL_CLASS}>Asset Type</label>
-            <select className={FIELD_CLASS} value={form.asset_type} onChange={(e) => set('asset_type', e.target.value)}>
+            <select className={FIELD_CLASS} value={form.asset_type} onChange={(event) => set('asset_type', event.target.value)}>
               <option value="stock">Stock</option>
               <option value="etf">ETF</option>
               <option value="mf">Mutual Fund</option>
@@ -97,7 +97,7 @@ export default function NewTransactionPage() {
           </div>
           <div>
             <label className={LABEL_CLASS}>Transaction Type</label>
-            <select className={FIELD_CLASS} value={form.transaction_type} onChange={(e) => set('transaction_type', e.target.value)}>
+            <select className={FIELD_CLASS} value={form.transaction_type} onChange={(event) => set('transaction_type', event.target.value)}>
               <option value="buy">Buy</option>
               <option value="sell">Sell</option>
               <option value="sip">SIP</option>
@@ -113,7 +113,7 @@ export default function NewTransactionPage() {
             type="text"
             placeholder="e.g. Apple Inc"
             value={form.name}
-            onChange={(e) => set('name', e.target.value)}
+            onChange={(event) => set('name', event.target.value)}
           />
         </div>
 
@@ -124,7 +124,7 @@ export default function NewTransactionPage() {
             type="text"
             placeholder="e.g. AAPL"
             value={form.ticker}
-            onChange={(e) => set('ticker', e.target.value.toUpperCase())}
+            onChange={(event) => set('ticker', event.target.value.toUpperCase())}
           />
         </div>
 
@@ -138,7 +138,7 @@ export default function NewTransactionPage() {
               min="0"
               placeholder="0"
               value={form.quantity}
-              onChange={(e) => set('quantity', e.target.value)}
+              onChange={(event) => set('quantity', event.target.value)}
             />
           </div>
           <div>
@@ -150,7 +150,7 @@ export default function NewTransactionPage() {
               min="0"
               placeholder="0.00"
               value={form.price}
-              onChange={(e) => set('price', e.target.value)}
+              onChange={(event) => set('price', event.target.value)}
             />
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function NewTransactionPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={LABEL_CLASS}>Currency</label>
-            <select className={FIELD_CLASS} value={form.currency} onChange={(e) => set('currency', e.target.value)}>
+            <select className={FIELD_CLASS} value={form.currency} onChange={(event) => set('currency', event.target.value)}>
               <option value="EUR">EUR</option>
               <option value="INR">INR</option>
               <option value="USD">USD</option>
@@ -170,7 +170,7 @@ export default function NewTransactionPage() {
               className={FIELD_CLASS}
               type="date"
               value={form.transaction_date}
-              onChange={(e) => set('transaction_date', e.target.value)}
+              onChange={(event) => set('transaction_date', event.target.value)}
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function NewTransactionPage() {
             type="text"
             placeholder="e.g. scalable, zerodha"
             value={form.broker}
-            onChange={(e) => set('broker', e.target.value)}
+            onChange={(event) => set('broker', event.target.value)}
           />
         </div>
 
@@ -200,4 +200,6 @@ export default function NewTransactionPage() {
       </form>
     </div>
   );
-}
+};
+
+export default NewTransactionPage;

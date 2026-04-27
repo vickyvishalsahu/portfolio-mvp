@@ -3,8 +3,8 @@ import type { BrokerDefinition } from './types';
 
 export const getBrokersByIds = (ids: string[]): BrokerDefinition[] =>
   ids
-    .map((id) => BROKER_CATALOG.find((b) => b.id === id))
-    .filter((b): b is BrokerDefinition => b !== undefined);
+    .map((id) => BROKER_CATALOG.find((broker) => broker.id === id))
+    .filter((broker): broker is BrokerDefinition => broker !== undefined);
 
 export const getAllSenderDomains = (brokers: BrokerDefinition[]): string[] =>
-  brokers.flatMap((b) => b.senderDomains);
+  brokers.flatMap((broker) => broker.senderDomains);

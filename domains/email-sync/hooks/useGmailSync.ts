@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 
-interface SyncStatus {
+export interface SyncStatus {
   total_raw: number;
   total_parsed: number;
   gmail_connected: boolean;
 }
 
-interface SyncResult {
+export interface SyncResult {
   fetched: number;
   new: number;
   total_raw: number;

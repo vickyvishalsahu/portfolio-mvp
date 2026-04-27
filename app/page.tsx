@@ -4,20 +4,20 @@ import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { fmtLocal, fmtHolding, pct } from '@/lib/format';
 
-interface CurrencySummary {
+type CurrencySummary = {
   currency: string;
   total_value: number;
   total_pnl: number;
   total_pnl_pct: number;
 }
 
-interface Summary {
+type Summary = {
   by_currency: CurrencySummary[];
   holdings_count: number;
   transaction_count: number;
 }
 
-interface Holding {
+type Holding = {
   ticker: string;
   name: string;
   asset_type: string;
@@ -34,7 +34,7 @@ interface Holding {
   broker: string;
 }
 
-interface PortfolioData {
+type PortfolioData = {
   summary: Summary;
   holdings: Holding[];
   broker_allocation: Record<string, number>;
@@ -62,8 +62,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetch('/api/portfolio')
-      .then((r) => r.json())
-      .then((d) => { if (d.summary) setData(d); })
+      .then((response) => response.json())
+      .then((data) => { if (data.summary) setData(data); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -74,8 +74,8 @@ export default function Dashboard() {
     const primaryCurrency = data.summary.by_currency[0]?.currency;
     if (!primaryCurrency) return;
     fetch(`/api/snapshots?currency=${primaryCurrency}`)
-      .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d)) setSnapshots(d); })
+      .then((response) => response.json())
+      .then((data) => { if (Array.isArray(data)) setSnapshots(data); })
       .catch(() => {});
   }, [data]);
 
@@ -137,15 +137,15 @@ export default function Dashboard() {
 
   // Biggest movers — use local values, filter on prev_value_local
   const withChange = holdings
-    .filter((h) => h.prev_value_local !== null)
-    .map((h) => ({
-      ...h,
-      change: h.current_value_local - h.prev_value_local!,
-      change_pct: ((h.current_value_local - h.prev_value_local!) / h.prev_value_local!) * 100,
+    .filter((holding) => holding.prev_value_local !== null)
+    .map((holding) => ({
+      ...holding,
+      change: holding.current_value_local - holding.prev_value_local!,
+      change_pct: ((holding.current_value_local - holding.prev_value_local!) / holding.prev_value_local!) * 100,
     }))
-    .sort((a, b) => b.change - a.change);
+    .sort((holdingA, holdingB) => holdingB.change - holdingA.change);
   const topGainers = withChange.slice(0, 3);
-  const topLosers = [...withChange].reverse().slice(0, 3).filter((h) => h.change < 0);
+  const topLosers = [...withChange].reverse().slice(0, 3).filter((holding) => holding.change < 0);
 
   return (
     <div>
@@ -322,14 +322,14 @@ export default function Dashboard() {
               <XAxis
                 dataKey="date"
                 tick={{ fill: '#9ca3af', fontSize: 11 }}
-                tickFormatter={(d) => {
-                  const [, month, day] = d.split('-');
+                tickFormatter={(dateString) => {
+                  const [, month, day] = dateString.split('-');
                   return `${day}/${month}`;
                 }}
               />
               <YAxis
                 tick={{ fill: '#9ca3af', fontSize: 11 }}
-                tickFormatter={(v) => fmtLocal(v, primaryCurrency)}
+                tickFormatter={(value) => fmtLocal(value, primaryCurrency)}
                 width={64}
               />
               <Tooltip

@@ -6,7 +6,7 @@ const yahooFinance = new YahooFinance();
 
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
-interface CachedPrice {
+type CachedPrice = {
   ticker: string;
   price_eur: number;
   price_local: number;
