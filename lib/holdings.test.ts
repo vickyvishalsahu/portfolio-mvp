@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 let mockRows: Record<string, unknown>[] = [];
 let mockPrevPriceEur: number | null = null;
 
-vi.mock('@/lib/db', () => ({
+vi.mock('@/domains/shared/db', () => ({
   getDb: () => ({
     prepare: () => ({
       all: () => mockRows,
@@ -68,7 +68,24 @@ describe('computeHoldings', () => {
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(10);
     expect(holdings[0].avg_cost_eur).toBe(10);
+    expect(holdings[0].avg_cost_local).toBe(10);
     expect(holdings[0].current_value_eur).toBe(1000); // 10 qty × €100 current price
+    expect(holdings[0].current_value_local).toBe(1000);
+  });
+
+  it('INR holding — local values use source price, not EUR conversion', async () => {
+    const { getPrice } = await import('@/lib/prices');
+    vi.mocked(getPrice).mockResolvedValueOnce({ priceEur: 1.65, priceLocal: 150, currency: 'INR' });
+
+    mockRows = [makeTx({ quantity: 100, price: 130, currency: 'INR', asset_type: 'mf' })];
+
+    const holdings = await computeHoldings();
+
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0].avg_cost_local).toBe(130);       // ₹130, not converted
+    expect(holdings[0].current_price_local).toBe(150);  // ₹150 NAV
+    expect(holdings[0].current_value_local).toBe(15000); // 100 × ₹150
+    expect(holdings[0].pnl_local).toBe(2000);            // 15000 - 13000
   });
 
   it('partial sell — reduces qty and adjusts cost proportionally', async () => {

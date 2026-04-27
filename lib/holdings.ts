@@ -1,7 +1,7 @@
-import { getDb } from './db';
+import { getDb } from '@/domains/shared/db';
 import { getPrice } from './prices';
 import { convertToEur } from './currency';
-import type { Holding, Transaction } from '@/types';
+import type { Holding, Transaction } from '@/domains/shared/types';
 
 interface TransactionRow {
   ticker: string;
@@ -33,6 +33,7 @@ export async function computeHoldings(): Promise<Holding[]> {
   for (const [key, txs] of groups) {
     let totalQty = 0;
     let totalCostEur = 0;
+    let totalCostLocal = 0;
     const first = txs[0];
 
     for (const tx of txs) {
@@ -40,13 +41,16 @@ export async function computeHoldings(): Promise<Holding[]> {
 
       if (tx.transaction_type === 'buy' || tx.transaction_type === 'sip') {
         totalCostEur += tx.quantity * priceEur;
+        totalCostLocal += tx.quantity * tx.price;
         totalQty += tx.quantity;
       } else if (tx.transaction_type === 'sell') {
         // Reduce quantity; clamp to 0 so an oversell never corrupts subsequent buys
         if (totalQty > 0) {
-          const avgCost = totalCostEur / totalQty;
+          const avgCostEur = totalCostEur / totalQty;
+          const avgCostLocal = totalCostLocal / totalQty;
           totalQty = Math.max(0, totalQty - tx.quantity);
-          totalCostEur = totalQty * avgCost;
+          totalCostEur = totalQty * avgCostEur;
+          totalCostLocal = totalQty * avgCostLocal;
         }
       }
       // dividends don't affect quantity/cost
@@ -55,12 +59,16 @@ export async function computeHoldings(): Promise<Holding[]> {
     if (totalQty <= 0.0001) continue; // skip fully sold positions
 
     const avgCostEur = totalCostEur / totalQty;
+    const avgCostLocal = totalCostLocal / totalQty;
 
     // Fetch current price
     const priceData = await getPrice(key, first.asset_type, first.currency);
-    const currentPriceEur = priceData?.priceEur ?? avgCostEur; // fallback to cost if no price
+    const currentPriceEur = priceData?.priceEur ?? avgCostEur;
+    const currentPriceLocal = priceData?.priceLocal ?? avgCostLocal;
     const currentValueEur = totalQty * currentPriceEur;
+    const currentValueLocal = totalQty * currentPriceLocal;
     const pnl = currentValueEur - totalCostEur;
+    const pnlLocal = currentValueLocal - totalCostLocal;
     const pnlPct = totalCostEur > 0 ? (pnl / totalCostEur) * 100 : 0;
 
     const priceRow = db.prepare('SELECT prev_price_eur FROM price_cache WHERE ticker = ?').get(key) as { prev_price_eur: number | null } | undefined;
@@ -73,10 +81,14 @@ export async function computeHoldings(): Promise<Holding[]> {
       asset_type: first.asset_type,
       quantity: totalQty,
       avg_cost_eur: avgCostEur,
+      avg_cost_local: avgCostLocal,
       current_price_eur: currentPriceEur,
+      current_price_local: currentPriceLocal,
       current_value_eur: currentValueEur,
+      current_value_local: currentValueLocal,
       prev_value_eur: prevValueEur,
       pnl,
+      pnl_local: pnlLocal,
       pnl_pct: pnlPct,
       currency: first.currency,
       broker: first.broker,
