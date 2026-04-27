@@ -3,8 +3,8 @@
 import { useState, useRef } from 'react';
 import { useGmailSync } from '@/domains/email-sync/hooks/useGmailSync';
 import { useBrokerSettings } from '@/domains/email-sync/hooks/useBrokerSettings';
-import { BrokerSelection } from './BrokerSelection';
-import { GmailConnection } from './GmailConnection';
+import { BrokerSelection } from './broker/BrokerSelection';
+import { GmailConnection } from './gmail/GmailConnection';
 import { Pipeline } from './Pipeline';
 import type { ParseResult } from './Pipeline';
 import { SyncStats } from './SyncStats';
