@@ -1,29 +1,6 @@
 import { NextResponse } from 'next/server';
-import { fetchBrokerEmails } from '@/lib/gmail';
-import {
-  insertRawEmail,
-  getRawEmailCount,
-  getParsedEmailCount,
-  getSelectedBrokerIds,
-  getBrokerCustomDomains,
-} from '@/lib/db';
-import { getBrokersByIds } from '@/lib/brokers';
-import type { BrokerDefinition } from '@/lib/brokers';
-
-function mergeCustomDomains(
-  brokers: BrokerDefinition[],
-  customDomains: Record<string, string[]>
-): BrokerDefinition[] {
-  return brokers.map((b) => {
-    const extras = customDomains[b.id] ?? [];
-    if (extras.length === 0) return b;
-    return {
-      ...b,
-      senderDomains: [...new Set([...b.senderDomains, ...extras])],
-      gmailSearchTerms: [...new Set([...(b.gmailSearchTerms ?? b.senderDomains), ...extras])],
-    };
-  });
-}
+import { fetchBrokerEmails, insertRawEmail, getRawEmailCount, getParsedEmailCount, getSelectedBrokerIds, getBrokerCustomDomains, mergeCustomDomains } from '@/domains/email-sync';
+import { getBrokersByIds } from '@/domains/shared';
 
 export async function POST() {
   try {

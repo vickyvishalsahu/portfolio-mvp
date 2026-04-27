@@ -1,5 +1,3 @@
-import { getDb } from './db';
-
 interface RateCache {
   rates: Record<string, number>;
   updated_at: number;

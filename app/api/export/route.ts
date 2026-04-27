@@ -1,4 +1,4 @@
-import { getAllTransactions } from '@/lib/db';
+import { getAllTransactions } from '@/domains/shared/db';
 import { buildCsv } from '@/lib/export';
 
 export async function GET() {

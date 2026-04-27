@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { BROKER_CATALOG } from '@/lib/brokers';
-import { getSelectedBrokerIds, setSelectedBrokerIds, getBrokerCustomDomains, setBrokerCustomDomains } from '@/lib/db';
+import { BROKER_CATALOG } from '@/domains/shared/constants';
+import { getSelectedBrokerIds, setSelectedBrokerIds, getBrokerCustomDomains, setBrokerCustomDomains } from '@/domains/email-sync/db';
 
 export async function GET() {
   const selected = getSelectedBrokerIds();
@@ -19,7 +19,6 @@ export async function PUT(req: Request) {
 
   if (body.customDomains !== undefined) {
     const incoming: Record<string, string[]> = body.customDomains ?? {};
-    // Only keep entries for valid broker IDs
     const filtered = Object.fromEntries(
       Object.entries(incoming).filter(([id]) => validIds.has(id))
     );

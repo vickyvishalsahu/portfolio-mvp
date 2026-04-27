@@ -1,6 +1,6 @@
-import type { ParseResponse } from '@/types';
+import type { ParseResponse } from '@/domains/shared/types';
 import { getParser } from './parsers';
-import { BROKER_CATALOG } from './brokers';
+import { BROKER_CATALOG } from '@/domains/shared/constants';
 
 // Derived from catalog — single source of truth
 const ALL_BROKER_DOMAINS = BROKER_CATALOG.flatMap((b) => b.senderDomains);

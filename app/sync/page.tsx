@@ -1,20 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import type { BrokerDefinition } from '@/lib/brokers';
-
-interface SyncStatus {
-  total_raw: number;
-  total_parsed: number;
-  gmail_connected: boolean;
-}
-
-interface SyncResult {
-  fetched: number;
-  new: number;
-  total_raw: number;
-  total_parsed: number;
-}
+import { useState, useRef } from 'react';
+import { useGmailSync } from '@/domains/email-sync/hooks/useGmailSync';
+import { useBrokerSettings } from '@/domains/email-sync/hooks/useBrokerSettings';
 
 interface ParseResult {
   processed: number;
@@ -30,142 +18,53 @@ const REGION_LABEL: Record<string, string> = {
   GLOBAL: 'Global',
 };
 
-function extractDomain(input: string): string {
-  const trimmed = input.trim().toLowerCase();
-  // If it looks like an email address, extract the domain
-  if (trimmed.includes('@')) return trimmed.split('@')[1] ?? trimmed;
-  return trimmed;
-}
-
 export default function SyncPage() {
-  const [status, setStatus] = useState<SyncStatus | null>(null);
-  const [catalog, setCatalog] = useState<BrokerDefinition[]>([]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [customDomains, setCustomDomains] = useState<Record<string, string[]>>({});
-  const [expandedBroker, setExpandedBroker] = useState<string | null>(null);
-  const [newDomainInput, setNewDomainInput] = useState('');
-  const [savingBrokers, setSavingBrokers] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const {
+    status,
+    syncing,
+    syncResult,
+    error: syncError,
+    handleSync,
+  } = useGmailSync();
+
+  const {
+    catalog,
+    selectedIds,
+    customDomains,
+    expandedBroker,
+    savingBrokers,
+    newDomainInput,
+    setNewDomainInput,
+    handleToggleBroker,
+    handleExpandBroker,
+    handleAddDomain,
+    handleRemoveCustomDomain,
+  } = useBrokerSettings();
+
   const [parsing, setParsing] = useState(false);
-  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
   const domainInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetchStatus();
-    fetchBrokerSettings();
-  }, []);
-
-  async function fetchStatus() {
-    try {
-      const res = await fetch('/api/gmail/sync');
-      const data = await res.json();
-      if (res.ok) setStatus(data);
-      else setError(data.error);
-    } catch {
-      setError('Failed to fetch status');
-    }
-  }
-
-  async function fetchBrokerSettings() {
-    try {
-      const res = await fetch('/api/settings/brokers');
-      const data = await res.json();
-      setCatalog(data.catalog ?? []);
-      setSelectedIds(data.selected ?? []);
-      setCustomDomains(data.customDomains ?? {});
-    } catch {
-      // non-fatal
-    }
-  }
-
-  async function saveBrokerSettings(
-    nextSelected: string[],
-    nextCustomDomains: Record<string, string[]>
-  ) {
-    setSavingBrokers(true);
-    try {
-      await fetch('/api/settings/brokers', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selected: nextSelected, customDomains: nextCustomDomains }),
-      });
-    } finally {
-      setSavingBrokers(false);
-    }
-  }
-
-  function handleToggleBroker(id: string) {
-    const next = selectedIds.includes(id)
-      ? selectedIds.filter((x) => x !== id)
-      : [...selectedIds, id];
-    setSelectedIds(next);
-    if (!next.includes(id)) setExpandedBroker(null);
-    saveBrokerSettings(next, customDomains);
-  }
-
-  function handleExpandBroker(id: string) {
-    setExpandedBroker(expandedBroker === id ? null : id);
-    setNewDomainInput('');
+  function handleExpandWithFocus(id: string) {
+    handleExpandBroker(id);
     setTimeout(() => domainInputRef.current?.focus(), 50);
-  }
-
-  function handleAddDomain(brokerId: string) {
-    const domain = extractDomain(newDomainInput);
-    if (!domain) return;
-    const current = customDomains[brokerId] ?? [];
-    if (current.includes(domain)) return;
-    const next = { ...customDomains, [brokerId]: [...current, domain] };
-    setCustomDomains(next);
-    setNewDomainInput('');
-    saveBrokerSettings(selectedIds, next);
-  }
-
-  function handleRemoveCustomDomain(brokerId: string, domain: string) {
-    const next = {
-      ...customDomains,
-      [brokerId]: (customDomains[brokerId] ?? []).filter((d) => d !== domain),
-    };
-    setCustomDomains(next);
-    saveBrokerSettings(selectedIds, next);
-  }
-
-  async function handleSync() {
-    setSyncing(true);
-    setError(null);
-    setSyncResult(null);
-    try {
-      const res = await fetch('/api/gmail/sync', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        setSyncResult(data);
-        setStatus({ total_raw: data.total_raw, total_parsed: data.total_parsed, gmail_connected: true });
-      } else {
-        setError(data.error);
-      }
-    } catch {
-      setError('Sync request failed');
-    } finally {
-      setSyncing(false);
-    }
   }
 
   async function handleParse() {
     setParsing(true);
-    setError(null);
+    setParseError(null);
     setParseResult(null);
     try {
       const res = await fetch('/api/parse', { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
         setParseResult(data);
-        fetchStatus();
       } else {
-        setError(data.error);
+        setParseError(data.error);
       }
     } catch {
-      setError('Parse request failed');
+      setParseError('Parse request failed');
     } finally {
       setParsing(false);
     }
@@ -173,6 +72,7 @@ export default function SyncPage() {
 
   const unparsedCount = status ? status.total_raw - status.total_parsed : 0;
   const selectedNames = catalog.filter((b) => selectedIds.includes(b.id)).map((b) => b.name);
+  const error = syncError || parseError;
 
   return (
     <div>
@@ -229,7 +129,7 @@ export default function SyncPage() {
                     {selected && (
                       <div className="border-t border-blue-800/40">
                         <button
-                          onClick={() => handleExpandBroker(broker.id)}
+                          onClick={() => handleExpandWithFocus(broker.id)}
                           className="w-full text-left px-3 py-1.5 text-[10px] text-blue-400 hover:text-blue-300 flex items-center justify-between"
                         >
                           <span>Sender domains {extras.length > 0 ? `(+${extras.length} custom)` : ''}</span>

@@ -1,4 +1,4 @@
-import { insertTransaction } from '@/lib/db';
+import { insertTransaction } from '@/domains/shared/db';
 
 export async function POST(req: Request) {
   try {

@@ -1,5 +1,5 @@
 import Groq from 'groq-sdk';
-import type { ParseResponse, ParsedTransaction } from '@/types';
+import type { ParseResponse, ParsedTransaction } from '@/domains/shared/types';
 import type { EmailParser } from './types';
 
 const SYSTEM_PROMPT = `You are a financial transaction parser.

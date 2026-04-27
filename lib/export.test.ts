@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildCsv } from './export';
-import type { Transaction } from '@/types';
+import type { Transaction } from '@/domains/shared/types';
 
 function makeTx(overrides: Partial<Transaction> = {}): Transaction {
   return {

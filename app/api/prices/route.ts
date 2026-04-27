@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb } from '@/domains/shared/db';
 import { refreshPrices } from '@/lib/prices';
 
 export async function POST() {

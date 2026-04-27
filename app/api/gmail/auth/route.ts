@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthUrl } from '@/lib/gmail';
+import { getAuthUrl } from '@/domains/email-sync';
 
 export async function GET() {
   const url = getAuthUrl();

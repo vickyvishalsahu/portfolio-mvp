@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/db', () => ({
+vi.mock('@/domains/shared/db', () => ({
   insertTransaction: vi.fn().mockReturnValue({ lastInsertRowid: 1 }),
 }));
 
 import { POST } from './route';
-import { insertTransaction } from '@/lib/db';
+import { insertTransaction } from '@/domains/shared/db';
 
 function makeRequest(body: unknown) {
   return new Request('http://localhost/api/transactions', {

@@ -1,4 +1,4 @@
-import type { ParseResponse } from '@/types';
+import type { ParseResponse } from '@/domains/shared/types';
 import type { EmailParser } from './types';
 
 // Stub — install @google/generative-ai and implement when needed

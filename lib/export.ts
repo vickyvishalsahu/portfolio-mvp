@@ -1,4 +1,4 @@
-import type { Transaction } from '@/types';
+import type { Transaction } from '@/domains/shared/types';
 
 function escapeField(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {

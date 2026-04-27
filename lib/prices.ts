@@ -1,5 +1,5 @@
 import YahooFinance from 'yahoo-finance2';
-import { getDb } from './db';
+import { getDb } from '@/domains/shared/db';
 import { convertToEur } from './currency';
 
 const yahooFinance = new YahooFinance();

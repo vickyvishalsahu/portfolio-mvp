@@ -6,7 +6,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 // ---------------------------------------------------------------------------
 let testDb: Database.Database;
 
-vi.mock('@/lib/db', () => ({
+vi.mock('@/domains/shared/db', () => ({
   getDb: () => testDb,
 }));
 

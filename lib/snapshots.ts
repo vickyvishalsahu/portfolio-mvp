@@ -1,4 +1,4 @@
-import { getDb } from './db';
+import { getDb } from '@/domains/shared/db';
 
 export interface Snapshot {
   date: string;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllTransactions, getPriceCacheAge } from '@/lib/db';
+import { getAllTransactions, getPriceCacheAge } from '@/domains/shared/db';
 import { computeHoldings } from '@/lib/holdings';
 import { recordSnapshot, getSnapshotDelta } from '@/lib/snapshots';
 

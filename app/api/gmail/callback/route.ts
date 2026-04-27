@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOAuth2Client } from '@/lib/gmail';
+import { getOAuth2Client } from '@/domains/email-sync';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
