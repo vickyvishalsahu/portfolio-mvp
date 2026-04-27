@@ -17,7 +17,7 @@ export type BrokerCardProps = {
   extras: string[];
   newDomainInput: string;
   setNewDomainInput: (value: string) => void;
-  domainInputRef?: RefObject<HTMLInputElement>;
+  domainInputRef?: RefObject<HTMLInputElement | null>;
   onToggle: () => void;
   onExpand: () => void;
   onAddDomain: () => void;

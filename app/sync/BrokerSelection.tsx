@@ -12,7 +12,7 @@ type Props = {
   savingBrokers: boolean;
   newDomainInput: string;
   setNewDomainInput: (value: string) => void;
-  domainInputRef: RefObject<HTMLInputElement>;
+  domainInputRef: RefObject<HTMLInputElement | null>;
   handleToggleBroker: (id: string) => void;
   handleExpandWithFocus: (id: string) => void;
   handleAddDomain: (brokerId: string) => void;
