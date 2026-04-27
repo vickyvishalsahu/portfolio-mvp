@@ -15,7 +15,7 @@ export function getDb(): Database.Database {
   return db;
 }
 
-function initializeDb(db: Database.Database) {
+export function initializeDb(db: Database.Database) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS raw_emails (
       id TEXT PRIMARY KEY,
@@ -47,15 +47,18 @@ function initializeDb(db: Database.Database) {
       price_eur REAL,
       prev_price_eur REAL,
       price_local REAL,
+      prev_price_local REAL,
       currency TEXT,
       updated_at TEXT
     );
 
     CREATE TABLE IF NOT EXISTS snapshots (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      date TEXT UNIQUE,
-      total_value_eur REAL,
-      created_at TEXT
+      date TEXT NOT NULL,
+      currency TEXT NOT NULL,
+      total_value REAL NOT NULL,
+      created_at TEXT,
+      UNIQUE(date, currency)
     );
 
     CREATE TABLE IF NOT EXISTS settings (
@@ -64,9 +67,29 @@ function initializeDb(db: Database.Database) {
     );
   `);
 
+  // price_cache migrations
   const priceCacheCols = db.prepare('PRAGMA table_info(price_cache)').all() as { name: string }[];
   if (!priceCacheCols.some((c) => c.name === 'prev_price_eur')) {
     db.exec('ALTER TABLE price_cache ADD COLUMN prev_price_eur REAL');
+  }
+  if (!priceCacheCols.some((c) => c.name === 'prev_price_local')) {
+    db.exec('ALTER TABLE price_cache ADD COLUMN prev_price_local REAL');
+  }
+
+  // snapshots migration: old schema had total_value_eur — drop and recreate
+  const snapshotCols = db.prepare('PRAGMA table_info(snapshots)').all() as { name: string }[];
+  if (snapshotCols.some((c) => c.name === 'total_value_eur')) {
+    db.exec('DROP TABLE snapshots');
+    db.exec(`
+      CREATE TABLE snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        currency TEXT NOT NULL,
+        total_value REAL NOT NULL,
+        created_at TEXT,
+        UNIQUE(date, currency)
+      )
+    `);
   }
 }
 

@@ -117,7 +117,7 @@ Under GDPR Article 20, users have the right to data portability. A CSV export of
 
 **The "explain yourself" problem.** When you open the app after not checking for a week and your portfolio is down €800, you want to know *why*. Which position moved? What changed? Right now the app has no answer to that. A simple "biggest movers" section would address it.
 
-**The multi-currency confusion.** Everything is shown in EUR, which is correct for a Berlin-based expat. But the user thinks about their Indian holdings in INR. Showing a secondary value in original currency — *"€8,400 (₹7.6L)"* — would make the Indian positions feel more legible.
+**Currency rule (updated):** No conversion. Each holding shows in its source currency. Totals group by currency — ₹X shown separately from €X, never added together. This is a deliberate product decision, not a gap.
 
 **The empty parse error experience.** Right now if Claude can't parse an email, it shows up in the "errors" list on the sync page and that transaction is gone. There's no way to recover it. That email contains a real trade. Losing it silently is unacceptable in a financial product. At minimum, the error state should say "this transaction needs manual review" and give the user a path to enter it.
 

@@ -1,6 +1,312 @@
 # Architecture Brief for Kai
-*Written by Mr. Wolf · April 2026*
+*Written by Mr. Wolf · April 2026 · Updated after multi-currency aggregation incident*
 *Read this before touching any task. It tells you the file, the pattern, and the gotcha.*
+
+---
+
+## ⚠️ ACTIVE BATCH — Multi-currency aggregation fix
+*Do this before anything else. This is the current broken state.*
+
+### The problem
+The aggregation layer was EUR-first from day one. Individual holding display was fixed (shows ₹), but the summary cards, Biggest Movers, and the snapshot/chart system still convert everything to EUR and sum across currencies. The user has all-INR data and sees euros everywhere on the dashboard.
+
+### The rule going forward — burned into every layer
+**Never sum across currencies. Never convert for display. Show each currency as-is.**
+
+For totals: group by currency. If single currency → one total. If mixed → one total per currency, shown separately (₹X · €X · ₿X). We do not add them together. Not now, not until the user explicitly asks for it.
+
+---
+
+### Task A — Schema: add `prev_price_local`, migrate `snapshots`
+**File:** `domains/shared/db.ts`
+
+Two changes:
+
+**1. `price_cache` — add `prev_price_local`**
+
+In the `CREATE TABLE IF NOT EXISTS price_cache` block, add the column:
+```sql
+CREATE TABLE IF NOT EXISTS price_cache (
+  ticker TEXT PRIMARY KEY,
+  price_eur REAL,
+  prev_price_eur REAL,
+  price_local REAL,
+  prev_price_local REAL,   -- ← add this
+  currency TEXT,
+  updated_at TEXT
+);
+```
+
+Add a migration check (same pattern as the existing `prev_price_eur` migration at line 67–70):
+```typescript
+if (!priceCacheCols.some((c) => c.name === 'prev_price_local')) {
+  db.exec('ALTER TABLE price_cache ADD COLUMN prev_price_local REAL');
+}
+```
+
+**2. `snapshots` — per-currency schema**
+
+The current schema `(date, total_value_eur)` stores a single EUR total. Replace with a per-currency schema:
+```sql
+CREATE TABLE IF NOT EXISTS snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,
+  currency TEXT NOT NULL,
+  total_value REAL NOT NULL,
+  created_at TEXT,
+  UNIQUE(date, currency)
+);
+```
+
+The old `total_value_eur` column is gone. The existing data is stale EUR data — safe to abandon (the table was never meaningful for INR holdings anyway).
+
+Migration strategy: SQLite can't drop columns. Instead, in `initializeDb`, check if the old column exists. If it does, we're on the old schema — drop and recreate the table:
+```typescript
+const snapshotCols = db.prepare('PRAGMA table_info(snapshots)').all() as { name: string }[];
+if (snapshotCols.some((c) => c.name === 'total_value_eur')) {
+  db.exec('DROP TABLE snapshots');
+  db.exec(`CREATE TABLE snapshots (...)`);  // new schema
+}
+```
+
+**Tests:** `domains/shared/db.test.ts` — verify price_cache has `prev_price_local` column; verify snapshots schema has `(date, currency, total_value)` and not `total_value_eur`.
+
+---
+
+### Task B — Prices: preserve `prev_price_local`
+**File:** `lib/prices.ts`
+
+In `setCachedPrice()` (line 28):
+
+1. Read the existing row for BOTH `price_eur` and `price_local` before overwriting:
+```typescript
+const existing = db.prepare('SELECT price_eur, price_local FROM price_cache WHERE ticker = ?').get(ticker) as { price_eur: number; price_local: number } | undefined;
+```
+
+2. Write `prev_price_local` from `existing?.price_local`:
+```typescript
+db.prepare(`
+  INSERT OR REPLACE INTO price_cache
+    (ticker, price_eur, prev_price_eur, price_local, prev_price_local, currency, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+`).run(ticker, priceEur, existing?.price_eur ?? null, priceLocal, existing?.price_local ?? null, currency, new Date().toISOString());
+```
+
+**Tests:** In `lib/prices.test.ts` (new file), mock getDb and verify that calling `setCachedPrice` twice preserves the first call's `price_local` as `prev_price_local` on the second call.
+
+---
+
+### Task C — Types: add `prev_value_local`
+**File:** `domains/shared/types.ts`
+
+Add to `Holding`:
+```typescript
+prev_value_local: number | null;
+```
+
+---
+
+### Task D — Holdings: compute `prev_value_local`
+**File:** `lib/holdings.ts`
+
+After the existing `prevPriceEur` / `prevValueEur` lines, add:
+```typescript
+const priceRow = db.prepare('SELECT prev_price_eur, prev_price_local FROM price_cache WHERE ticker = ?').get(key) as { prev_price_eur: number | null; prev_price_local: number | null } | undefined;
+const prevPriceLocal = priceRow?.prev_price_local ?? null;
+const prevValueLocal = prevPriceLocal !== null ? totalQty * prevPriceLocal : null;
+```
+
+Add `prev_value_local: prevValueLocal` to the pushed holding object.
+
+**Tests:** In `lib/holdings.test.ts`, add a case where the `getDb` mock returns a `prev_price_local` value and verify `prev_value_local` is `qty × prev_price_local`.
+
+---
+
+### Task E — Snapshots: per-currency API
+**File:** `lib/snapshots.ts`
+
+Full rewrite. Three functions:
+
+```typescript
+// One INSERT OR IGNORE per currency per day
+export function recordSnapshot(byCurrency: Record<string, number>): void {
+  const db = getDb();
+  const today = new Date().toISOString().slice(0, 10);
+  const stmt = db.prepare(
+    'INSERT OR IGNORE INTO snapshots (date, currency, total_value, created_at) VALUES (?, ?, ?, ?)'
+  );
+  for (const [currency, value] of Object.entries(byCurrency)) {
+    stmt.run(today, currency, value, new Date().toISOString());
+  }
+}
+
+// All snapshots for a given currency, ascending by date
+export function getAllSnapshots(currency: string): { date: string; total_value: number }[] {
+  const db = getDb();
+  return db.prepare(
+    'SELECT date, total_value FROM snapshots WHERE currency = ? ORDER BY date ASC'
+  ).all(currency) as { date: string; total_value: number }[];
+}
+
+// Remove getSnapshotDelta — parked until multi-currency delta is designed
+```
+
+**Tests:** `lib/snapshots.test.ts` — full rewrite to match the new API. Key cases:
+- `recordSnapshot` with two currencies inserts two rows
+- Calling twice on the same day is idempotent (INSERT OR IGNORE)
+- `getAllSnapshots('INR')` returns only INR rows, ascending
+
+---
+
+### Task F — Portfolio API: group by currency
+**File:** `app/api/portfolio/route.ts`
+
+Replace the EUR-summing block with per-currency grouping:
+
+```typescript
+const byCurrency = holdings.reduce<Record<string, { value: number; cost: number }>>((acc, h) => {
+  const cur = h.currency;
+  if (!acc[cur]) acc[cur] = { value: 0, cost: 0 };
+  acc[cur].value += h.current_value_local;
+  acc[cur].cost += h.avg_cost_local * h.quantity;
+  return acc;
+}, {});
+
+const currencySummaries = Object.entries(byCurrency).map(([currency, { value, cost }]) => ({
+  currency,
+  total_value: value,
+  total_pnl: value - cost,
+  total_pnl_pct: cost > 0 ? ((value - cost) / cost) * 100 : 0,
+}));
+
+// Record per-currency snapshot
+const snapshotInput = Object.fromEntries(
+  Object.entries(byCurrency).map(([cur, { value }]) => [cur, value])
+);
+if (Object.keys(snapshotInput).length > 0) recordSnapshot(snapshotInput);
+```
+
+Return shape:
+```typescript
+return NextResponse.json({
+  summary: {
+    by_currency: currencySummaries,
+    holdings_count: holdings.length,
+    transaction_count: transactions.length,
+  },
+  holdings,
+  broker_allocation: brokerAllocation,  // see note below
+  price_cache_updated_at: getPriceCacheAge(),
+});
+```
+
+**Broker allocation:** change the reduce to use `current_value_local`. For mixed currencies this is not a meaningful comparison, but it's the best we can do without conversion. We'll revisit when multi-currency allocation is designed.
+
+**Remove:** `delta_30d`, `delta_7d` from the summary — these were EUR-snapshot-based and are now stale. Parked until per-currency snapshot deltas are designed.
+
+---
+
+### Task G — Dashboard: per-currency cards and local Biggest Movers
+**File:** `app/page.tsx`
+
+**1. Update `Summary` and `Holding` interfaces:**
+```typescript
+interface CurrencySummary {
+  currency: string;
+  total_value: number;
+  total_pnl: number;
+  total_pnl_pct: number;
+}
+interface Summary {
+  by_currency: CurrencySummary[];
+  holdings_count: number;
+  transaction_count: number;
+}
+interface Holding {
+  // ... existing fields ...
+  prev_value_local: number | null;  // ← add
+}
+```
+
+**2. Summary cards layout:**
+
+One card per currency for value+P&L, then fixed cards for counts. For a single INR portfolio:
+```
+[₹ Value + P&L]  [Holdings: 5]  [Transactions: 12]
+```
+
+For mixed INR + EUR later:
+```
+[₹ Value + P&L]  [€ Value + P&L]  [Holdings: 8]  [Transactions: 20]
+```
+
+Render pattern:
+```tsx
+{summary.by_currency.map((s) => (
+  <div key={s.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+    <p className="text-gray-400 text-sm">Total Value ({s.currency})</p>
+    <p className="text-2xl font-bold text-white">{fmtLocal(s.total_value, s.currency)}</p>
+    <p className={`text-sm font-medium mt-1 ${s.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+      {fmtLocal(s.total_pnl, s.currency)} {pct(s.total_pnl_pct)}
+    </p>
+  </div>
+))}
+```
+
+**3. Biggest Movers — fix to use local values:**
+
+Replace:
+```typescript
+change: h.current_value_eur - h.prev_value_eur!,
+change_pct: ((h.current_value_eur - h.prev_value_eur!) / h.prev_value_eur!) * 100,
+```
+With:
+```typescript
+change: h.current_value_local - h.prev_value_local!,
+change_pct: ((h.current_value_local - h.prev_value_local!) / h.prev_value_local!) * 100,
+```
+
+Filter on `prev_value_local !== null` (not `prev_value_eur`).
+
+Display the `change` using `fmtHolding(change, changeEur, h.currency)` — same local-first rule.
+
+**4. Allocation chart:**
+Change `current_value_eur` → `current_value_local` in both the type-based and broker-based reduce. For mixed currencies this is a deferred problem — flag with a comment, don't solve it now.
+
+**5. Net worth chart:**
+The `snapshots` API now returns per-currency data. For now, fetch INR snapshots (or whichever currency exists). The Y-axis formatter: replace `€${(v/1000).toFixed(0)}k` with a dynamic formatter using `fmtLocal`. Fetch snapshots per currency.
+
+`/api/snapshots` route: needs a `?currency=INR` query param, or return all grouped by currency.
+
+---
+
+### Task H — Snapshots API
+**File:** `app/api/snapshots/route.ts`
+
+Add `currency` query param:
+```typescript
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const currency = searchParams.get('currency') ?? 'INR';
+  return NextResponse.json(getAllSnapshots(currency));
+}
+```
+
+Dashboard fetches: `/api/snapshots?currency=INR` (or the first currency from `by_currency`).
+
+---
+
+### Execution order for Kai
+
+```
+A (schema) → B (prices) → C (types) → D (holdings) → E (snapshots) → F (portfolio API) → G (dashboard) → H (snapshots API)
+```
+
+Each step must have passing tests before moving to the next. Tasks A–E are pure logic with no UI — write tests first, then implement. Tasks F–H are integration — tests for F (mock computeHoldings), then implement G and H.
+
+**Do not touch the allocation chart multi-currency problem.** Leave a `// TODO: multi-currency allocation needs redesign` comment and move on. It's not broken today (all INR), it's a future problem.
+
+---
 
 ---
 

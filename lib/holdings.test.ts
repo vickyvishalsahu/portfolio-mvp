@@ -7,12 +7,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mutable rows so each test can set its own transaction data
 let mockRows: Record<string, unknown>[] = [];
 let mockPrevPriceEur: number | null = null;
+let mockPrevPriceLocal: number | null = null;
 
 vi.mock('@/domains/shared/db', () => ({
   getDb: () => ({
     prepare: () => ({
       all: () => mockRows,
-      get: () => ({ prev_price_eur: mockPrevPriceEur }),
+      get: () => ({ prev_price_eur: mockPrevPriceEur, prev_price_local: mockPrevPriceLocal }),
     }),
   }),
 }));
@@ -58,7 +59,7 @@ function makeTx(overrides: Partial<Record<string, unknown>> = {}): Record<string
 // ---------------------------------------------------------------------------
 describe('computeHoldings', () => {
 
-  beforeEach(() => { mockRows = []; mockPrevPriceEur = null; });
+  beforeEach(() => { mockRows = []; mockPrevPriceEur = null; mockPrevPriceLocal = null; });
 
   it('simple buy — creates holding with correct qty and avg cost', async () => {
     mockRows = [makeTx({ quantity: 10, price: 10 })];
@@ -192,8 +193,26 @@ describe('computeHoldings', () => {
 
     const holdings = await computeHoldings();
 
-    // 10 qty × €80 previous price
     expect(holdings[0].prev_value_eur).toBe(800);
+  });
+
+  it('prev_value_local is null when no prev_price_local in cache', async () => {
+    mockRows = [makeTx({ quantity: 10, price: 130, currency: 'INR' })];
+    mockPrevPriceLocal = null;
+
+    const holdings = await computeHoldings();
+
+    expect(holdings[0].prev_value_local).toBeNull();
+  });
+
+  it('prev_value_local is qty × prev_price_local when it exists', async () => {
+    mockRows = [makeTx({ quantity: 100, price: 130, currency: 'INR' })];
+    mockPrevPriceLocal = 145;
+
+    const holdings = await computeHoldings();
+
+    // 100 units × ₹145 previous NAV
+    expect(holdings[0].prev_value_local).toBe(14500);
   });
 
 });

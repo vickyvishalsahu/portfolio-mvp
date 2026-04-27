@@ -1,42 +1,47 @@
 import { NextResponse } from 'next/server';
 import { getAllTransactions, getPriceCacheAge } from '@/domains/shared/db';
 import { computeHoldings } from '@/lib/holdings';
-import { recordSnapshot, getSnapshotDelta } from '@/lib/snapshots';
+import { recordSnapshot } from '@/lib/snapshots';
 
 export async function GET() {
   try {
     const holdings = await computeHoldings();
     const transactions = getAllTransactions();
 
-    const totalValue = holdings.reduce((sum, h) => sum + h.current_value_eur, 0);
-    const totalCost = holdings.reduce((sum, h) => sum + h.avg_cost_eur * h.quantity, 0);
-    const totalPnl = totalValue - totalCost;
-    const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
-
-    const brokerAllocation = holdings.reduce<Record<string, number>>((acc, h) => {
-      acc[h.broker] = (acc[h.broker] || 0) + h.current_value_eur;
+    // Group totals by source currency — never convert, never sum across currencies
+    const byCurrency = holdings.reduce<Record<string, { value: number; cost: number }>>((acc, h) => {
+      const cur = h.currency;
+      if (!acc[cur]) acc[cur] = { value: 0, cost: 0 };
+      acc[cur].value += h.current_value_local;
+      acc[cur].cost += h.avg_cost_local * h.quantity;
       return acc;
     }, {});
 
-    // Record today's snapshot (INSERT OR IGNORE — safe to call on every load)
-    if (totalValue > 0) recordSnapshot(totalValue);
+    const currencySummaries = Object.entries(byCurrency).map(([currency, { value, cost }]) => ({
+      currency,
+      total_value: value,
+      total_pnl: value - cost,
+      total_pnl_pct: cost > 0 ? ((value - cost) / cost) * 100 : 0,
+    }));
 
-    const value30dAgo = getSnapshotDelta(30);
-    const value7dAgo = getSnapshotDelta(7);
+    // Broker allocation uses local values (single-currency meaningful; multi-currency: TODO)
+    const brokerAllocation = holdings.reduce<Record<string, number>>((acc, h) => {
+      acc[h.broker] = (acc[h.broker] || 0) + h.current_value_local;
+      return acc;
+    }, {});
+
+    const snapshotInput = Object.fromEntries(
+      Object.entries(byCurrency).map(([cur, { value }]) => [cur, value])
+    );
+    if (Object.keys(snapshotInput).length > 0) recordSnapshot(snapshotInput);
 
     return NextResponse.json({
       summary: {
-        total_value_eur: totalValue,
-        total_cost_eur: totalCost,
-        total_pnl: totalPnl,
-        total_pnl_pct: totalPnlPct,
+        by_currency: currencySummaries,
         holdings_count: holdings.length,
         transaction_count: transactions.length,
-        delta_30d: value30dAgo !== null ? totalValue - value30dAgo : null,
-        delta_7d:  value7dAgo  !== null ? totalValue - value7dAgo  : null,
       },
       holdings,
-      transactions,
       broker_allocation: brokerAllocation,
       price_cache_updated_at: getPriceCacheAge(),
     });

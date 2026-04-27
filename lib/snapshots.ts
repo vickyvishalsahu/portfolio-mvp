@@ -1,32 +1,19 @@
 import { getDb } from '@/domains/shared/db';
 
-export interface Snapshot {
-  date: string;
-  total_value_eur: number;
-}
-
-export function recordSnapshot(totalValueEur: number): void {
+export function recordSnapshot(byCurrency: Record<string, number>): void {
   const db = getDb();
   const today = new Date().toISOString().slice(0, 10);
-  db.prepare(
-    'INSERT OR IGNORE INTO snapshots (date, total_value_eur, created_at) VALUES (?, ?, ?)'
-  ).run(today, totalValueEur, new Date().toISOString());
+  const stmt = db.prepare(
+    'INSERT OR IGNORE INTO snapshots (date, currency, total_value, created_at) VALUES (?, ?, ?, ?)'
+  );
+  for (const [currency, value] of Object.entries(byCurrency)) {
+    stmt.run(today, currency, value, new Date().toISOString());
+  }
 }
 
-export function getSnapshotDelta(days: 7 | 30): number | null {
-  const db = getDb();
-  const row = db.prepare(`
-    SELECT total_value_eur FROM snapshots
-    WHERE date <= date('now', '-' || ? || ' days')
-    ORDER BY date DESC
-    LIMIT 1
-  `).get(days) as { total_value_eur: number } | undefined;
-  return row?.total_value_eur ?? null;
-}
-
-export function getAllSnapshots(): Snapshot[] {
+export function getAllSnapshots(currency: string): { date: string; total_value: number }[] {
   const db = getDb();
   return db.prepare(
-    'SELECT date, total_value_eur FROM snapshots ORDER BY date ASC'
-  ).all() as Snapshot[];
+    'SELECT date, total_value FROM snapshots WHERE currency = ? ORDER BY date ASC'
+  ).all(currency) as { date: string; total_value: number }[];
 }

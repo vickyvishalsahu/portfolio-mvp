@@ -2,6 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { fmtLocal, fmtHolding, pct } from '@/lib/format';
+
+interface CurrencySummary {
+  currency: string;
+  total_value: number;
+  total_pnl: number;
+  total_pnl_pct: number;
+}
+
+interface Summary {
+  by_currency: CurrencySummary[];
+  holdings_count: number;
+  transaction_count: number;
+}
 
 interface Holding {
   ticker: string;
@@ -11,21 +25,13 @@ interface Holding {
   avg_cost_eur: number;
   current_price_eur: number;
   current_value_eur: number;
+  current_value_local: number;
   prev_value_eur: number | null;
+  prev_value_local: number | null;
   pnl: number;
   pnl_pct: number;
+  currency: string;
   broker: string;
-}
-
-interface Summary {
-  total_value_eur: number;
-  total_cost_eur: number;
-  total_pnl: number;
-  total_pnl_pct: number;
-  holdings_count: number;
-  transaction_count: number;
-  delta_30d: number | null;
-  delta_7d: number | null;
 }
 
 interface PortfolioData {
@@ -48,23 +54,10 @@ const ASSET_LABELS: Record<string, string> = {
   crypto: 'Crypto',
 };
 
-function fmt(n: number): string {
-  return new Intl.NumberFormat('en-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
-}
-
-function pct(n: number): string {
-  return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
-}
-
 export default function Dashboard() {
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [snapshots, setSnapshots] = useState<{ date: string; total_value_eur: number }[]>([]);
+  const [snapshots, setSnapshots] = useState<{ date: string; total_value: number }[]>([]);
   const [allocView, setAllocView] = useState<'type' | 'broker'>('type');
 
   useEffect(() => {
@@ -73,12 +66,18 @@ export default function Dashboard() {
       .then((d) => { if (d.summary) setData(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
 
-    fetch('/api/snapshots')
+  // Fetch snapshots for the primary currency once portfolio data is available
+  useEffect(() => {
+    if (!data) return;
+    const primaryCurrency = data.summary.by_currency[0]?.currency;
+    if (!primaryCurrency) return;
+    fetch(`/api/snapshots?currency=${primaryCurrency}`)
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d)) setSnapshots(d); })
       .catch(() => {});
-  }, []);
+  }, [data]);
 
   if (loading) {
     return (
@@ -110,12 +109,14 @@ export default function Dashboard() {
   }
 
   const { summary, holdings } = data;
+  const primaryCurrency = summary.by_currency[0]?.currency ?? 'INR';
 
   const BROKER_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
+  // Allocation uses local values — valid for single currency; multi-currency: TODO
   const allocationByType = Object.entries(
     holdings.reduce<Record<string, number>>((acc, h) => {
-      acc[h.asset_type] = (acc[h.asset_type] || 0) + h.current_value_eur;
+      acc[h.asset_type] = (acc[h.asset_type] || 0) + h.current_value_local;
       return acc;
     }, {})
   ).map(([type, value]) => ({
@@ -132,16 +133,15 @@ export default function Dashboard() {
 
   const allocationData = allocView === 'type' ? allocationByType : allocationByBroker;
 
-  // Top holdings for mini table
   const topHoldings = holdings.slice(0, 5);
 
-  // Biggest movers — only holdings where previous price data exists
+  // Biggest movers — use local values, filter on prev_value_local
   const withChange = holdings
-    .filter((h) => h.prev_value_eur !== null)
+    .filter((h) => h.prev_value_local !== null)
     .map((h) => ({
       ...h,
-      change: h.current_value_eur - h.prev_value_eur!,
-      change_pct: ((h.current_value_eur - h.prev_value_eur!) / h.prev_value_eur!) * 100,
+      change: h.current_value_local - h.prev_value_local!,
+      change_pct: ((h.current_value_local - h.prev_value_local!) / h.prev_value_local!) * 100,
     }))
     .sort((a, b) => b.change - a.change);
   const topGainers = withChange.slice(0, 3);
@@ -151,31 +151,17 @@ export default function Dashboard() {
     <div>
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-      {/* Summary Cards */}
+      {/* Summary Cards — one per currency + counts */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <p className="text-gray-400 text-sm">Total Value</p>
-          <p className="text-2xl font-bold text-white">{fmt(summary.total_value_eur)}</p>
-          {summary.delta_30d !== null && (
-            <p className={`text-xs mt-1 ${summary.delta_30d >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {summary.delta_30d >= 0 ? '↑' : '↓'} {fmt(Math.abs(summary.delta_30d))} vs 30d ago
+        {summary.by_currency.map((s) => (
+          <div key={s.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+            <p className="text-gray-400 text-sm">Total Value</p>
+            <p className="text-2xl font-bold text-white">{fmtLocal(s.total_value, s.currency)}</p>
+            <p className={`text-sm font-medium mt-1 ${s.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {fmtLocal(s.total_pnl, s.currency)} {pct(s.total_pnl_pct)}
             </p>
-          )}
-          {summary.delta_30d === null && summary.delta_7d !== null && (
-            <p className={`text-xs mt-1 ${summary.delta_7d >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {summary.delta_7d >= 0 ? '↑' : '↓'} {fmt(Math.abs(summary.delta_7d))} vs 7d ago
-            </p>
-          )}
-        </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <p className="text-gray-400 text-sm">Total P&L</p>
-          <p className={`text-2xl font-bold ${summary.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {fmt(summary.total_pnl)}
-          </p>
-          <p className={`text-sm ${summary.total_pnl_pct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {pct(summary.total_pnl_pct)}
-          </p>
-        </div>
+          </div>
+        ))}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <p className="text-gray-400 text-sm">Holdings</p>
           <p className="text-2xl font-bold text-white">{summary.holdings_count}</p>
@@ -224,7 +210,7 @@ export default function Dashboard() {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: any) => fmt(Number(value))}
+                formatter={(value: any) => fmtLocal(Number(value), primaryCurrency)}
                 contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
                 labelStyle={{ color: '#e5e7eb' }}
                 itemStyle={{ color: '#e5e7eb' }}
@@ -251,7 +237,9 @@ export default function Dashboard() {
                     <span className="text-white">{h.name}</span>
                     <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
                   </td>
-                  <td className="text-right text-white">{fmt(h.current_value_eur)}</td>
+                  <td className="text-right text-white">
+                    {fmtHolding(h.current_value_local, h.current_value_eur, h.currency)}
+                  </td>
                   <td className={`text-right ${h.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {pct(h.pnl_pct)}
                   </td>
@@ -285,7 +273,7 @@ export default function Dashboard() {
                           <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
                         </td>
                         <td className="text-right text-green-400 font-medium">
-                          +{fmt(h.change)}
+                          +{fmtLocal(h.change, h.currency)}
                         </td>
                         <td className="text-right text-green-500 text-xs w-16">
                           +{h.change_pct.toFixed(1)}%
@@ -310,7 +298,7 @@ export default function Dashboard() {
                           <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
                         </td>
                         <td className="text-right text-red-400 font-medium">
-                          {fmt(h.change)}
+                          {fmtLocal(h.change, h.currency)}
                         </td>
                         <td className="text-right text-red-500 text-xs w-16">
                           {h.change_pct.toFixed(1)}%
@@ -341,18 +329,18 @@ export default function Dashboard() {
               />
               <YAxis
                 tick={{ fill: '#9ca3af', fontSize: 11 }}
-                tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`}
-                width={48}
+                tickFormatter={(v) => fmtLocal(v, primaryCurrency)}
+                width={64}
               />
               <Tooltip
-                formatter={(value: any) => [fmt(Number(value)), 'Portfolio']}
+                formatter={(value: any) => [fmtLocal(Number(value), primaryCurrency), 'Portfolio']}
                 contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
                 labelStyle={{ color: '#e5e7eb' }}
                 itemStyle={{ color: '#3b82f6' }}
               />
               <Line
                 type="monotone"
-                dataKey="total_value_eur"
+                dataKey="total_value"
                 stroke="#3b82f6"
                 strokeWidth={2}
                 dot={false}

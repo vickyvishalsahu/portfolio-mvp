@@ -71,9 +71,11 @@ export async function computeHoldings(): Promise<Holding[]> {
     const pnlLocal = currentValueLocal - totalCostLocal;
     const pnlPct = totalCostEur > 0 ? (pnl / totalCostEur) * 100 : 0;
 
-    const priceRow = db.prepare('SELECT prev_price_eur FROM price_cache WHERE ticker = ?').get(key) as { prev_price_eur: number | null } | undefined;
+    const priceRow = db.prepare('SELECT prev_price_eur, prev_price_local FROM price_cache WHERE ticker = ?').get(key) as { prev_price_eur: number | null; prev_price_local: number | null } | undefined;
     const prevPriceEur = priceRow?.prev_price_eur ?? null;
+    const prevPriceLocal = priceRow?.prev_price_local ?? null;
     const prevValueEur = prevPriceEur !== null ? totalQty * prevPriceEur : null;
+    const prevValueLocal = prevPriceLocal !== null ? totalQty * prevPriceLocal : null;
 
     holdings.push({
       ticker: first.ticker || key,
@@ -87,6 +89,7 @@ export async function computeHoldings(): Promise<Holding[]> {
       current_value_eur: currentValueEur,
       current_value_local: currentValueLocal,
       prev_value_eur: prevValueEur,
+      prev_value_local: prevValueLocal,
       pnl,
       pnl_local: pnlLocal,
       pnl_pct: pnlPct,

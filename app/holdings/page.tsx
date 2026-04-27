@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { fmtEur, fmtHolding, pct } from '@/lib/format';
 
 interface Holding {
   ticker: string;
@@ -21,33 +22,6 @@ interface Holding {
 }
 
 type SortKey = 'name' | 'current_value_eur' | 'pnl_pct' | 'quantity' | 'broker' | 'asset_type';
-
-function fmt(n: number): string {
-  return new Intl.NumberFormat('en-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
-}
-
-function pct(n: number): string {
-  return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
-}
-
-function fmtLocal(amount: number, currency: string): string {
-  if (currency === 'INR') {
-    // Compact Indian notation: ₹7.6L, ₹1.2Cr
-    if (amount >= 10_000_000) return `₹${(amount / 10_000_000).toFixed(2)}Cr`;
-    if (amount >= 100_000)    return `₹${(amount / 100_000).toFixed(1)}L`;
-    return `₹${Math.round(amount).toLocaleString('en-IN')}`;
-  }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 const TYPE_BADGE: Record<string, string> = {
   stock: 'bg-blue-900 text-blue-300',
@@ -211,23 +185,23 @@ export default function HoldingsPage() {
                     {h.quantity < 1 ? h.quantity.toFixed(6) : h.quantity.toFixed(2)}
                   </td>
                   <td className="py-3 text-right text-gray-400">
-                    {h.currency !== 'EUR' ? fmtLocal(h.avg_cost_local, h.currency) : fmt(h.avg_cost_eur)}
+                    {fmtHolding(h.avg_cost_local, h.avg_cost_eur, h.currency)}
                   </td>
                   <td className="py-3 text-right text-gray-300">
-                    {h.currency !== 'EUR' ? fmtLocal(h.current_price_local, h.currency) : fmt(h.current_price_eur)}
+                    {fmtHolding(h.current_price_local, h.current_price_eur, h.currency)}
                   </td>
                   <td className="py-3 text-right">
                     <div className="text-white font-medium">
-                      {h.currency !== 'EUR' ? fmtLocal(h.current_value_local, h.currency) : fmt(h.current_value_eur)}
+                      {fmtHolding(h.current_value_local, h.current_value_eur, h.currency)}
                     </div>
                     {h.currency !== 'EUR' && (
-                      <div className="text-gray-600 text-xs">{fmt(h.current_value_eur)}</div>
+                      <div className="text-gray-600 text-xs">{fmtEur(h.current_value_eur)}</div>
                     )}
                   </td>
                   <td className={`py-3 text-right font-medium ${h.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     <div>{pct(h.pnl_pct)}</div>
                     <div className="text-xs opacity-70">
-                      {h.currency !== 'EUR' ? fmtLocal(h.pnl_local, h.currency) : fmt(h.pnl)}
+                      {fmtHolding(h.pnl_local, h.pnl, h.currency)}
                     </div>
                   </td>
                   <td className="py-3 text-gray-500 text-xs">{h.broker}</td>

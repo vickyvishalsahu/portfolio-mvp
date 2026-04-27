@@ -53,6 +53,7 @@ export interface Holding {
   current_value_eur: number;
   current_value_local: number;
   prev_value_eur: number | null;
+  prev_value_local: number | null;
   pnl: number;
   pnl_local: number;
   pnl_pct: number;
