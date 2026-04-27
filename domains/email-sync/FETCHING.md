@@ -4,17 +4,21 @@
 
 ---
 
-## Is it a separate domain?
+## Domain structure
 
-Loosely, yes — but not enforced by directory structure. The fetching logic lives in two places:
+The fetching logic now lives entirely in `domains/email-sync/`:
 
-| Layer | File | Responsibility |
-|---|---|---|
-| Core lib | `lib/gmail.ts` | OAuth client, query builder, Gmail API calls, email decoding |
-| API route | `app/api/gmail/sync/route.ts` | Orchestration: read broker config from DB → call lib → store raw emails |
-| Broker catalog | `lib/brokers.ts` | All broker definitions + helper functions used by the query builder |
-
-Auth endpoints (`/api/gmail/auth`, `/api/gmail/callback`) are thin wrappers — they only handle the OAuth handshake.
+| File | Responsibility |
+|---|---|
+| `domains/email-sync/client.ts` | OAuth client, `getAuthenticatedClient()`, `fetchBrokerEmails()` |
+| `domains/email-sync/utils.ts` | `buildSearchQuery()`, `mergeCustomDomains()`, body decoding helpers |
+| `domains/email-sync/db.ts` | Raw email CRUD + broker settings (selected IDs, custom domains) |
+| `domains/email-sync/constants.ts` | `GMAIL_SCOPES`, `DEFAULT_MAX_RESULTS`, `GLOBAL_SUBJECT_KEYWORDS` |
+| `domains/email-sync/hooks/useGmailSync.ts` | Gmail status + fetch trigger state |
+| `domains/email-sync/hooks/useBrokerSettings.ts` | Broker selection + custom domain state |
+| `app/api/gmail/` + `app/api/settings/brokers/` | Thin API route wrappers |
+| `domains/shared/constants.ts` | `BROKER_CATALOG` (shared with parser domain) |
+| `domains/shared/types.ts` | `BrokerDefinition`, `FetchedEmail`, `RawEmail` |
 
 ---
 
@@ -41,7 +45,7 @@ From then on, every sync call uses `getAuthenticatedClient()` which instantiates
 
 ## The Gmail query
 
-The query is built dynamically in `lib/gmail.ts: buildSearchQuery()` based on which brokers the user selected.
+The query is built dynamically in `domains/email-sync/utils.ts: buildSearchQuery()` based on which brokers the user selected.
 
 ### Structure
 
@@ -80,7 +84,7 @@ gmailSearchTerms: ['fior.digital'],
 
 ### Subject keywords
 
-Defined globally in `GLOBAL_SUBJECT_KEYWORDS`:
+Defined globally in `GLOBAL_SUBJECT_KEYWORDS` (`domains/email-sync/constants.ts`):
 ```
 confirmation, contract note, purchase, SIP, bought, sold, order, execution, transaction, allotment, redemption
 ```
@@ -89,7 +93,7 @@ Brokers can extend this with `subjectKeywords?: string[]` on their definition (n
 
 ### Custom domains (user-defined)
 
-Users can add extra sender domains per broker via the Sync page UI. These are stored in the `settings` table as `broker_custom_domains` (JSON blob). At sync time, `mergeCustomDomains()` in the sync route merges them into the broker definitions before building the query.
+Users can add extra sender domains per broker via the Sync page UI. These are stored in the `settings` table as `broker_custom_domains` (JSON blob). At sync time, `mergeCustomDomains()` (`domains/email-sync/utils.ts`) merges them into the broker definitions before building the query.
 
 ---
 
@@ -100,18 +104,19 @@ POST /api/gmail/sync
 
 1. Guard: GOOGLE_REFRESH_TOKEN present?  →  400 if not
 2. Guard: at least one broker selected?  →  400 if not
-3. Read selected broker IDs from settings table
-4. Read custom domains from settings table
-5. Merge custom domains into broker definitions
-6. Call fetchBrokerEmails(brokers, maxResults=100)
-   a. Build Gmail search query (sender OR + subject OR, AND-ed together)
+3. Read selected broker IDs  →  getSelectedBrokerIds() [email-sync/db.ts]
+4. Read custom domains       →  getBrokerCustomDomains() [email-sync/db.ts]
+5. Merge custom domains      →  mergeCustomDomains() [email-sync/utils.ts]
+6. Call fetchBrokerEmails(brokers, maxResults=100)  [email-sync/client.ts]
+   a. buildSearchQuery()  →  sender OR + subject OR, AND-ed together
    b. gmail.users.messages.list({ q, maxResults: 100 })  →  list of { id, threadId }
    c. For each ID: gmail.users.messages.get({ format: 'full' })
-      - Extract headers: From, Subject, Date
+      - Extract headers: From, Subject, Date  →  getHeader() [email-sync/utils.ts]
       - Decode body: prefers text/plain, falls back to text/html, recurses into parts
-      - Body is truncated at 10,000 chars before storing
+        →  extractBody() + decodeBase64Url() [email-sync/utils.ts]
+      - Body truncated at 10,000 chars before storing
    d. Returns FetchedEmail[]
-7. For each email: insertRawEmail (INSERT OR IGNORE — deduplicates by Gmail message ID)
+7. For each email: insertRawEmail()  [email-sync/db.ts]  (INSERT OR IGNORE — deduplicates)
 8. Return: { fetched, new, total_raw, total_parsed }
 ```
 
@@ -119,7 +124,7 @@ POST /api/gmail/sync
 
 ## Raw email storage
 
-Stored in `raw_emails` table:
+Stored in `raw_emails` table (schema owned by `domains/shared/db.ts`):
 
 ```sql
 CREATE TABLE raw_emails (
@@ -154,10 +159,16 @@ CREATE TABLE raw_emails (
 
 ```
 app/sync/page.tsx
-  └── POST /api/gmail/sync
-        ├── lib/db.ts          (getSelectedBrokerIds, getBrokerCustomDomains, insertRawEmail)
-        ├── lib/brokers.ts     (getBrokersByIds, BROKER_CATALOG)
-        └── lib/gmail.ts
-              ├── lib/brokers.ts  (getGmailSearchTerms, getAllSubjectKeywords)
-              └── googleapis      (OAuth2, gmail.users.messages.list/get)
+  ├── domains/email-sync/hooks/useGmailSync.ts
+  │     └── POST /api/gmail/sync
+  │           ├── domains/email-sync/db.ts     (getSelectedBrokerIds, getBrokerCustomDomains, insertRawEmail)
+  │           ├── domains/shared/utils.ts      (getBrokersByIds)
+  │           ├── domains/email-sync/utils.ts  (mergeCustomDomains)
+  │           └── domains/email-sync/client.ts (fetchBrokerEmails)
+  │                 ├── domains/email-sync/utils.ts  (buildSearchQuery, extractBody, getHeader)
+  │                 └── googleapis               (OAuth2, gmail.users.messages.list/get)
+  └── domains/email-sync/hooks/useBrokerSettings.ts
+        └── GET/PUT /api/settings/brokers
+              ├── domains/shared/constants.ts  (BROKER_CATALOG)
+              └── domains/email-sync/db.ts     (getSelectedBrokerIds, setSelectedBrokerIds, ...)
 ```
