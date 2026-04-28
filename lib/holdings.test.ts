@@ -4,7 +4,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mocks — hoisted by Vitest before any imports
 // ---------------------------------------------------------------------------
 
-// Mutable rows so each test can set its own transaction data
 let mockRows: Record<string, unknown>[] = [];
 let mockPrevPriceEur: number | null = null;
 let mockPrevPriceLocal: number | null = null;
@@ -13,23 +12,18 @@ vi.mock('@/domains/shared/db', () => ({
   getDb: () => ({
     prepare: () => ({
       all: () => mockRows,
-      get: () => ({ prev_price_eur: mockPrevPriceEur, prev_price_local: mockPrevPriceLocal }),
     }),
   }),
 }));
 
-// Prices: always return €100 per unit for simplicity
-vi.mock('@/lib/prices', () => ({
+vi.mock('@/domains/pricing', () => ({
   getPrice: vi.fn().mockResolvedValue({
     priceEur: 100,
     priceLocal: 100,
     currency: 'EUR',
   }),
-}));
-
-// Currency: EUR pass-through (amount unchanged)
-vi.mock('@/lib/currency', () => ({
   convertToEur: vi.fn((amount: number) => Promise.resolve(amount)),
+  getPrevPrice: vi.fn(() => ({ prev_price_eur: mockPrevPriceEur, prev_price_local: mockPrevPriceLocal })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -40,19 +34,17 @@ import { computeHoldings } from './holdings';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeTx(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
-  return {
-    ticker: 'AAPL',
-    name: 'Apple Inc',
-    asset_type: 'stock',
-    currency: 'EUR',
-    broker: 'scalable',
-    quantity: 10,
-    price: 10,
-    transaction_type: 'buy',
-    ...overrides,
-  };
-}
+const makeTx = (overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> => ({
+  ticker: 'AAPL',
+  name: 'Apple Inc',
+  asset_type: 'stock',
+  currency: 'EUR',
+  broker: 'scalable',
+  quantity: 10,
+  price: 10,
+  transaction_type: 'buy',
+  ...overrides,
+});
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -70,12 +62,12 @@ describe('computeHoldings', () => {
     expect(holdings[0].quantity).toBe(10);
     expect(holdings[0].avg_cost_eur).toBe(10);
     expect(holdings[0].avg_cost_local).toBe(10);
-    expect(holdings[0].current_value_eur).toBe(1000); // 10 qty × €100 current price
+    expect(holdings[0].current_value_eur).toBe(1000);
     expect(holdings[0].current_value_local).toBe(1000);
   });
 
   it('INR holding — local values use source price, not EUR conversion', async () => {
-    const { getPrice } = await import('@/lib/prices');
+    const { getPrice } = await import('@/domains/pricing');
     vi.mocked(getPrice).mockResolvedValueOnce({ priceEur: 1.65, priceLocal: 150, currency: 'INR' });
 
     mockRows = [makeTx({ quantity: 100, price: 130, currency: 'INR', asset_type: 'mf' })];
@@ -83,10 +75,10 @@ describe('computeHoldings', () => {
     const holdings = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
-    expect(holdings[0].avg_cost_local).toBe(130);       // ₹130, not converted
-    expect(holdings[0].current_price_local).toBe(150);  // ₹150 NAV
-    expect(holdings[0].current_value_local).toBe(15000); // 100 × ₹150
-    expect(holdings[0].pnl_local).toBe(2000);            // 15000 - 13000
+    expect(holdings[0].avg_cost_local).toBe(130);
+    expect(holdings[0].current_price_local).toBe(150);
+    expect(holdings[0].current_value_local).toBe(15000);
+    expect(holdings[0].pnl_local).toBe(2000);
   });
 
   it('partial sell — reduces qty and adjusts cost proportionally', async () => {
@@ -99,7 +91,7 @@ describe('computeHoldings', () => {
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(6);
-    expect(holdings[0].avg_cost_eur).toBeCloseTo(10); // avg cost doesn't change on a sell
+    expect(holdings[0].avg_cost_eur).toBeCloseTo(10);
   });
 
   it('full sell — position is removed from holdings', async () => {
@@ -114,7 +106,6 @@ describe('computeHoldings', () => {
   });
 
   it('oversell — qty never goes negative, position is skipped', async () => {
-    // THE BUG: sell more than was ever bought
     mockRows = [
       makeTx({ quantity: 5,  price: 10, transaction_type: 'buy' }),
       makeTx({ quantity: 20, price: 15, transaction_type: 'sell' }),
@@ -122,23 +113,21 @@ describe('computeHoldings', () => {
 
     const holdings = await computeHoldings();
 
-    // Position should be excluded — not shown with qty=-15 and garbage P&L
     expect(holdings).toHaveLength(0);
   });
 
   it('oversell then rebuy — state resets cleanly, avg cost reflects only new buy', async () => {
-    // After overselling, a subsequent buy should start from a clean slate
     mockRows = [
       makeTx({ quantity: 5,  price: 10, transaction_type: 'buy' }),
-      makeTx({ quantity: 20, price: 15, transaction_type: 'sell' }),  // oversell
-      makeTx({ quantity: 8,  price: 12, transaction_type: 'buy' }),   // fresh buy
+      makeTx({ quantity: 20, price: 15, transaction_type: 'sell' }),
+      makeTx({ quantity: 8,  price: 12, transaction_type: 'buy' }),
     ];
 
     const holdings = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(8);
-    expect(holdings[0].avg_cost_eur).toBeCloseTo(12); // only the fresh buy counts
+    expect(holdings[0].avg_cost_eur).toBeCloseTo(12);
   });
 
   it('sell with no prior buy — position is skipped gracefully, no crash', async () => {
@@ -165,7 +154,6 @@ describe('computeHoldings', () => {
   });
 
   it('multiple buys — avg cost weighted correctly', async () => {
-    // Buy 10 @ €10 then 10 @ €20 → avg = €15
     mockRows = [
       makeTx({ quantity: 10, price: 10, transaction_type: 'buy' }),
       makeTx({ quantity: 10, price: 20, transaction_type: 'buy' }),
@@ -211,7 +199,6 @@ describe('computeHoldings', () => {
 
     const holdings = await computeHoldings();
 
-    // 100 units × ₹145 previous NAV
     expect(holdings[0].prev_value_local).toBe(14500);
   });
 

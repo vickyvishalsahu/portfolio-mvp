@@ -7,7 +7,7 @@ vi.mock('@/domains/shared/db', () => ({ getDb: () => testDb }));
 vi.mock('./currency', () => ({ convertToEur: vi.fn((amount: number) => Promise.resolve(amount)) }));
 vi.mock('yahoo-finance2', () => ({ default: class { quote = vi.fn() } }));
 
-import { getPrice } from './prices';
+import { getPrice } from './price';
 
 beforeEach(() => {
   testDb = new Database(':memory:');
@@ -26,11 +26,6 @@ beforeEach(() => {
 
 describe('setCachedPrice — prev_price_local preservation', () => {
   it('first write: prev_price_local is null', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      json: () => Promise.resolve([{ schemeCode: '123' }]),
-    }));
-
-    // Stub AMFI second fetch
     let callCount = 0;
     vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
       callCount++;
@@ -46,10 +41,9 @@ describe('setCachedPrice — prev_price_local preservation', () => {
   });
 
   it('second write: prev_price_local = first write price_local', async () => {
-    // Seed an existing row with price_local = 150
     testDb.prepare(
       'INSERT INTO price_cache (ticker, price_eur, prev_price_eur, price_local, prev_price_local, currency, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).run('HDFC_MF', 1.65, null, 150, null, 'INR', new Date(Date.now() - 60 * 60 * 1000).toISOString()); // 1hr ago = stale
+    ).run('HDFC_MF', 1.65, null, 150, null, 'INR', new Date(Date.now() - 60 * 60 * 1000).toISOString());
 
     let callCount = 0;
     vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
@@ -62,6 +56,6 @@ describe('setCachedPrice — prev_price_local preservation', () => {
 
     const row = testDb.prepare('SELECT * FROM price_cache WHERE ticker = ?').get('HDFC_MF') as any;
     expect(row.price_local).toBe(155);
-    expect(row.prev_price_local).toBe(150); // preserved from previous write
+    expect(row.prev_price_local).toBe(150);
   });
 });

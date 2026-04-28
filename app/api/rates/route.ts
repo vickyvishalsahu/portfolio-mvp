@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getExchangeRates } from '@/lib/currency';
+import { getExchangeRates } from '@/domains/pricing';
 
 export const GET = async () => {
   try {

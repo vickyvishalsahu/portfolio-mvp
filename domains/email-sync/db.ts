@@ -1,41 +1,47 @@
 import { getDb } from '@/domains/shared/db';
 import type { RawEmail } from '@/domains/shared/types';
 import type { FetchedEmail } from './types';
+import {
+  INSERT_RAW_EMAIL,
+  GET_UNPARSED_EMAILS,
+  MARK_EMAIL_PARSED,
+  GET_EMAIL_COUNT,
+  GET_PARSED_EMAIL_COUNT,
+  GET_SELECTED_BROKERS,
+  GET_BROKER_CUSTOM_DOMAINS,
+  UPSERT_SETTING,
+} from './constants';
 
 export const insertRawEmail = (email: FetchedEmail) => {
   const db = getDb();
-  const stmt = db.prepare(`
-    INSERT OR IGNORE INTO raw_emails (id, sender, subject, body, received_at, parsed)
-    VALUES (?, ?, ?, ?, ?, 0)
-  `);
-  return stmt.run(email.id, email.sender, email.subject, email.body, email.received_at);
+  return db.prepare(INSERT_RAW_EMAIL).run(email.id, email.sender, email.subject, email.body, email.received_at);
 };
 
 export const getUnparsedEmails = (): RawEmail[] => {
   const db = getDb();
-  return db.prepare('SELECT * FROM raw_emails WHERE parsed = 0').all() as RawEmail[];
+  return db.prepare(GET_UNPARSED_EMAILS).all() as RawEmail[];
 };
 
 export const markEmailParsed = (emailId: string) => {
   const db = getDb();
-  db.prepare('UPDATE raw_emails SET parsed = 1 WHERE id = ?').run(emailId);
+  db.prepare(MARK_EMAIL_PARSED).run(emailId);
 };
 
 export const getRawEmailCount = (): number => {
   const db = getDb();
-  const row = db.prepare('SELECT COUNT(*) as count FROM raw_emails').get() as { count: number };
+  const row = db.prepare(GET_EMAIL_COUNT).get() as { count: number };
   return row.count;
 };
 
 export const getParsedEmailCount = (): number => {
   const db = getDb();
-  const row = db.prepare('SELECT COUNT(*) as count FROM raw_emails WHERE parsed = 1').get() as { count: number };
+  const row = db.prepare(GET_PARSED_EMAIL_COUNT).get() as { count: number };
   return row.count;
 };
 
 export const getSelectedBrokerIds = (): string[] => {
   const db = getDb();
-  const row = db.prepare("SELECT value FROM settings WHERE key = 'selected_brokers'").get() as { value: string } | undefined;
+  const row = db.prepare(GET_SELECTED_BROKERS).get() as { value: string } | undefined;
   if (!row?.value) return [];
   try {
     const parsed = JSON.parse(row.value);
@@ -47,12 +53,12 @@ export const getSelectedBrokerIds = (): string[] => {
 
 export const setSelectedBrokerIds = (ids: string[]): void => {
   const db = getDb();
-  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('selected_brokers', JSON.stringify(ids));
+  db.prepare(UPSERT_SETTING).run('selected_brokers', JSON.stringify(ids));
 };
 
 export const getBrokerCustomDomains = (): Record<string, string[]> => {
   const db = getDb();
-  const row = db.prepare("SELECT value FROM settings WHERE key = 'broker_custom_domains'").get() as { value: string } | undefined;
+  const row = db.prepare(GET_BROKER_CUSTOM_DOMAINS).get() as { value: string } | undefined;
   if (!row?.value) return {};
   try {
     const parsed = JSON.parse(row.value);
@@ -64,5 +70,5 @@ export const getBrokerCustomDomains = (): Record<string, string[]> => {
 
 export const setBrokerCustomDomains = (overrides: Record<string, string[]>): void => {
   const db = getDb();
-  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('broker_custom_domains', JSON.stringify(overrides));
+  db.prepare(UPSERT_SETTING).run('broker_custom_domains', JSON.stringify(overrides));
 };

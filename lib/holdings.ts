@@ -1,6 +1,5 @@
 import { getDb } from '@/domains/shared/db';
-import { getPrice } from './prices';
-import { convertToEur } from './currency';
+import { getPrice, convertToEur, getPrevPrice } from '@/domains/pricing';
 import type { Holding, Transaction } from '@/domains/shared/types';
 
 type TransactionRow = {
@@ -71,9 +70,9 @@ export const computeHoldings = async (): Promise<Holding[]> => {
     const pnlLocal = currentValueLocal - totalCostLocal;
     const pnlPct = totalCostEur > 0 ? (pnl / totalCostEur) * 100 : 0;
 
-    const priceRow = db.prepare('SELECT prev_price_eur, prev_price_local FROM price_cache WHERE ticker = ?').get(key) as { prev_price_eur: number | null; prev_price_local: number | null } | undefined;
-    const prevPriceEur = priceRow?.prev_price_eur ?? null;
-    const prevPriceLocal = priceRow?.prev_price_local ?? null;
+    const prevPriceData = getPrevPrice(key);
+    const prevPriceEur = prevPriceData?.prev_price_eur ?? null;
+    const prevPriceLocal = prevPriceData?.prev_price_local ?? null;
     const prevValueEur = prevPriceEur !== null ? totalQty * prevPriceEur : null;
     const prevValueLocal = prevPriceLocal !== null ? totalQty * prevPriceLocal : null;
 

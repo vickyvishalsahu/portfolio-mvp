@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import type { Transaction } from './types';
+import { GET_SETTING, UPSERT_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_PRICE_CACHE_AGE } from './constants';
 
 const DB_PATH = path.join(process.cwd(), 'portfolio.db');
 
@@ -95,13 +96,13 @@ export const getDb = (): Database.Database => {
 
 export const getSetting = (key: string): string | null => {
   const db = getDb();
-  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
+  const row = db.prepare(GET_SETTING).get(key) as { value: string } | undefined;
   return row?.value ?? null;
 };
 
 export const setSetting = (key: string, value: string): void => {
   const db = getDb();
-  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value);
+  db.prepare(UPSERT_SETTING).run(key, value);
 };
 
 export const insertTransaction = (tx: {
@@ -119,11 +120,7 @@ export const insertTransaction = (tx: {
   confidence: string;
 }) => {
   const db = getDb();
-  const stmt = db.prepare(`
-    INSERT INTO transactions (email_id, asset_type, ticker, name, quantity, price, currency, transaction_type, transaction_date, broker, raw_text, confidence)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  return stmt.run(
+  return db.prepare(INSERT_TRANSACTION).run(
     tx.email_id, tx.asset_type, tx.ticker, tx.name, tx.quantity, tx.price,
     tx.currency, tx.transaction_type, tx.transaction_date, tx.broker,
     tx.raw_text, tx.confidence
@@ -132,11 +129,11 @@ export const insertTransaction = (tx: {
 
 export const getAllTransactions = (): Transaction[] => {
   const db = getDb();
-  return db.prepare('SELECT * FROM transactions ORDER BY transaction_date DESC').all() as Transaction[];
+  return db.prepare(GET_ALL_TRANSACTIONS).all() as Transaction[];
 };
 
 export const getPriceCacheAge = (): string | null => {
   const db = getDb();
-  const row = db.prepare('SELECT MAX(updated_at) as latest FROM price_cache').get() as { latest: string | null };
+  const row = db.prepare(GET_PRICE_CACHE_AGE).get() as { latest: string | null };
   return row.latest;
 };

@@ -1,10 +1,11 @@
+import { CACHE_TTL, EXCHANGE_RATE_API_URL } from './constants';
+
 type RateCache = {
   rates: Record<string, number>;
   updated_at: number;
-}
+};
 
 let rateCache: RateCache | null = null;
-const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 export const getExchangeRates = async (): Promise<Record<string, number>> => {
   if (rateCache && Date.now() - rateCache.updated_at < CACHE_TTL) {
@@ -12,8 +13,7 @@ export const getExchangeRates = async (): Promise<Record<string, number>> => {
   }
 
   try {
-    // Free API, no key required for EUR base
-    const res = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
+    const res = await fetch(EXCHANGE_RATE_API_URL);
     const data = await res.json();
 
     const rates: Record<string, number> = {
@@ -26,7 +26,6 @@ export const getExchangeRates = async (): Promise<Record<string, number>> => {
     return rates;
   } catch (error) {
     console.error('Exchange rate fetch failed:', error);
-    // Fallback rates
     return { EUR: 1, USD: 1.08, INR: 90.5 };
   }
 };

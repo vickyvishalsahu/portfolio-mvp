@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/domains/shared/db';
-import { refreshPrices } from '@/lib/prices';
+import { refreshPrices } from '@/domains/pricing';
 
 export const POST = async () => {
   try {
