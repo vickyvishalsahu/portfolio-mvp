@@ -26,3 +26,7 @@ next-env.d.ts
 *.db
 *.db-shm
 *.db-wal
+
+# markdown (keep only README)
+*.md
+!README.md
