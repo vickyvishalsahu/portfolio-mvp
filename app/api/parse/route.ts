@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUnparsedEmails, markEmailParsed } from '@/domains/email-sync/db';
 import { insertTransaction } from '@/domains/shared/db';
-import { parseEmail } from '@/lib/parser';
+import { parseEmail } from '@/domains/transaction-parsing';
 import type { RawEmail } from '@/domains/shared/types';
 
 export const POST = async () => {
