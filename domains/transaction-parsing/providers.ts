@@ -1,3 +1,5 @@
+import { createGroqParser } from './groq';
+import { createGeminiParser } from './gemini';
 import type { EmailParser } from './types';
 
 const SUPPORTED_PROVIDERS = ['groq', 'gemini'] as const;
@@ -25,13 +27,9 @@ export const getParser = (): EmailParser => {
   const provider = getProvider();
 
   switch (provider) {
-    case 'groq': {
-      const { GroqParser } = require('./groq');
-      return new GroqParser();
-    }
-    case 'gemini': {
-      const { GeminiParser } = require('./gemini');
-      return new GeminiParser();
-    }
+    case 'groq':
+      return createGroqParser();
+    case 'gemini':
+      return createGeminiParser();
   }
 };

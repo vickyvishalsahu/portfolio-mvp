@@ -1,11 +1,17 @@
+export type AssetType = 'stock' | 'etf' | 'mf' | 'crypto';
+export type TransactionType = 'buy' | 'sell' | 'dividend' | 'sip';
+export type Currency = 'EUR' | 'INR' | 'USD';
+export type Confidence = 'high' | 'medium' | 'low';
+export type Region = 'EU' | 'IN' | 'US' | 'GLOBAL';
+
 export interface BrokerDefinition {
   id: string;
   name: string;
   senderDomains: string[];
   gmailSearchTerms?: string[];
   subjectKeywords?: string[];
-  assetTypes: Array<'stock' | 'etf' | 'mf' | 'crypto'>;
-  region: 'EU' | 'IN' | 'US' | 'GLOBAL';
+  assetTypes: AssetType[];
+  region: Region;
 }
 
 export interface RawEmail {
@@ -20,17 +26,17 @@ export interface RawEmail {
 export interface Transaction {
   id?: number;
   email_id: string;
-  asset_type: 'stock' | 'etf' | 'mf' | 'crypto';
+  asset_type: AssetType;
   ticker: string | null;
   name: string;
   quantity: number;
   price: number;
-  currency: 'EUR' | 'INR' | 'USD';
-  transaction_type: 'buy' | 'sell' | 'dividend' | 'sip';
+  currency: Currency;
+  transaction_type: TransactionType;
   transaction_date: string;
   broker: string;
   raw_text: string;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: Confidence;
 }
 
 export interface PriceCache {
@@ -62,16 +68,16 @@ export interface Holding {
 }
 
 export interface ParsedTransaction {
-  asset_type: 'stock' | 'etf' | 'mf' | 'crypto';
+  asset_type: AssetType;
   ticker: string | null;
   name: string;
   quantity: number;
   price: number;
-  currency: 'EUR' | 'INR' | 'USD';
-  transaction_type: 'buy' | 'sell' | 'dividend' | 'sip';
+  currency: Currency;
+  transaction_type: TransactionType;
   transaction_date: string;
   broker: string;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: Confidence;
 }
 
 export interface ParseResponse {

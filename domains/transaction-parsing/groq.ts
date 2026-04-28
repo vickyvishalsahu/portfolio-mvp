@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import type { ParseResponse, ParsedTransaction } from '@/domains/shared/types';
+import { VALID_ASSET_TYPES, VALID_TRANSACTION_TYPES, VALID_CURRENCIES } from './constants';
 import type { EmailParser } from './types';
 
 const SYSTEM_PROMPT = `You are a financial transaction parser.
@@ -39,14 +40,10 @@ Rules:
 const validateResponse = (parsed: ParseResponse): ParseResponse => {
   if (parsed.unparseable) return parsed;
 
-  const validTypes = ['stock', 'etf', 'mf', 'crypto'];
-  const validTxTypes = ['buy', 'sell', 'dividend', 'sip'];
-  const validCurrencies = ['EUR', 'INR', 'USD'];
-
   parsed.transactions = parsed.transactions.filter((tx: ParsedTransaction) => {
-    if (!validTypes.includes(tx.asset_type)) return false;
-    if (!validTxTypes.includes(tx.transaction_type)) return false;
-    if (!validCurrencies.includes(tx.currency)) return false;
+    if (!VALID_ASSET_TYPES.includes(tx.asset_type)) return false;
+    if (!VALID_TRANSACTION_TYPES.includes(tx.transaction_type)) return false;
+    if (!VALID_CURRENCIES.includes(tx.currency)) return false;
     if (!tx.name || tx.quantity <= 0 || tx.price <= 0) return false;
     if (!tx.transaction_date?.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
     return true;
@@ -55,18 +52,15 @@ const validateResponse = (parsed: ParseResponse): ParseResponse => {
   return parsed;
 };
 
-export class GroqParser implements EmailParser {
-  private client: Groq;
-
-  constructor() {
-    if (!process.env.GROQ_API_KEY) {
-      throw new Error('GROQ_API_KEY is not set in environment variables');
-    }
-    this.client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+export const createGroqParser = (): EmailParser => {
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY is not set in environment variables');
   }
+  const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-  async parse(emailBody: string, sender: string, subject: string): Promise<ParseResponse> {
-    const userMessage = `Parse this broker email:
+  return {
+    parse: async (emailBody: string, sender: string, subject: string): Promise<ParseResponse> => {
+      const userMessage = `Parse this broker email:
 
 From: ${sender}
 Subject: ${subject}
@@ -74,27 +68,28 @@ Subject: ${subject}
 Body:
 ${emailBody}`;
 
-    const response = await this.client.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userMessage },
-      ],
-      response_format: { type: 'json_object' },
-      max_tokens: 1024,
-    });
+      const response = await client.chat.completions.create({
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 1024,
+      });
 
-    const text = response.choices[0].message.content ?? '';
+      const text = response.choices[0].message.content ?? '';
 
-    try {
-      const parsed: ParseResponse = JSON.parse(text);
-      return validateResponse(parsed);
-    } catch {
-      return {
-        transactions: [],
-        unparseable: true,
-        reason: `Failed to parse response: ${text.substring(0, 200)}`,
-      };
-    }
-  }
-}
+      try {
+        const parsed: ParseResponse = JSON.parse(text);
+        return validateResponse(parsed);
+      } catch {
+        return {
+          transactions: [],
+          unparseable: true,
+          reason: `Failed to parse response: ${text.substring(0, 200)}`,
+        };
+      }
+    },
+  };
+};

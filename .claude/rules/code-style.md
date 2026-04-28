@@ -19,6 +19,27 @@ function formatDate(date: string) { ... }
 
 Only fall back to the `function` keyword when arrow syntax is genuinely impossible (e.g., generator functions).
 
+Never use `class`. When an implementation needs shared state with initialization (e.g. an API client), use a factory function that captures state in a closure:
+
+```typescript
+// CORRECT
+const createGroqParser = (): EmailParser => {
+  const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  return {
+    parse: async (body, sender, subject) => { ... },
+  };
+};
+
+// WRONG
+class GroqParser implements EmailParser {
+  private client: Groq;
+  constructor() { this.client = new Groq(...); }
+  async parse(...) { ... }
+}
+```
+
+Never use `require()` in TypeScript files. Always use static `import`. The only exception is Next.js dynamic `import()` when explicit code-splitting is needed.
+
 ## Conditional rendering
 
 Never inline ternaries or early-returns directly inside a component's `return`. Extract them into a named render function so the main return stays flat and readable.
@@ -96,6 +117,18 @@ A component belongs in its own file when:
 - Keeping it co-located makes the parent file harder to scan
 
 Co-locate files that belong together (e.g. `BrokerCard.tsx` next to `BrokerSelection.tsx`), but each component lives in its own file.
+
+## Validation constants
+
+Validation arrays that mirror a TypeScript union type must live in `constants.ts`, not inline inside functions. This keeps them visible and easy to update when the union changes.
+
+```typescript
+// CORRECT — in constants.ts
+export const VALID_ASSET_TYPES = ['stock', 'etf', 'mf', 'crypto'] as const;
+
+// WRONG — inline inside validateResponse()
+const validTypes = ['stock', 'etf', 'mf', 'crypto'];
+```
 
 ## Derived values in map callbacks
 
