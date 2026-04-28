@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk';
 import type { ParseResponse, ParsedTransaction } from '@/domains/shared/types';
-import { VALID_ASSET_TYPES, VALID_TRANSACTION_TYPES, VALID_CURRENCIES } from './constants';
-import type { EmailParser } from './types';
+import { VALID_ASSET_TYPES, VALID_TRANSACTION_TYPES, VALID_CURRENCIES } from '../constants';
+import type { EmailParser } from '../types';
 
 const SYSTEM_PROMPT = `You are a financial transaction parser.
 Extract investment transaction data from broker confirmation emails.

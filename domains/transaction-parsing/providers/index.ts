@@ -1,6 +1,6 @@
 import { createGroqParser } from './groq';
 import { createGeminiParser } from './gemini';
-import type { EmailParser } from './types';
+import type { EmailParser } from '../types';
 
 const SUPPORTED_PROVIDERS = ['groq', 'gemini'] as const;
 type Provider = (typeof SUPPORTED_PROVIDERS)[number];
