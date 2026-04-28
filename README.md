@@ -1,6 +1,6 @@
 # Portfolio MVP
 
-Personal investment portfolio tracker that automatically parses broker confirmation emails from Gmail, extracts transactions using AI, and displays holdings with real-time pricing — all converted to EUR.
+Personal investment portfolio tracker that automatically parses broker confirmation emails from Gmail, extracts transactions using AI, and displays holdings with real-time pricing in their source currency.
 
 ## How It Works
 
@@ -23,6 +23,8 @@ Personal investment portfolio tracker that automatically parses broker confirmat
 | Paytm Money | Stocks, ETFs, Mutual Funds | India |
 | Coinbase | Crypto | Global |
 | Binance | Crypto | Global |
+| KFintech | Mutual Funds | India |
+| 21Bitcoin | Crypto | Global |
 
 Custom sender domains can be added per broker in the sync UI — useful when a broker rebrands or uses multiple email domains.
 
@@ -34,7 +36,7 @@ All values are converted to EUR using live exchange rates.
 - **Database:** SQLite (better-sqlite3, WAL mode)
 - **Styling:** Tailwind CSS
 - **Charts:** Recharts
-- **AI Parsing:** Groq (llama-3.1-8b-instant) — configurable via `AI_PROVIDER`
+- **AI Parsing:** Groq (llama-3.1-8b-instant) — default, configurable via `AI_PROVIDER`. Gemini stub exists but is not yet implemented.
 - **Price Data:** Yahoo Finance, AMFI NAV API, CoinGecko
 - **Currency:** exchangerate-api.com
 
@@ -58,6 +60,16 @@ cp .env.local.example .env.local
 
 # Start development server
 pnpm dev
+```
+
+### Commands
+
+```bash
+pnpm dev        # Start dev server
+pnpm build      # Production build
+pnpm lint       # ESLint
+pnpm test       # Run tests (vitest)
+pnpm release    # Merge dev → main
 ```
 
 ### Environment Variables
@@ -87,6 +99,10 @@ GEMINI_API_KEY            # Gemini API key (if AI_PROVIDER=gemini)
 | `GET /api/export` | Export transactions as CSV |
 | `GET /api/settings/brokers` | Get broker selection + custom domains |
 | `PUT /api/settings/brokers` | Update broker selection + custom domains |
+| `GET /api/rates` | Currency exchange rates |
+| `GET /api/transactions` | List transactions |
+| `POST /api/transactions` | Create manual transaction |
+| `POST /api/snapshots` | Record daily portfolio snapshot |
 
 ## Project Structure
 
@@ -97,22 +113,23 @@ app/
   sync/page.tsx               # Broker selection + Gmail sync UI
   transactions/new/page.tsx   # Manual transaction entry
   api/                        # API routes
+domains/
+  shared/                     # Broker catalog, SQLite schema, shared types + utils
+  email-sync/                 # Gmail OAuth + email fetching, hooks, constants
+    hooks/                    # useGmailSync, useBrokerSettings
 lib/
-  brokers.ts                  # Broker catalog — sender domains, asset types
-  db.ts                       # SQLite schema, queries, settings
-  gmail.ts                    # Gmail OAuth + targeted email fetching
   parser.ts                   # Pre-filter + AI parser orchestration
   parsers/
     groq.ts                   # Groq parser (llama-3.1-8b-instant)
-    gemini.ts                 # Gemini parser (stub)
+    gemini.ts                 # Gemini parser (stub — not yet implemented)
     index.ts                  # Parser factory — reads AI_PROVIDER
     types.ts                  # EmailParser interface
   holdings.ts                 # Holdings aggregation + P&L
   prices.ts                   # Yahoo Finance, AMFI, CoinGecko
   currency.ts                 # EUR conversion
   export.ts                   # CSV export
-types/
-  index.ts                    # Shared TypeScript types
+  format.ts                   # Number + currency formatting helpers
+  snapshots.ts                # Daily portfolio value history
 ```
 
 ## Data Privacy
