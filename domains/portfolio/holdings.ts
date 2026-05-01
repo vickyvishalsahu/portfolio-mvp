@@ -1,6 +1,6 @@
 import { getDb } from '@/domains/shared/db';
 import { getPrice, convertToEur, getPrevPrice } from '@/domains/pricing';
-import type { Holding, Transaction } from '@/domains/shared/types';
+import type { Holding } from '@/domains/shared/types';
 
 type TransactionRow = {
   ticker: string;

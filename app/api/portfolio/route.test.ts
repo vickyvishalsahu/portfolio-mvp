@@ -1,16 +1,14 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // vi.mock is hoisted — mock data must be defined inline or via vi.fn()
-vi.mock('@/lib/holdings', () => ({ computeHoldings: vi.fn() }));
+vi.mock('@/domains/portfolio', () => ({ computeHoldings: vi.fn(), recordSnapshot: vi.fn() }));
 vi.mock('@/domains/shared/db', () => ({
   getAllTransactions: vi.fn().mockReturnValue([{}, {}]),
   getPriceCacheAge: vi.fn().mockReturnValue(null),
 }));
-vi.mock('@/lib/snapshots', () => ({ recordSnapshot: vi.fn() }));
 
 import { GET } from './route';
-import { computeHoldings } from '@/lib/holdings';
-import { recordSnapshot } from '@/lib/snapshots';
+import { computeHoldings, recordSnapshot } from '@/domains/portfolio';
 
 const TWO_INR_HOLDINGS = [
   {

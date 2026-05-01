@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllSnapshots } from '@/lib/snapshots';
+import { getAllSnapshots } from '@/domains/portfolio';
 
 export const GET = async (req: Request) => {
   try {

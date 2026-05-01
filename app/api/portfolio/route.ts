@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllTransactions, getPriceCacheAge } from '@/domains/shared/db';
-import { computeHoldings } from '@/lib/holdings';
-import { recordSnapshot } from '@/lib/snapshots';
+import { computeHoldings, recordSnapshot } from '@/domains/portfolio';
 
 export const GET = async () => {
   try {
