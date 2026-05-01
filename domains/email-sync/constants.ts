@@ -13,17 +13,3 @@ export const GET_PARSED_EMAIL_COUNT = 'SELECT COUNT(*) as count FROM raw_emails 
 export const GET_SELECTED_BROKERS = "SELECT value FROM settings WHERE key = 'selected_brokers'";
 export const GET_BROKER_CUSTOM_DOMAINS = "SELECT value FROM settings WHERE key = 'broker_custom_domains'";
 export const UPSERT_SETTING = 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)';
-
-export const GLOBAL_SUBJECT_KEYWORDS = [
-  'confirmation',
-  'contract note',
-  'purchase',
-  'SIP',
-  'bought',
-  'sold',
-  'order',
-  'execution',
-  'transaction',
-  'allotment',
-  'redemption',
-];

@@ -1,19 +1,10 @@
-import { GLOBAL_SUBJECT_KEYWORDS } from './constants';
 import type { BrokerDefinition } from '@/domains/shared/types';
 
 export const getGmailSearchTerms = (brokers: BrokerDefinition[]): string[] =>
   brokers.flatMap((broker) => broker.gmailSearchTerms ?? broker.senderDomains);
 
-export const getAllSubjectKeywords = (brokers: BrokerDefinition[]): string[] => {
-  const brokerKeywords = brokers.flatMap((broker) => broker.subjectKeywords ?? []);
-  return [...new Set([...GLOBAL_SUBJECT_KEYWORDS, ...brokerKeywords])];
-};
-
-export const buildSearchQuery = (brokers: BrokerDefinition[]): string => {
-  const senderPart = getGmailSearchTerms(brokers).map((searchTerm) => `from:${searchTerm}`).join(' OR ');
-  const subjectPart = getAllSubjectKeywords(brokers).map((keyword) => `subject:${keyword}`).join(' OR ');
-  return `(${senderPart}) (${subjectPart})`;
-};
+export const buildSearchQuery = (brokers: BrokerDefinition[]): string =>
+  getGmailSearchTerms(brokers).map((searchTerm) => `from:${searchTerm}`).join(' OR ');
 
 export const decodeBase64Url = (data: string): string =>
   Buffer.from(data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8');

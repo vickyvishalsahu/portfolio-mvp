@@ -9,7 +9,6 @@ export interface BrokerDefinition {
   name: string;
   senderDomains: string[];
   gmailSearchTerms?: string[];
-  subjectKeywords?: string[];
   assetTypes: AssetType[];
   region: Region;
 }
