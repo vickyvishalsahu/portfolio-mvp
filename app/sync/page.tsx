@@ -8,6 +8,7 @@ import { GmailConnection } from './gmail/GmailConnection';
 import { Pipeline } from './Pipeline';
 import type { ParseResult } from './Pipeline';
 import { SyncStats } from './SyncStats';
+import { DevResetPanel } from './DevResetPanel';
 
 const SyncPage = () => {
   const {
@@ -82,6 +83,7 @@ const SyncPage = () => {
         error={error}
       />
       {status && <SyncStats status={status} unparsedCount={unparsedCount} />}
+      <DevResetPanel />
     </div>
   );
 };
