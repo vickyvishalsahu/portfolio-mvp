@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import type { Transaction } from './types';
-import { GET_SETTING, UPSERT_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_PRICE_CACHE_AGE } from './constants';
+import { GET_SETTING, UPSERT_SETTING, DELETE_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_PRICE_CACHE_AGE } from './constants';
 
 const DB_PATH = path.join(process.cwd(), 'portfolio.db');
 
@@ -103,6 +103,11 @@ export const getSetting = (key: string): string | null => {
 export const setSetting = (key: string, value: string): void => {
   const db = getDb();
   db.prepare(UPSERT_SETTING).run(key, value);
+};
+
+export const deleteSetting = (key: string): void => {
+  const db = getDb();
+  db.prepare(DELETE_SETTING).run(key);
 };
 
 export const insertTransaction = (tx: {

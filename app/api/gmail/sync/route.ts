@@ -1,26 +1,25 @@
 import { NextResponse } from 'next/server';
-import { fetchBrokerEmails, insertRawEmail, getRawEmailCount, getParsedEmailCount, getSelectedBrokerIds, getBrokerCustomDomains, mergeCustomDomains } from '@/domains/email-sync';
-import { getBrokersByIds } from '@/domains/shared';
+import { fetchBrokerEmails, insertRawEmail, getRawEmailCount, getParsedEmailCount, getSelectedInstitutions } from '@/domains/email-sync';
+import { getRefreshToken } from '@/domains/email-sync';
 
 export const POST = async () => {
   try {
-    if (!process.env.GOOGLE_REFRESH_TOKEN) {
+    if (!getRefreshToken()) {
       return NextResponse.json(
-        { error: 'Gmail not connected. Visit /api/gmail/auth to connect.' },
+        { error: 'Gmail not connected. Visit /sync to connect.' },
         { status: 400 }
       );
     }
 
-    const selectedIds = getSelectedBrokerIds();
-    if (selectedIds.length === 0) {
+    const institutions = getSelectedInstitutions();
+    if (institutions.length === 0) {
       return NextResponse.json(
-        { error: 'No brokers selected. Choose at least one broker on the Sync page.' },
+        { error: 'No institutions selected. Add at least one on the Sync page.' },
         { status: 400 }
       );
     }
 
-    const brokers = mergeCustomDomains(getBrokersByIds(selectedIds), getBrokerCustomDomains());
-    const emails = await fetchBrokerEmails(brokers, 100);
+    const emails = await fetchBrokerEmails(institutions, 100);
 
     let newCount = 0;
     for (const email of emails) {
@@ -41,16 +40,16 @@ export const POST = async () => {
       { status: 500 }
     );
   }
-}
+};
 
 export const GET = async () => {
   try {
     return NextResponse.json({
       total_raw: getRawEmailCount(),
       total_parsed: getParsedEmailCount(),
-      gmail_connected: !!process.env.GOOGLE_REFRESH_TOKEN,
+      gmail_connected: !!getRefreshToken(),
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+};

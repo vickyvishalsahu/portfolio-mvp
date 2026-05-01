@@ -1,5 +1,5 @@
-import { getDb } from '@/domains/shared/db';
-import type { RawEmail } from '@/domains/shared/types';
+import { getDb, getSetting, setSetting } from '@/domains/shared/db';
+import type { RawEmail, Institution } from '@/domains/shared/types';
 import type { FetchedEmail } from './types';
 import {
   INSERT_RAW_EMAIL,
@@ -7,9 +7,6 @@ import {
   MARK_EMAIL_PARSED,
   GET_EMAIL_COUNT,
   GET_PARSED_EMAIL_COUNT,
-  GET_SELECTED_BROKERS,
-  GET_BROKER_CUSTOM_DOMAINS,
-  UPSERT_SETTING,
 } from './constants';
 
 export const insertRawEmail = (email: FetchedEmail) => {
@@ -39,36 +36,17 @@ export const getParsedEmailCount = (): number => {
   return row.count;
 };
 
-export const getSelectedBrokerIds = (): string[] => {
-  const db = getDb();
-  const row = db.prepare(GET_SELECTED_BROKERS).get() as { value: string } | undefined;
-  if (!row?.value) return [];
+export const getSelectedInstitutions = (): Institution[] => {
+  const value = getSetting('custom_institutions');
+  if (!value) return [];
   try {
-    const parsed = JSON.parse(row.value);
+    const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 };
 
-export const setSelectedBrokerIds = (ids: string[]): void => {
-  const db = getDb();
-  db.prepare(UPSERT_SETTING).run('selected_brokers', JSON.stringify(ids));
-};
-
-export const getBrokerCustomDomains = (): Record<string, string[]> => {
-  const db = getDb();
-  const row = db.prepare(GET_BROKER_CUSTOM_DOMAINS).get() as { value: string } | undefined;
-  if (!row?.value) return {};
-  try {
-    const parsed = JSON.parse(row.value);
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-};
-
-export const setBrokerCustomDomains = (overrides: Record<string, string[]>): void => {
-  const db = getDb();
-  db.prepare(UPSERT_SETTING).run('broker_custom_domains', JSON.stringify(overrides));
+export const setSelectedInstitutions = (institutions: Institution[]): void => {
+  setSetting('custom_institutions', JSON.stringify(institutions));
 };

@@ -1,8 +1,9 @@
 import { google } from 'googleapis';
+import { getSetting } from '@/domains/shared/db';
 import { GMAIL_SCOPES, DEFAULT_MAX_RESULTS } from './constants';
 import { buildSearchQuery, extractBody, getHeader } from './utils';
 import type { FetchedEmail } from './types';
-import type { BrokerDefinition } from '@/domains/shared/types';
+import type { Institution } from '@/domains/shared/types';
 
 export const getOAuth2Client = () =>
   new google.auth.OAuth2(
@@ -20,26 +21,29 @@ export const getAuthUrl = () => {
   });
 };
 
+export const getRefreshToken = (): string | null =>
+  getSetting('google_refresh_token') ?? process.env.GOOGLE_REFRESH_TOKEN ?? null;
+
 export const getAuthenticatedClient = () => {
+  const token = getRefreshToken();
+  if (!token) throw new Error('Gmail not connected');
   const oauth2Client = getOAuth2Client();
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-  });
+  oauth2Client.setCredentials({ refresh_token: token });
   return oauth2Client;
 };
 
 export const fetchBrokerEmails = async (
-  brokers: BrokerDefinition[],
+  institutions: Institution[],
   maxResults = DEFAULT_MAX_RESULTS
 ): Promise<FetchedEmail[]> => {
-  if (brokers.length === 0) return [];
+  if (institutions.length === 0) return [];
 
   const auth = getAuthenticatedClient();
   const gmail = google.gmail({ version: 'v1', auth });
 
   const listResponse = await gmail.users.messages.list({
     userId: 'me',
-    q: buildSearchQuery(brokers),
+    q: buildSearchQuery(institutions),
     maxResults,
   });
 

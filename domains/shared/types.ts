@@ -1,4 +1,5 @@
 export type AssetType = 'stock' | 'etf' | 'mf' | 'crypto';
+export type Institution = { name: string; domain: string };
 export type TransactionType = 'buy' | 'sell' | 'dividend' | 'sip';
 export type Currency = 'EUR' | 'INR' | 'USD';
 export type Confidence = 'high' | 'medium' | 'low';

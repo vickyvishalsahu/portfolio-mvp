@@ -1,10 +1,7 @@
-import type { BrokerDefinition } from '@/domains/shared/types';
+import type { Institution } from '@/domains/shared/types';
 
-export const getGmailSearchTerms = (brokers: BrokerDefinition[]): string[] =>
-  brokers.flatMap((broker) => broker.gmailSearchTerms ?? broker.senderDomains);
-
-export const buildSearchQuery = (brokers: BrokerDefinition[]): string =>
-  getGmailSearchTerms(brokers).map((searchTerm) => `from:${searchTerm}`).join(' OR ');
+export const buildSearchQuery = (institutions: Institution[]): string =>
+  institutions.map((institution) => `from:${institution.domain}`).join(' OR ');
 
 export const decodeBase64Url = (data: string): string =>
   Buffer.from(data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8');
@@ -29,17 +26,3 @@ export const getHeader = (headers: any[], name: string): string => {
   const header = headers?.find((headerItem: any) => headerItem.name.toLowerCase() === name.toLowerCase());
   return header?.value || '';
 };
-
-export const mergeCustomDomains = (
-  brokers: BrokerDefinition[],
-  customDomains: Record<string, string[]>
-): BrokerDefinition[] =>
-  brokers.map((broker) => {
-    const extras = customDomains[broker.id] ?? [];
-    if (extras.length === 0) return broker;
-    return {
-      ...broker,
-      senderDomains: [...new Set([...broker.senderDomains, ...extras])],
-      gmailSearchTerms: [...new Set([...(broker.gmailSearchTerms ?? broker.senderDomains), ...extras])],
-    };
-  });
