@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CLEARBIT_SUGGEST_URL } from '@/domains/email-sync/constants';
 
 type ClearbitSuggestion = { name: string; domain: string; logo: string };
 
@@ -11,7 +12,7 @@ export const GET = async (request: NextRequest) => {
 
   try {
     const response = await fetch(
-      `https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(query)}`,
+      `${CLEARBIT_SUGGEST_URL}?query=${encodeURIComponent(query)}`,
       { next: { revalidate: 300 } }
     );
 

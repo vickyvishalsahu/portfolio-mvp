@@ -1,5 +1,7 @@
 export const GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 
+export const CLEARBIT_SUGGEST_URL = 'https://autocomplete.clearbit.com/v1/companies/suggest';
+
 export const DEFAULT_MAX_RESULTS = 50;
 
 export const INSERT_RAW_EMAIL = `
