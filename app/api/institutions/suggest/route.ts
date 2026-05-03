@@ -4,7 +4,8 @@ type ClearbitSuggestion = { name: string; domain: string; logo: string };
 
 export const GET = async (request: NextRequest) => {
   const query = request.nextUrl.searchParams.get('q');
-  if (!query || query.trim().length < 2) {
+  const isTooShort = !query || query.trim().length < 2;
+  if (isTooShort) {
     return NextResponse.json([]);
   }
 
