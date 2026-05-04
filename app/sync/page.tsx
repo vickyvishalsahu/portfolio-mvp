@@ -31,6 +31,7 @@ const SyncPage = () => {
     addInstitution, removeInstitution, updateDomain,
   } = useInstitutionSettings();
 
+  const [activeFetchJobId, setActiveFetchJobId] = useState<string | null>(null);
   const [activeParseJobId, setActiveParseJobId] = useState<string | null>(null);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -39,6 +40,7 @@ const SyncPage = () => {
   const isConnected = status?.gmail_connected ?? false;
   const hasInstitutions = institutions.length > 0;
   const hasSynced = (status?.total_raw ?? 0) > 0;
+  const fetching = activeFetchJobId !== null;
   const parsing = activeParseJobId !== null;
   const unparsedCount = status ? status.total_raw - status.total_parsed : 0;
   const error = syncError || parseError;
@@ -58,8 +60,8 @@ const SyncPage = () => {
   }, [hasSynced]);
 
   const handleFetch = async () => {
-    await handleSync();
-    await loadFetchedEmails();
+    const jobId = await handleSync();
+    if (jobId) setActiveFetchJobId(jobId);
   };
 
   const handleParse = async () => {
@@ -74,6 +76,26 @@ const SyncPage = () => {
       setParseError('Parse request failed');
     }
   };
+
+  useEffect(() => {
+    if (!activeFetchJobId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/jobs');
+        const jobs: { id: string; status: string }[] = await response.json();
+        const job = jobs.find((jobItem) => jobItem.id === activeFetchJobId);
+        if (job?.status === 'success' || job?.status === 'error') {
+          await loadFetchedEmails();
+          setActiveFetchJobId(null);
+        }
+      } catch {
+        // non-fatal
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activeFetchJobId]);
 
   useEffect(() => {
     if (!activeParseJobId) return;
@@ -147,10 +169,10 @@ const SyncPage = () => {
         <h2 className="text-lg font-semibold mb-4">Fetch Emails</h2>
         <button
           onClick={handleFetch}
-          disabled={locked}
+          disabled={fetching || locked}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
         >
-          Fetch emails from these senders
+          {fetching ? 'Fetching… (see bell)' : 'Fetch emails from these senders'}
         </button>
         <p className="text-gray-500 text-xs mt-2">Progress shown in the bell →</p>
         {fetchedEmails.length > 0 && (
@@ -174,6 +196,7 @@ const SyncPage = () => {
         >
           {parsing ? 'Parsing… (see bell)' : `Parse emails (${unparsedCount} pending)`}
         </button>
+        <p className="text-gray-500 text-xs mt-2">Progress shown in the bell →</p>
         {renderParseResult()}
       </div>
     );

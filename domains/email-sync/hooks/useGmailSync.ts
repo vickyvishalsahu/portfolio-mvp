@@ -29,12 +29,13 @@ export const useGmailSync = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSync = async () => {
+  const handleSync = async (): Promise<string | undefined> => {
     setError(null);
     try {
       const res = await fetch('/api/gmail/sync', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) setError(data.error);
+      else return data.jobId as string;
     } catch {
       setError('Sync request failed');
     }
