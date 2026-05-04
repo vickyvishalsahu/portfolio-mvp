@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { NotificationBell } from '@/app/components/NotificationBell';
 
 export const metadata: Metadata = {
   title: 'Portfolio MVP',
@@ -20,6 +21,9 @@ export default function RootLayout({
             <a href="/sync" className="text-gray-400 hover:text-white transition">Sync</a>
             <a href="/holdings" className="text-gray-400 hover:text-white transition">Holdings</a>
             <a href="/transactions/new" className="text-gray-400 hover:text-white transition">Add Transaction</a>
+            <div className="ml-auto">
+              <NotificationBell />
+            </div>
           </div>
         </nav>
         <main className="max-w-6xl mx-auto px-6 py-8">
