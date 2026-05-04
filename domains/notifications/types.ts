@@ -8,3 +8,16 @@ export type Notification = {
   timestamp: Date;
   read: boolean;
 };
+
+export type JobType = 'fetch' | 'parse';
+
+export type Job = {
+  id: string;
+  type: JobType;
+  status: NotificationStatus;
+  progress: { current: number; total: number } | null;
+  detail: string;
+  result?: Record<string, unknown>;
+  startedAt: Date;
+  finishedAt?: Date;
+};

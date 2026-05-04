@@ -25,20 +25,21 @@ type FetchedEmail = {
 };
 
 const SyncPage = () => {
-  const { status, syncing, syncResult, error: syncError, handleSync, fetchStatus } = useGmailSync();
+  const { status, error: syncError, handleSync, fetchStatus } = useGmailSync();
   const {
     institutions, searchQuery, setSearchQuery, suggestions, searching,
     addInstitution, removeInstitution, updateDomain,
   } = useInstitutionSettings();
 
-  const [parsing, setParsing] = useState(false);
+  const [activeParseJobId, setActiveParseJobId] = useState<string | null>(null);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const [fetchedEmails, setFetchedEmails] = useState<FetchedEmail[]>([]);
 
   const isConnected = status?.gmail_connected ?? false;
   const hasInstitutions = institutions.length > 0;
-  const hasSynced = syncResult !== null;
+  const hasSynced = (status?.total_raw ?? 0) > 0;
+  const parsing = activeParseJobId !== null;
   const unparsedCount = status ? status.total_raw - status.total_parsed : 0;
   const error = syncError || parseError;
 
@@ -62,20 +63,40 @@ const SyncPage = () => {
   };
 
   const handleParse = async () => {
-    setParsing(true);
     setParseError(null);
     setParseResult(null);
     try {
       const response = await fetch('/api/parse', { method: 'POST' });
       const data = await response.json();
-      if (response.ok) setParseResult(data);
-      else setParseError(data.error);
+      if (response.ok && data.jobId) setActiveParseJobId(data.jobId);
+      else if (!response.ok) setParseError(data.error);
     } catch {
       setParseError('Parse request failed');
-    } finally {
-      setParsing(false);
     }
   };
+
+  useEffect(() => {
+    if (!activeParseJobId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/jobs');
+        const jobs: { id: string; status: string; result?: ParseResult; detail: string }[] = await response.json();
+        const job = jobs.find((jobItem) => jobItem.id === activeParseJobId);
+        if (job?.status === 'success') {
+          if (job.result) setParseResult(job.result as ParseResult);
+          setActiveParseJobId(null);
+        } else if (job?.status === 'error') {
+          setParseError(job.detail);
+          setActiveParseJobId(null);
+        }
+      } catch {
+        // non-fatal
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activeParseJobId]);
 
   const handleTokenReset = async () => {
     await fetchStatus();
@@ -126,16 +147,12 @@ const SyncPage = () => {
         <h2 className="text-lg font-semibold mb-4">Fetch Emails</h2>
         <button
           onClick={handleFetch}
-          disabled={syncing || locked}
+          disabled={locked}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
         >
-          {syncing ? 'Fetching...' : 'Fetch emails from these senders'}
+          Fetch emails from these senders
         </button>
-        {syncResult && (
-          <p className="text-green-400 text-sm mt-3">
-            Fetched {syncResult.fetched} emails, {syncResult.new} new
-          </p>
-        )}
+        <p className="text-gray-500 text-xs mt-2">Progress shown in the bell →</p>
         {fetchedEmails.length > 0 && (
           <div className="mt-4">
             <FetchedEmailList emails={fetchedEmails} />
@@ -155,7 +172,7 @@ const SyncPage = () => {
           disabled={parsing || locked}
           className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
         >
-          {parsing ? 'Parsing...' : `Parse emails (${unparsedCount} pending)`}
+          {parsing ? 'Parsing… (see bell)' : `Parse emails (${unparsedCount} pending)`}
         </button>
         {renderParseResult()}
       </div>

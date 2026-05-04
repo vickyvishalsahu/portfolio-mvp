@@ -8,17 +8,8 @@ export interface SyncStatus {
   gmail_connected: boolean;
 }
 
-export interface SyncResult {
-  fetched: number;
-  new: number;
-  total_raw: number;
-  total_parsed: number;
-}
-
 export const useGmailSync = () => {
   const [status, setStatus] = useState<SyncStatus | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = async () => {
@@ -34,27 +25,20 @@ export const useGmailSync = () => {
 
   useEffect(() => {
     fetchStatus();
+    const interval = setInterval(fetchStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSync = async () => {
-    setSyncing(true);
     setError(null);
-    setSyncResult(null);
     try {
       const res = await fetch('/api/gmail/sync', { method: 'POST' });
       const data = await res.json();
-      if (res.ok) {
-        setSyncResult(data);
-        setStatus({ total_raw: data.total_raw, total_parsed: data.total_parsed, gmail_connected: true });
-      } else {
-        setError(data.error);
-      }
+      if (!res.ok) setError(data.error);
     } catch {
       setError('Sync request failed');
-    } finally {
-      setSyncing(false);
     }
   };
 
-  return { status, syncing, syncResult, error, setError, fetchStatus, handleSync };
+  return { status, error, setError, fetchStatus, handleSync };
 };

@@ -2,26 +2,40 @@ import { NextResponse } from 'next/server';
 import { getUnparsedEmails, markEmailParsed } from '@/domains/email-sync/db';
 import { insertTransaction } from '@/domains/shared/db';
 import { parseEmail } from '@/domains/transaction-parsing';
+import { createJob, updateJob } from '@/domains/notifications/jobStore';
 import type { RawEmail } from '@/domains/shared/types';
 
 export const POST = async () => {
-  try {
-    const unparsed = getUnparsedEmails() as RawEmail[];
+  const unparsed = getUnparsedEmails() as RawEmail[];
 
-    if (unparsed.length === 0) {
-      return NextResponse.json({
-        message: 'No unparsed emails',
-        processed: 0,
-        transactions_added: 0,
-        errors: [],
-      });
-    }
+  if (unparsed.length === 0) {
+    return NextResponse.json({
+      message: 'No unparsed emails',
+      processed: 0,
+      transactions_added: 0,
+      errors: [],
+    });
+  }
 
+  const job = createJob('parse');
+  updateJob(job.id, {
+    progress: { current: 0, total: unparsed.length },
+    detail: `Parsing 0 of ${unparsed.length}…`,
+  });
+
+  (async () => {
     let totalTransactions = 0;
     const errors: { email_id: string; subject: string; error: string }[] = [];
     const skipped: { email_id: string; subject: string; reason: string }[] = [];
 
-    for (const email of unparsed) {
+    for (let index = 0; index < unparsed.length; index++) {
+      const email = unparsed[index];
+
+      updateJob(job.id, {
+        progress: { current: index + 1, total: unparsed.length },
+        detail: `Parsing ${index + 1} of ${unparsed.length}…`,
+      });
+
       try {
         const result = await parseEmail(email.body, email.sender, email.subject);
 
@@ -63,17 +77,18 @@ export const POST = async () => {
       }
     }
 
-    return NextResponse.json({
-      processed: unparsed.length,
-      transactions_added: totalTransactions,
-      skipped,
-      errors,
+    updateJob(job.id, {
+      status: errors.length > 0 && totalTransactions === 0 ? 'error' : 'success',
+      detail: `Done — ${totalTransactions} transactions added`,
+      result: {
+        processed: unparsed.length,
+        transactions_added: totalTransactions,
+        skipped,
+        errors,
+      },
+      finishedAt: new Date(),
     });
-  } catch (error: any) {
-    console.error('Parse error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Parse failed' },
-      { status: 500 }
-    );
-  }
-}
+  })();
+
+  return NextResponse.json({ jobId: job.id });
+};
