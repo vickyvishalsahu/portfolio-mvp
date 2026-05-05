@@ -165,7 +165,7 @@ const SyncPage = () => {
   };
 
   const renderFetchStep = () => {
-    const locked = !isConnected || !hasInstitutions;
+    const locked = !isConnected;
     return (
       <div className={`bg-gray-900 border rounded-lg p-6 mb-6 transition ${locked ? 'border-gray-800 opacity-40 pointer-events-none' : 'border-gray-800'}`}>
         <h2 className="text-lg font-semibold mb-4">{t('sync.fetch.title')}</h2>

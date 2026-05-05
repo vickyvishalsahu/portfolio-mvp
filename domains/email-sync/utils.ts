@@ -1,7 +1,11 @@
 import type { Institution } from '@/domains/shared/types';
 
-export const buildSearchQuery = (institutions: Institution[]): string =>
-  institutions.map((institution) => `from:${institution.domain}`).join(' OR ');
+export const buildSearchQuery = (institutions: Institution[]): string => {
+  const base = 'category:purchases';
+  if (institutions.length === 0) return base;
+  const domainFilter = institutions.map((institution) => `from:${institution.domain}`).join(' OR ');
+  return `${base} OR (${domainFilter})`;
+};
 
 export const decodeBase64Url = (data: string): string =>
   Buffer.from(data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8');

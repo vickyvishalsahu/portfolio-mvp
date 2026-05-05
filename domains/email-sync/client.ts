@@ -36,7 +36,6 @@ export const fetchBrokerEmails = async (
   institutions: Institution[],
   maxResults = DEFAULT_MAX_RESULTS
 ): Promise<FetchedEmail[]> => {
-  if (institutions.length === 0) return [];
 
   const auth = getAuthenticatedClient();
   const gmail = google.gmail({ version: 'v1', auth });

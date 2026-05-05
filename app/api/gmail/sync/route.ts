@@ -12,12 +12,6 @@ export const POST = async () => {
   }
 
   const institutions = getSelectedInstitutions();
-  if (institutions.length === 0) {
-    return NextResponse.json(
-      { error: 'No institutions selected. Add at least one on the Sync page.' },
-      { status: 400 }
-    );
-  }
 
   const job = createJob('fetch');
 
