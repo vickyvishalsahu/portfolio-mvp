@@ -30,15 +30,15 @@ const NotificationIcon = ({ status }: { status: Notification['status'] }) => {
 };
 
 const NotificationItem = ({ notification }: { notification: Notification }) => {
-  const { t } = useTranslation('notifications');
+  const { t } = useTranslation();
 
   const formatRelativeTime = (date: Date): string => {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (seconds < 60) return t('timeAgo.justNow');
+    if (seconds < 60) return t('notifications.timeAgo.justNow');
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return t('timeAgo.minsAgo', { minutes });
+    if (minutes < 60) return t('notifications.timeAgo.minsAgo', { minutes });
     const hours = Math.floor(minutes / 60);
-    return t('timeAgo.hoursAgo', { hours });
+    return t('notifications.timeAgo.hoursAgo', { hours });
   };
 
   return (
@@ -61,7 +61,7 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
 };
 
 export const NotificationBell = () => {
-  const { t } = useTranslation('notifications');
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAllRead, clearAll } = useNotifications();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -88,7 +88,7 @@ export const NotificationBell = () => {
   };
 
   const renderEmpty = () => (
-    <p className="text-sm text-gray-600 text-center py-8">{t('noActivity')}</p>
+    <p className="text-sm text-gray-600 text-center py-8">{t('notifications.noActivity')}</p>
   );
 
   const renderList = () => (
@@ -105,7 +105,7 @@ export const NotificationBell = () => {
         ref={buttonRef}
         onClick={handleToggle}
         className="relative p-2 text-gray-400 hover:text-white transition"
-        aria-label={t('ariaLabel')}
+        aria-label={t('notifications.ariaLabel')}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path
@@ -125,13 +125,13 @@ export const NotificationBell = () => {
           className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-50 overflow-hidden"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-            <span className="text-sm font-medium text-white">{t('title')}</span>
+            <span className="text-sm font-medium text-white">{t('notifications.title')}</span>
             {notifications.length > 0 && (
               <button
                 onClick={clearAll}
                 className="text-xs text-gray-500 hover:text-gray-300 transition"
               >
-                {t('clearAll')}
+                {t('notifications.clearAll')}
               </button>
             )}
           </div>

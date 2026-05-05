@@ -11,7 +11,7 @@ type Props = {
 };
 
 export const InstitutionChip = ({ institution, onRemove, onUpdateDomain }: Props) => {
-  const { t } = useTranslation('sync');
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [draftDomain, setDraftDomain] = useState(institution.domain);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +56,7 @@ export const InstitutionChip = ({ institution, onRemove, onUpdateDomain }: Props
       <button
         onClick={handleDomainClick}
         className="text-gray-400 text-xs hover:text-blue-400 transition"
-        title={t('institutions.chip.editTitle')}
+        title={t('sync.institutions.chip.editTitle')}
       >
         {institution.domain}
       </button>
@@ -71,7 +71,7 @@ export const InstitutionChip = ({ institution, onRemove, onUpdateDomain }: Props
       <button
         onClick={() => onRemove(institution.domain)}
         className="text-gray-600 hover:text-red-400 transition ml-1 text-xs leading-none"
-        title={t('institutions.chip.removeTitle')}
+        title={t('sync.institutions.chip.removeTitle')}
       >
         ×
       </button>

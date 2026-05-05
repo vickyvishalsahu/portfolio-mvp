@@ -13,7 +13,7 @@ type ResetResult = {
 };
 
 export const DevResetPanel = () => {
-  const { t } = useTranslation('sync');
+  const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [result, setResult] = useState<ResetResult | null>(null);
@@ -30,7 +30,7 @@ export const DevResetPanel = () => {
       if (response.ok) setResult(data);
       else setError(data.error);
     } catch {
-      setError(t('devReset.error'));
+      setError(t('sync.devReset.error'));
     } finally {
       setResetting(false);
     }
@@ -49,7 +49,7 @@ export const DevResetPanel = () => {
   const handleCancel = () => setConfirming(false);
 
   const renderButton = () => {
-    if (resetting) return <span className="text-gray-500 text-sm">{t('devReset.resetting')}</span>;
+    if (resetting) return <span className="text-gray-500 text-sm">{t('sync.devReset.resetting')}</span>;
 
     if (confirming) {
       return (
@@ -58,13 +58,13 @@ export const DevResetPanel = () => {
             onClick={handleResetClick}
             className="bg-red-700 hover:bg-red-600 text-white text-sm px-4 py-1.5 rounded transition"
           >
-            {t('devReset.confirmButton')}
+            {t('sync.devReset.confirmButton')}
           </button>
           <button
             onClick={handleCancel}
             className="text-gray-400 hover:text-gray-200 text-sm px-4 py-1.5 rounded border border-gray-700 transition"
           >
-            {t('devReset.cancel')}
+            {t('sync.devReset.cancel')}
           </button>
         </div>
       );
@@ -75,7 +75,7 @@ export const DevResetPanel = () => {
         onClick={handleResetClick}
         className="bg-gray-700 hover:bg-red-900 text-gray-300 hover:text-red-300 text-sm px-4 py-1.5 rounded transition border border-gray-600 hover:border-red-800"
       >
-        {t('devReset.resetButton')}
+        {t('sync.devReset.resetButton')}
       </button>
     );
   };
@@ -86,7 +86,7 @@ export const DevResetPanel = () => {
     const { deleted } = result;
     return (
       <p className="text-green-600 text-xs mt-2">
-        {t('devReset.cleared', {
+        {t('sync.devReset.cleared', {
           emails: deleted.raw_emails,
           transactions: deleted.transactions,
           prices: deleted.price_cache,
@@ -98,12 +98,12 @@ export const DevResetPanel = () => {
 
   return (
     <div className="border border-dashed border-gray-700 rounded-lg p-4">
-      <p className="text-xs text-gray-600 mb-2 uppercase tracking-wide">{t('devReset.title')}</p>
+      <p className="text-xs text-gray-600 mb-2 uppercase tracking-wide">{t('sync.devReset.title')}</p>
       <div className="flex items-center gap-3">
         {renderButton()}
         {!confirming && (
           <span className="text-xs text-gray-600">
-            {t('devReset.hint')}
+            {t('sync.devReset.hint')}
           </span>
         )}
       </div>

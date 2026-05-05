@@ -1,9 +1,0 @@
-{
-  "loading": "Loading...",
-  "assetTypes": {
-    "stock": "Stock",
-    "etf": "ETF",
-    "mf": "Mutual Fund",
-    "crypto": "Crypto"
-  }
-}

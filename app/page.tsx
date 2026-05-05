@@ -51,7 +51,7 @@ const ASSET_COLORS: Record<string, string> = {
 
 
 export default function Dashboard() {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [snapshots, setSnapshots] = useState<{ date: string; total_value: number }[]>([]);
@@ -79,17 +79,17 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
-        <p className="text-gray-500">{t('loading')}</p>
+        <h1 className="text-3xl font-bold mb-6">{t('dashboard.title')}</h1>
+        <p className="text-gray-500">{t('dashboard.loading')}</p>
       </div>
     );
   }
 
   if (!data || data.holdings.length === 0) {
-    const emptyLabels = [t('summary.totalValue'), t('summary.totalPnl'), t('summary.holdings')];
+    const emptyLabels = [t('dashboard.summary.totalValue'), t('dashboard.summary.totalPnl'), t('dashboard.summary.holdings')];
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('dashboard.title')}</h1>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {emptyLabels.map((label) => (
             <div key={label} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
@@ -99,8 +99,8 @@ export default function Dashboard() {
           ))}
         </div>
         <p className="text-gray-500">
-          {t('empty.description')}{' '}
-          <a href="/sync" className="text-blue-400 hover:underline">{t('empty.cta')}</a>
+          {t('dashboard.empty.description')}{' '}
+          <a href="/sync" className="text-blue-400 hover:underline">{t('dashboard.empty.cta')}</a>
         </p>
       </div>
     );
@@ -119,7 +119,7 @@ export default function Dashboard() {
       return acc;
     }, {})
   ).map(([type, value]) => ({
-    name: t(`assetLabels.${type}`, { defaultValue: type }),
+    name: t(`dashboard.assetLabels.${type}`, { defaultValue: type }),
     value: Math.round(value * 100) / 100,
     color: ASSET_COLORS[type] || '#6b7280',
   }));
@@ -148,7 +148,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
+      <h1 className="text-3xl font-bold mb-6">{t('dashboard.title')}</h1>
 
       {/* Summary Cards — one per currency + counts */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -162,14 +162,14 @@ export default function Dashboard() {
             const sign = isPositive ? '+' : '';
             return (
               <p className={`text-xs mt-2 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? '↑' : '↓'} {sign}{fmtLocal(delta.delta, s.currency)} ({sign}{delta.deltaPct.toFixed(1)}%) {t('movers.vsLast30d')}
+                {isPositive ? '↑' : '↓'} {sign}{fmtLocal(delta.delta, s.currency)} ({sign}{delta.deltaPct.toFixed(1)}%) {t('dashboard.movers.vsLast30d')}
               </p>
             );
           };
 
           return (
             <div key={s.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-              <p className="text-gray-400 text-sm">{t('summary.totalValue')}</p>
+              <p className="text-gray-400 text-sm">{t('dashboard.summary.totalValue')}</p>
               <p className="text-2xl font-bold text-white">{fmtLocal(s.total_value, s.currency)}</p>
               <p className={`text-sm font-medium mt-1 ${s.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {fmtLocal(s.total_pnl, s.currency)} {pct(s.total_pnl_pct)}
@@ -179,11 +179,11 @@ export default function Dashboard() {
           );
         })}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <p className="text-gray-400 text-sm">{t('summary.holdings')}</p>
+          <p className="text-gray-400 text-sm">{t('dashboard.summary.holdings')}</p>
           <p className="text-2xl font-bold text-white">{summary.holdings_count}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <p className="text-gray-400 text-sm">{t('summary.transactions')}</p>
+          <p className="text-gray-400 text-sm">{t('dashboard.summary.transactions')}</p>
           <p className="text-2xl font-bold text-white">{summary.transaction_count}</p>
         </div>
       </div>
@@ -192,19 +192,19 @@ export default function Dashboard() {
         {/* Allocation Chart */}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">{t('allocation.title')}</h2>
+            <h2 className="text-lg font-semibold">{t('dashboard.allocation.title')}</h2>
             <div className="flex text-xs rounded overflow-hidden border border-gray-700">
               <button
                 onClick={() => setAllocView('type')}
                 className={`px-3 py-1 transition ${allocView === 'type' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
               >
-                {t('allocation.byType')}
+                {t('dashboard.allocation.byType')}
               </button>
               <button
                 onClick={() => setAllocView('broker')}
                 className={`px-3 py-1 transition ${allocView === 'broker' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
               >
-                {t('allocation.byBroker')}
+                {t('dashboard.allocation.byBroker')}
               </button>
             </div>
           </div>
@@ -237,13 +237,13 @@ export default function Dashboard() {
 
         {/* Top Holdings */}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('topHoldings.title')}</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('dashboard.topHoldings.title')}</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-gray-400 border-b border-gray-800">
-                <th className="text-left pb-2">{t('topHoldings.name')}</th>
-                <th className="text-right pb-2">{t('topHoldings.value')}</th>
-                <th className="text-right pb-2">{t('topHoldings.pnl')}</th>
+                <th className="text-left pb-2">{t('dashboard.topHoldings.name')}</th>
+                <th className="text-right pb-2">{t('dashboard.topHoldings.value')}</th>
+                <th className="text-right pb-2">{t('dashboard.topHoldings.pnl')}</th>
               </tr>
             </thead>
             <tbody>
@@ -265,7 +265,7 @@ export default function Dashboard() {
           </table>
           {holdings.length > 5 && (
             <a href="/holdings" className="text-blue-400 hover:underline text-sm mt-3 inline-block">
-              {t('topHoldings.viewAll', { count: holdings.length })}
+              {t('dashboard.topHoldings.viewAll', { count: holdings.length })}
             </a>
           )}
         </div>
@@ -273,12 +273,12 @@ export default function Dashboard() {
 
       {withChange.length > 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">{t('movers.title')}</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('dashboard.movers.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('movers.gainers')}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('dashboard.movers.gainers')}</p>
               {topGainers.length === 0 ? (
-                <p className="text-gray-600 text-sm">{t('movers.noGains')}</p>
+                <p className="text-gray-600 text-sm">{t('dashboard.movers.noGains')}</p>
               ) : (
                 <table className="w-full text-sm">
                   <tbody>
@@ -301,9 +301,9 @@ export default function Dashboard() {
               )}
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('movers.losers')}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('dashboard.movers.losers')}</p>
               {topLosers.length === 0 ? (
-                <p className="text-gray-600 text-sm">{t('movers.noLosses')}</p>
+                <p className="text-gray-600 text-sm">{t('dashboard.movers.noLosses')}</p>
               ) : (
                 <table className="w-full text-sm">
                   <tbody>
@@ -331,7 +331,7 @@ export default function Dashboard() {
 
       {snapshots.length > 1 && (
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('netWorth.title')}</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('dashboard.netWorth.title')}</h2>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={snapshots} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
@@ -339,7 +339,7 @@ export default function Dashboard() {
                 dataKey="date"
                 tick={{ fill: '#9ca3af', fontSize: 11 }}
                 tickFormatter={(dateString) => {
-                  const [, month, day] = dateString.split('-');
+                  const [, month, day] = dateString.split('dashboard.-');
                   return `${day}/${month}`;
                 }}
               />
@@ -349,7 +349,7 @@ export default function Dashboard() {
                 width={64}
               />
               <Tooltip
-                formatter={(value: any) => [fmtLocal(Number(value), primaryCurrency), t('netWorth.portfolio')]}
+                formatter={(value: any) => [fmtLocal(Number(value), primaryCurrency), t('dashboard.netWorth.portfolio')]}
                 contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
                 labelStyle={{ color: '#e5e7eb' }}
                 itemStyle={{ color: '#3b82f6' }}

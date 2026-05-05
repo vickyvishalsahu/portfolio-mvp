@@ -23,11 +23,11 @@ export const BrokerCard = ({
   newDomainInput, setNewDomainInput, domainInputRef,
   onToggle, onExpand, onAddDomain, onRemoveDomain,
 }: BrokerCardProps) => {
-  const { t } = useTranslation('sync');
+  const { t } = useTranslation();
 
   const senderDomainsLabel = extras.length > 0
-    ? t('brokers.senderDomainsCustom', { count: extras.length })
-    : t('brokers.senderDomains');
+    ? t('sync.brokers.senderDomainsCustom', { count: extras.length })
+    : t('sync.brokers.senderDomains');
 
   return (
     <div className={`rounded-lg border transition ${selected ? 'border-blue-500 bg-blue-950' : 'border-gray-700 bg-gray-800'}`}>
@@ -39,7 +39,7 @@ export const BrokerCard = ({
           <span className="text-sm font-medium text-white truncate">{broker.name}</span>
         </div>
         <div className="flex flex-wrap gap-1 pl-5">
-          <span className="text-[10px] text-gray-500">{t(`brokers.regions.${broker.region}`, { defaultValue: broker.region })}</span>
+          <span className="text-[10px] text-gray-500">{t(`sync.brokers.regions.${broker.region}`, { defaultValue: broker.region })}</span>
           <span className="text-[10px] text-gray-600">·</span>
           <span className="text-[10px] text-gray-500">{broker.assetTypes.join(', ')}</span>
         </div>
@@ -75,11 +75,11 @@ export const BrokerCard = ({
                   value={newDomainInput}
                   onChange={(event) => setNewDomainInput(event.target.value)}
                   onKeyDown={(event) => event.key === 'Enter' && onAddDomain()}
-                  placeholder={t('brokers.addDomainPlaceholder')}
+                  placeholder={t('sync.brokers.addDomainPlaceholder')}
                   className="flex-1 text-[11px] bg-gray-800 border border-gray-600 rounded px-2 py-1 text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500"
                 />
                 <button onClick={onAddDomain} className="text-[11px] bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded">
-                  {t('brokers.add')}
+                  {t('sync.brokers.add')}
                 </button>
               </div>
             </div>

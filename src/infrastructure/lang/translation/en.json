@@ -1,0 +1,282 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "assetTypes": {
+      "stock": "Stock",
+      "etf": "ETF",
+      "mf": "Mutual Fund",
+      "crypto": "Crypto"
+    }
+  },
+  "nav": {
+    "brand": "Portfolio MVP",
+    "links": {
+      "sync": "Sync",
+      "holdings": "Holdings",
+      "addTransaction": "Add Transaction"
+    },
+    "footer": "Your data stays on your device — nothing is uploaded except during Gmail sync and live price lookups."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "loading": "Loading...",
+    "empty": {
+      "description": "Connect Gmail and sync emails to get started.",
+      "cta": "Go to Sync"
+    },
+    "summary": {
+      "totalValue": "Total Value",
+      "totalPnl": "Total P&L",
+      "holdings": "Holdings",
+      "transactions": "Transactions"
+    },
+    "assetLabels": {
+      "stock": "Stocks",
+      "etf": "ETFs",
+      "mf": "Mutual Funds",
+      "crypto": "Crypto"
+    },
+    "allocation": {
+      "title": "Allocation",
+      "byType": "By Type",
+      "byBroker": "By Broker"
+    },
+    "topHoldings": {
+      "title": "Top Holdings",
+      "name": "Name",
+      "value": "Value",
+      "pnl": "P&L",
+      "viewAll": "View all {{count}} holdings"
+    },
+    "movers": {
+      "title": "Biggest Movers",
+      "gainers": "Gainers",
+      "losers": "Losers",
+      "noGains": "No gains since last refresh",
+      "noLosses": "No losses since last refresh",
+      "vsLast30d": "vs last 30d"
+    },
+    "netWorth": {
+      "title": "Net Worth Over Time",
+      "portfolio": "Portfolio"
+    }
+  },
+  "holdings": {
+    "title": "Holdings",
+    "loading": "Loading...",
+    "empty": {
+      "description": "No holdings yet.",
+      "syncLink": "Sync emails",
+      "toGetStarted": "to get started."
+    },
+    "priceAge": {
+      "updating": "Updating...",
+      "label": "Prices: {{age}}",
+      "never": "never",
+      "justNow": "just now",
+      "oneMinAgo": "1 min ago",
+      "minsAgo": "{{mins}} min ago",
+      "oneHourAgo": "1 hour ago",
+      "hoursAgo": "{{hrs}} hours ago"
+    },
+    "actions": {
+      "exportCsv": "Export CSV",
+      "refreshPrices": "Refresh Prices",
+      "refreshing": "Refreshing..."
+    },
+    "failedPrices": "Failed to update prices for: {{tickers}}",
+    "columns": {
+      "name": "Name",
+      "ticker": "Ticker",
+      "type": "Type",
+      "qty": "Qty",
+      "avgCost": "Avg Cost",
+      "price": "Price",
+      "value": "Value",
+      "pnlPct": "P&L %",
+      "broker": "Broker"
+    }
+  },
+  "sync": {
+    "title": "Email Sync",
+    "fetch": {
+      "title": "Fetch Emails",
+      "button": "Fetch emails from these senders",
+      "buttonFetching": "Fetching… (see bell)",
+      "progressHint": "Progress shown in the bell →"
+    },
+    "parse": {
+      "title": "Parse Emails",
+      "button": "Parse emails ({{count}} pending)",
+      "buttonParsing": "Parsing… (see bell)",
+      "progressHint": "Progress shown in the bell →",
+      "result": {
+        "summary": "Processed {{processed}} emails, added {{transactions}} transactions",
+        "skipped": "Skipped ({{count}}):",
+        "errors": "Errors ({{count}}):",
+        "addManually": "Add manually →"
+      },
+      "error": "Parse request failed"
+    },
+    "gmail": {
+      "loading": "Loading...",
+      "connected": "Connected",
+      "disconnect": "Disconnect",
+      "notConnected": "Not connected",
+      "beforeConnect": {
+        "title": "Before you connect",
+        "bodyPrefix": "We request",
+        "readOnly": "read-only",
+        "bodySuffix": "Gmail access to find investment emails from senders you choose. No other emails are read, stored, or transmitted.",
+        "staysOnDevice": "Everything stays on your device.",
+        "connectButton": "Connect Gmail →"
+      }
+    },
+    "institutions": {
+      "title": "Which institutions send you investment emails?",
+      "subtitle": "Search for your broker, bank, or fund house.",
+      "searchPlaceholder": "Search broker, bank, or fund house...",
+      "searching": "Searching...",
+      "noResults": "No results found.",
+      "addManually": "Add domain manually →",
+      "notFinding": "Not finding yours? Add a domain manually →",
+      "manualPlaceholder": "e.g. angelbroking.com",
+      "add": "Add",
+      "cancel": "Cancel",
+      "chip": {
+        "editTitle": "Click to edit domain",
+        "removeTitle": "Remove"
+      }
+    },
+    "brokers": {
+      "title": "Your Brokers",
+      "saving": "Saving...",
+      "loading": "Loading...",
+      "senderDomains": "Sender domains",
+      "senderDomainsCustom": "Sender domains (+{{count}} custom)",
+      "addDomainPlaceholder": "e.g. noreply@angelone.in",
+      "add": "Add",
+      "hint": "Only emails from selected brokers will be fetched. Expand a card to add custom sender domains.",
+      "regions": {
+        "EU": "Europe",
+        "IN": "India",
+        "US": "US",
+        "GLOBAL": "Global"
+      }
+    },
+    "emails": {
+      "fetched_one": "{{count}} email fetched",
+      "fetched_other": "{{count}} emails fetched",
+      "collapse": "Collapse ↑",
+      "expand": "Expand ↓",
+      "columns": {
+        "from": "From",
+        "subject": "Subject",
+        "date": "Date",
+        "status": "Status"
+      },
+      "status": {
+        "parsed": "parsed",
+        "pending": "pending"
+      },
+      "showAll": "Show all {{count}} emails ↓"
+    },
+    "stats": {
+      "rawEmails": "Raw Emails",
+      "parsed": "Parsed",
+      "pending": "Pending"
+    },
+    "danger": {
+      "zone": "Danger zone",
+      "requestFailed": "Request failed.",
+      "token": {
+        "button": "Reset Google Token",
+        "disconnecting": "Disconnecting...",
+        "confirmText": "This will revoke Gmail access. Your emails and transactions stay intact.",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "error": "Failed to disconnect Gmail."
+      },
+      "db": {
+        "button": "Clear DB",
+        "clearing": "Clearing...",
+        "confirmText": "This wipes all emails, transactions, and institution selections. Cannot be undone.",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "error": "Failed to clear database."
+      }
+    },
+    "devReset": {
+      "title": "Dev tools",
+      "resetting": "Resetting...",
+      "confirmButton": "Confirm reset",
+      "cancel": "Cancel",
+      "resetButton": "Reset DB",
+      "hint": "Wipes emails, transactions, prices, snapshots. Keeps broker config.",
+      "cleared": "Cleared: {{emails}} emails · {{transactions}} transactions · {{prices}} prices · {{snapshots}} snapshots",
+      "error": "Reset request failed"
+    }
+  },
+  "transactions": {
+    "title": "Add Transaction",
+    "success": "Transaction added successfully.",
+    "required": "(required)",
+    "optional": "(optional)",
+    "actions": {
+      "addAnother": "Add Another",
+      "viewHoldings": "View Holdings",
+      "saving": "Saving...",
+      "submit": "Add Transaction"
+    },
+    "fields": {
+      "assetType": "Asset Type",
+      "transactionType": "Transaction Type",
+      "name": "Name",
+      "ticker": "Ticker",
+      "quantity": "Quantity",
+      "pricePerUnit": "Price per unit",
+      "currency": "Currency",
+      "date": "Date",
+      "broker": "Broker"
+    },
+    "placeholders": {
+      "name": "e.g. Apple Inc",
+      "ticker": "e.g. AAPL",
+      "quantity": "0",
+      "price": "0.00",
+      "broker": "e.g. scalable, zerodha"
+    },
+    "assetTypes": {
+      "stock": "Stock",
+      "etf": "ETF",
+      "mf": "Mutual Fund",
+      "crypto": "Crypto"
+    },
+    "transactionTypes": {
+      "buy": "Buy",
+      "sell": "Sell",
+      "sip": "SIP",
+      "dividend": "Dividend"
+    },
+    "errors": {
+      "nameRequired": "Name is required",
+      "brokerRequired": "Broker is required",
+      "quantityInvalid": "Quantity must be greater than 0",
+      "priceInvalid": "Price must be greater than 0",
+      "dateRequired": "Date is required",
+      "generic": "Something went wrong",
+      "network": "Network error — please try again"
+    }
+  },
+  "notifications": {
+    "title": "Activity",
+    "clearAll": "Clear all",
+    "noActivity": "No activity yet",
+    "ariaLabel": "Notifications",
+    "timeAgo": {
+      "justNow": "just now",
+      "minsAgo": "{{minutes}} min ago",
+      "hoursAgo": "{{hours}}h ago"
+    }
+  }
+}
