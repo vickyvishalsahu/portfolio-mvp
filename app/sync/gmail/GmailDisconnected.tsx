@@ -1,24 +1,31 @@
 'use client';
 
-export const GmailDisconnected = () => (
-  <div>
-    <div className="flex items-center gap-2 mb-4">
-      <span className="w-2 h-2 bg-red-500 rounded-full" />
-      <span className="text-red-400">Not connected</span>
+import { useTranslation } from 'react-i18next';
+
+export const GmailDisconnected = () => {
+  const { t } = useTranslation('sync');
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="w-2 h-2 bg-red-500 rounded-full" />
+        <span className="text-red-400">{t('gmail.notConnected')}</span>
+      </div>
+      <div className="bg-gray-800 border border-gray-700 rounded p-4 mb-4 text-sm text-gray-400">
+        <p className="mb-1 font-medium text-gray-300">{t('gmail.beforeConnect.title')}</p>
+        <p>
+          {t('gmail.beforeConnect.bodyPrefix')}{' '}
+          <span className="text-white">{t('gmail.beforeConnect.readOnly')}</span>{' '}
+          {t('gmail.beforeConnect.bodySuffix')}{' '}
+          <span className="text-white">{t('gmail.beforeConnect.staysOnDevice')}</span>
+        </p>
+      </div>
+      <a
+        href="/api/gmail/auth"
+        className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+      >
+        {t('gmail.beforeConnect.connectButton')}
+      </a>
     </div>
-    <div className="bg-gray-800 border border-gray-700 rounded p-4 mb-4 text-sm text-gray-400">
-      <p className="mb-1 font-medium text-gray-300">Before you connect</p>
-      <p>
-        We request <span className="text-white">read-only</span> Gmail access to find investment emails from senders you choose.{' '}
-        No other emails are read, stored, or transmitted.{' '}
-        <span className="text-white">Everything stays on your device.</span>
-      </p>
-    </div>
-    <a
-      href="/api/gmail/auth"
-      className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
-    >
-      Connect Gmail →
-    </a>
-  </div>
-);
+  );
+};

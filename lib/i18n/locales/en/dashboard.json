@@ -1,0 +1,44 @@
+{
+  "title": "Dashboard",
+  "loading": "Loading...",
+  "empty": {
+    "description": "Connect Gmail and sync emails to get started.",
+    "cta": "Go to Sync"
+  },
+  "summary": {
+    "totalValue": "Total Value",
+    "totalPnl": "Total P&L",
+    "holdings": "Holdings",
+    "transactions": "Transactions"
+  },
+  "assetLabels": {
+    "stock": "Stocks",
+    "etf": "ETFs",
+    "mf": "Mutual Funds",
+    "crypto": "Crypto"
+  },
+  "allocation": {
+    "title": "Allocation",
+    "byType": "By Type",
+    "byBroker": "By Broker"
+  },
+  "topHoldings": {
+    "title": "Top Holdings",
+    "name": "Name",
+    "value": "Value",
+    "pnl": "P&L",
+    "viewAll": "View all {{count}} holdings"
+  },
+  "movers": {
+    "title": "Biggest Movers",
+    "gainers": "Gainers",
+    "losers": "Losers",
+    "noGains": "No gains since last refresh",
+    "noLosses": "No losses since last refresh",
+    "vsLast30d": "vs last 30d"
+  },
+  "netWorth": {
+    "title": "Net Worth Over Time",
+    "portfolio": "Portfolio"
+  }
+}

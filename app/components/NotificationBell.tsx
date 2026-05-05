@@ -1,17 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNotifications } from '@/domains/notifications/hooks/useNotifications';
 import type { Notification } from '@/domains/notifications/types';
-
-const formatRelativeTime = (date: Date): string => {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  return `${hours}h ago`;
-};
 
 const NotificationIcon = ({ status }: { status: Notification['status'] }) => {
   if (status === 'in-progress') {
@@ -37,25 +29,39 @@ const NotificationIcon = ({ status }: { status: Notification['status'] }) => {
   );
 };
 
-const NotificationItem = ({ notification }: { notification: Notification }) => (
-  <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-800 transition">
-    <div className="mt-0.5">
-      <NotificationIcon status={notification.status} />
-    </div>
-    <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-white font-medium">{notification.title}</span>
-        {!notification.read && (
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-        )}
+const NotificationItem = ({ notification }: { notification: Notification }) => {
+  const { t } = useTranslation('notifications');
+
+  const formatRelativeTime = (date: Date): string => {
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 60) return t('timeAgo.justNow');
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return t('timeAgo.minsAgo', { minutes });
+    const hours = Math.floor(minutes / 60);
+    return t('timeAgo.hoursAgo', { hours });
+  };
+
+  return (
+    <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-800 transition">
+      <div className="mt-0.5">
+        <NotificationIcon status={notification.status} />
       </div>
-      <p className="text-xs text-gray-400 mt-0.5">{notification.detail}</p>
-      <p className="text-xs text-gray-600 mt-1">{formatRelativeTime(notification.timestamp)}</p>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-white font-medium">{notification.title}</span>
+          {!notification.read && (
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mt-0.5">{notification.detail}</p>
+        <p className="text-xs text-gray-600 mt-1">{formatRelativeTime(notification.timestamp)}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const NotificationBell = () => {
+  const { t } = useTranslation('notifications');
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAllRead, clearAll } = useNotifications();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -82,7 +88,7 @@ export const NotificationBell = () => {
   };
 
   const renderEmpty = () => (
-    <p className="text-sm text-gray-600 text-center py-8">No activity yet</p>
+    <p className="text-sm text-gray-600 text-center py-8">{t('noActivity')}</p>
   );
 
   const renderList = () => (
@@ -99,7 +105,7 @@ export const NotificationBell = () => {
         ref={buttonRef}
         onClick={handleToggle}
         className="relative p-2 text-gray-400 hover:text-white transition"
-        aria-label="Notifications"
+        aria-label={t('ariaLabel')}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path
@@ -119,13 +125,13 @@ export const NotificationBell = () => {
           className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-50 overflow-hidden"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-            <span className="text-sm font-medium text-white">Activity</span>
+            <span className="text-sm font-medium text-white">{t('title')}</span>
             {notifications.length > 0 && (
               <button
                 onClick={clearAll}
                 className="text-xs text-gray-500 hover:text-gray-300 transition"
               >
-                Clear all
+                {t('clearAll')}
               </button>
             )}
           </div>

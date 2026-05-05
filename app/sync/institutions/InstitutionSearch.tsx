@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Institution } from '@/domains/shared/types';
 import { InstitutionChip } from './InstitutionChip';
 
@@ -27,6 +28,7 @@ export const InstitutionSearch = ({
   onRemove,
   onUpdateDomain,
 }: Props) => {
+  const { t } = useTranslation('sync');
   const [manualDomain, setManualDomain] = useState('');
   const [showManual, setShowManual] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +56,7 @@ export const InstitutionSearch = ({
     if (searching) {
       return (
         <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg z-10 p-3">
-          <p className="text-gray-500 text-sm">Searching...</p>
+          <p className="text-gray-500 text-sm">{t('institutions.searching')}</p>
         </div>
       );
     }
@@ -62,12 +64,12 @@ export const InstitutionSearch = ({
     if (suggestions.length === 0) {
       return (
         <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg z-10 p-3">
-          <p className="text-gray-500 text-sm">No results found.</p>
+          <p className="text-gray-500 text-sm">{t('institutions.noResults')}</p>
           <button
             onClick={() => { setShowManual(true); setSearchQuery(''); }}
             className="text-blue-400 text-sm mt-1 hover:underline"
           >
-            Add domain manually →
+            {t('institutions.addManually')}
           </button>
         </div>
       );
@@ -100,7 +102,7 @@ export const InstitutionSearch = ({
           onClick={() => setShowManual(true)}
           className="text-gray-500 text-xs hover:text-gray-300 transition"
         >
-          Not finding yours? Add a domain manually →
+          {t('institutions.notFinding')}
         </button>
       );
     }
@@ -111,20 +113,20 @@ export const InstitutionSearch = ({
           value={manualDomain}
           onChange={(event) => setManualDomain(event.target.value)}
           onKeyDown={handleManualKeyDown}
-          placeholder="e.g. angelbroking.com"
+          placeholder={t('institutions.manualPlaceholder')}
           className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-600 outline-none focus:border-gray-500"
         />
         <button
           onClick={handleAddManual}
           className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded transition"
         >
-          Add
+          {t('institutions.add')}
         </button>
         <button
           onClick={() => { setShowManual(false); setManualDomain(''); }}
           className="text-gray-500 hover:text-gray-300 text-sm px-2"
         >
-          Cancel
+          {t('institutions.cancel')}
         </button>
       </div>
     );
@@ -132,8 +134,8 @@ export const InstitutionSearch = ({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-1">Which institutions send you investment emails?</h2>
-      <p className="text-gray-500 text-sm mb-4">Search for your broker, bank, or fund house.</p>
+      <h2 className="text-lg font-semibold mb-1">{t('institutions.title')}</h2>
+      <p className="text-gray-500 text-sm mb-4">{t('institutions.subtitle')}</p>
 
       {institutions.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -153,7 +155,7 @@ export const InstitutionSearch = ({
           ref={inputRef}
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search broker, bank, or fund house..."
+          placeholder={t('institutions.searchPlaceholder')}
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 outline-none focus:border-gray-500"
         />
         {renderSuggestions()}

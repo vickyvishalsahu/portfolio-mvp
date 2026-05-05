@@ -1,0 +1,9 @@
+{
+  "brand": "Portfolio MVP",
+  "links": {
+    "sync": "Sync",
+    "holdings": "Holdings",
+    "addTransaction": "Add Transaction"
+  },
+  "footer": "Your data stays on your device — nothing is uploaded except during Gmail sync and live price lookups."
+}

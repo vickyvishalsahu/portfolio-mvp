@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type FetchedEmail = {
   id: string;
@@ -17,6 +18,7 @@ type Props = {
 const MAX_DEFAULT = 50;
 
 export const FetchedEmailList = ({ emails }: Props) => {
+  const { t } = useTranslation('sync');
   const [expanded, setExpanded] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
@@ -25,13 +27,13 @@ export const FetchedEmailList = ({ emails }: Props) => {
   const renderHeader = () => (
     <div className="flex items-center justify-between mb-3">
       <span className="text-sm font-medium text-gray-300">
-        {emails.length} email{emails.length !== 1 ? 's' : ''} fetched
+        {t('emails.fetched', { count: emails.length })}
       </span>
       <button
         onClick={() => setExpanded(!expanded)}
         className="text-gray-500 hover:text-gray-300 text-xs transition"
       >
-        {expanded ? 'Collapse ↑' : 'Expand ↓'}
+        {expanded ? t('emails.collapse') : t('emails.expand')}
       </button>
     </div>
   );
@@ -44,10 +46,10 @@ export const FetchedEmailList = ({ emails }: Props) => {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-gray-500 text-xs border-b border-gray-800">
-              <th className="text-left pb-2 font-normal">From</th>
-              <th className="text-left pb-2 font-normal">Subject</th>
-              <th className="text-left pb-2 font-normal whitespace-nowrap">Date</th>
-              <th className="text-left pb-2 font-normal">Status</th>
+              <th className="text-left pb-2 font-normal">{t('emails.columns.from')}</th>
+              <th className="text-left pb-2 font-normal">{t('emails.columns.subject')}</th>
+              <th className="text-left pb-2 font-normal whitespace-nowrap">{t('emails.columns.date')}</th>
+              <th className="text-left pb-2 font-normal">{t('emails.columns.status')}</th>
             </tr>
           </thead>
           <tbody>
@@ -64,8 +66,8 @@ export const FetchedEmailList = ({ emails }: Props) => {
                   <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{date}</td>
                   <td className="py-2">
                     {email.parsed
-                      ? <span className="text-green-600 text-xs">parsed</span>
-                      : <span className="text-yellow-600 text-xs">pending</span>
+                      ? <span className="text-green-600 text-xs">{t('emails.status.parsed')}</span>
+                      : <span className="text-yellow-600 text-xs">{t('emails.status.pending')}</span>
                     }
                   </td>
                 </tr>
@@ -78,7 +80,7 @@ export const FetchedEmailList = ({ emails }: Props) => {
             onClick={() => setShowAll(true)}
             className="text-gray-500 hover:text-gray-300 text-xs mt-3 transition"
           >
-            Show all {emails.length} emails ↓
+            {t('emails.showAll', { count: emails.length })}
           </button>
         )}
       </>

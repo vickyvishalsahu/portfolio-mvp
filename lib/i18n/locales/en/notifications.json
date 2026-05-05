@@ -1,0 +1,11 @@
+{
+  "title": "Activity",
+  "clearAll": "Clear all",
+  "noActivity": "No activity yet",
+  "ariaLabel": "Notifications",
+  "timeAgo": {
+    "justNow": "just now",
+    "minsAgo": "{{minutes}} min ago",
+    "hoursAgo": "{{hours}}h ago"
+  }
+}

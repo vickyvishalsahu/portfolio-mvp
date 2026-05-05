@@ -1,6 +1,7 @@
 'use client';
 
 import type { RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { BrokerDefinition } from '@/domains/shared/types';
 import { BrokerCard } from './BrokerCard';
 
@@ -24,8 +25,10 @@ export const BrokerSelection = ({
   newDomainInput, setNewDomainInput, domainInputRef,
   handleToggleBroker, handleExpandWithFocus, handleAddDomain, handleRemoveCustomDomain,
 }: Props) => {
+  const { t } = useTranslation('sync');
+
   const renderCatalog = () => {
-    if (catalog.length === 0) return <p className="text-gray-500 text-sm">Loading...</p>;
+    if (catalog.length === 0) return <p className="text-gray-500 text-sm">{t('brokers.loading')}</p>;
 
     return (
       <>
@@ -55,7 +58,7 @@ export const BrokerSelection = ({
           })}
         </div>
         <p className="text-xs text-gray-500">
-          Only emails from selected brokers will be fetched. Expand a card to add custom sender domains.
+          {t('brokers.hint')}
         </p>
       </>
     );
@@ -64,8 +67,8 @@ export const BrokerSelection = ({
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Your Brokers</h2>
-        {savingBrokers && <span className="text-xs text-gray-500">Saving...</span>}
+        <h2 className="text-lg font-semibold">{t('brokers.title')}</h2>
+        {savingBrokers && <span className="text-xs text-gray-500">{t('brokers.saving')}</span>}
       </div>
       {renderCatalog()}
     </div>

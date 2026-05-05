@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { fmtEur, fmtHolding, pct } from '@/lib/format';
 
 type Holding = {
@@ -30,17 +31,20 @@ const TYPE_BADGE: Record<string, string> = {
   crypto: 'bg-emerald-900 text-emerald-300',
 };
 
-const formatAge = (updatedAt: string | null): string => {
-  if (!updatedAt) return 'never';
-  const mins = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins === 1) return '1 min ago';
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = Math.floor(mins / 60);
-  return hrs === 1 ? '1 hour ago' : `${hrs} hours ago`;
-};
 
 const HoldingsPage = () => {
+  const { t } = useTranslation('holdings');
+
+  const formatAge = (updatedAt: string | null): string => {
+    if (!updatedAt) return t('priceAge.never');
+    const mins = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60000);
+    if (mins < 1) return t('priceAge.justNow');
+    if (mins === 1) return t('priceAge.oneMinAgo');
+    if (mins < 60) return t('priceAge.minsAgo', { mins });
+    const hrs = Math.floor(mins / 60);
+    return hrs === 1 ? t('priceAge.oneHourAgo') : t('priceAge.hoursAgo', { hrs });
+  };
+
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('current_value_eur');
@@ -106,8 +110,8 @@ const HoldingsPage = () => {
   if (loading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-6">Holdings</h1>
-        <p className="text-gray-500">Loading...</p>
+        <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
+        <p className="text-gray-500">{t('loading')}</p>
       </div>
     );
   }
@@ -115,10 +119,11 @@ const HoldingsPage = () => {
   if (holdings.length === 0) {
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-6">Holdings</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
         <p className="text-gray-500">
-          No holdings yet.{' '}
-          <a href="/sync" className="text-blue-400 hover:underline">Sync emails</a> to get started.
+          {t('empty.description')}{' '}
+          <a href="/sync" className="text-blue-400 hover:underline">{t('empty.syncLink')}</a>{' '}
+          {t('empty.toGetStarted')}
         </p>
       </div>
     );
@@ -127,31 +132,31 @@ const HoldingsPage = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Holdings</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-500">
-            {refreshing ? 'Updating...' : `Prices: ${formatAge(priceAge)}`}
+            {refreshing ? t('priceAge.updating') : t('priceAge.label', { age: formatAge(priceAge) })}
           </span>
           <a
             href="/api/export"
             download
             className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition"
           >
-            Export CSV
+            {t('actions.exportCsv')}
           </a>
           <button
             onClick={handleRefreshPrices}
             disabled={refreshing}
             className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm px-4 py-2 rounded transition"
           >
-            {refreshing ? 'Refreshing...' : 'Refresh Prices'}
+            {refreshing ? t('actions.refreshing') : t('actions.refreshPrices')}
           </button>
         </div>
       </div>
 
       {failedTickers.length > 0 && (
         <div className="bg-amber-950 border border-amber-800 rounded p-3 mb-4 text-sm text-amber-400">
-          Failed to update prices for: {failedTickers.join(', ')}
+          {t('failedPrices', { tickers: failedTickers.join(', ') })}
         </div>
       )}
 
@@ -160,15 +165,15 @@ const HoldingsPage = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-gray-400 border-b border-gray-800 text-xs uppercase tracking-wider">
-                <SortHeader label="Name" field="name" />
-                <th className="text-left pb-3">Ticker</th>
-                <SortHeader label="Type" field="asset_type" />
-                <SortHeader label="Qty" field="quantity" />
-                <th className="text-right pb-3">Avg Cost</th>
-                <th className="text-right pb-3">Price</th>
-                <SortHeader label="Value" field="current_value_eur" />
-                <SortHeader label="P&L %" field="pnl_pct" />
-                <SortHeader label="Broker" field="broker" />
+                <SortHeader label={t('columns.name')} field="name" />
+                <th className="text-left pb-3">{t('columns.ticker')}</th>
+                <SortHeader label={t('columns.type')} field="asset_type" />
+                <SortHeader label={t('columns.qty')} field="quantity" />
+                <th className="text-right pb-3">{t('columns.avgCost')}</th>
+                <th className="text-right pb-3">{t('columns.price')}</th>
+                <SortHeader label={t('columns.value')} field="current_value_eur" />
+                <SortHeader label={t('columns.pnlPct')} field="pnl_pct" />
+                <SortHeader label={t('columns.broker')} field="broker" />
               </tr>
             </thead>
             <tbody>

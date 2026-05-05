@@ -1,0 +1,36 @@
+{
+  "title": "Holdings",
+  "loading": "Loading...",
+  "empty": {
+    "description": "No holdings yet.",
+    "syncLink": "Sync emails",
+    "toGetStarted": "to get started."
+  },
+  "priceAge": {
+    "updating": "Updating...",
+    "label": "Prices: {{age}}",
+    "never": "never",
+    "justNow": "just now",
+    "oneMinAgo": "1 min ago",
+    "minsAgo": "{{mins}} min ago",
+    "oneHourAgo": "1 hour ago",
+    "hoursAgo": "{{hrs}} hours ago"
+  },
+  "actions": {
+    "exportCsv": "Export CSV",
+    "refreshPrices": "Refresh Prices",
+    "refreshing": "Refreshing..."
+  },
+  "failedPrices": "Failed to update prices for: {{tickers}}",
+  "columns": {
+    "name": "Name",
+    "ticker": "Ticker",
+    "type": "Type",
+    "qty": "Qty",
+    "avgCost": "Avg Cost",
+    "price": "Price",
+    "value": "Value",
+    "pnlPct": "P&L %",
+    "broker": "Broker"
+  }
+}
