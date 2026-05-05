@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { fmtLocal, fmtHolding, pct } from '@/lib/format';
+import { computeNetWorthDelta } from '@/lib/snapshot-delta';
 
 type CurrencySummary = {
   currency: string;
@@ -110,6 +111,7 @@ export default function Dashboard() {
 
   const { summary, holdings } = data;
   const primaryCurrency = summary.by_currency[0]?.currency ?? 'INR';
+  const netWorthDelta = computeNetWorthDelta(snapshots);
 
   const BROKER_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
@@ -153,15 +155,32 @@ export default function Dashboard() {
 
       {/* Summary Cards — one per currency + counts */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {summary.by_currency.map((s) => (
-          <div key={s.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <p className="text-gray-400 text-sm">Total Value</p>
-            <p className="text-2xl font-bold text-white">{fmtLocal(s.total_value, s.currency)}</p>
-            <p className={`text-sm font-medium mt-1 ${s.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {fmtLocal(s.total_pnl, s.currency)} {pct(s.total_pnl_pct)}
-            </p>
-          </div>
-        ))}
+        {summary.by_currency.map((s) => {
+          const isPrimary = s.currency === primaryCurrency;
+          const delta = isPrimary ? netWorthDelta : null;
+
+          const renderDelta = () => {
+            if (!delta) return null;
+            const isPositive = delta.delta >= 0;
+            const sign = isPositive ? '+' : '';
+            return (
+              <p className={`text-xs mt-2 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                {isPositive ? '↑' : '↓'} {sign}{fmtLocal(delta.delta, s.currency)} ({sign}{delta.deltaPct.toFixed(1)}%) vs last 30d
+              </p>
+            );
+          };
+
+          return (
+            <div key={s.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <p className="text-gray-400 text-sm">Total Value</p>
+              <p className="text-2xl font-bold text-white">{fmtLocal(s.total_value, s.currency)}</p>
+              <p className={`text-sm font-medium mt-1 ${s.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {fmtLocal(s.total_pnl, s.currency)} {pct(s.total_pnl_pct)}
+              </p>
+              {renderDelta()}
+            </div>
+          );
+        })}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <p className="text-gray-400 text-sm">Holdings</p>
           <p className="text-2xl font-bold text-white">{summary.holdings_count}</p>
