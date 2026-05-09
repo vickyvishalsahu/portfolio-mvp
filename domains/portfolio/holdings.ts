@@ -71,33 +71,33 @@ export const computeHoldings = async (): Promise<Holding[]> => {
     const pnlPct = totalCostEur > 0 ? (pnl / totalCostEur) * 100 : 0;
 
     const prevPriceData = getPrevPrice(key);
-    const prevPriceEur = prevPriceData?.prev_price_eur ?? null;
-    const prevPriceLocal = prevPriceData?.prev_price_local ?? null;
+    const prevPriceEur = prevPriceData?.prevPriceEur ?? null;
+    const prevPriceLocal = prevPriceData?.prevPriceLocal ?? null;
     const prevValueEur = prevPriceEur !== null ? totalQty * prevPriceEur : null;
     const prevValueLocal = prevPriceLocal !== null ? totalQty * prevPriceLocal : null;
 
     holdings.push({
       ticker: first.ticker || key,
       name: first.name,
-      asset_type: first.asset_type,
+      assetType: first.asset_type,
       quantity: totalQty,
-      avg_cost_eur: avgCostEur,
-      avg_cost_local: avgCostLocal,
-      current_price_eur: currentPriceEur,
-      current_price_local: currentPriceLocal,
-      current_value_eur: currentValueEur,
-      current_value_local: currentValueLocal,
-      prev_value_eur: prevValueEur,
-      prev_value_local: prevValueLocal,
+      avgCostEur,
+      avgCostLocal,
+      currentPriceEur,
+      currentPriceLocal,
+      currentValueEur,
+      currentValueLocal,
+      prevValueEur,
+      prevValueLocal,
       pnl,
-      pnl_local: pnlLocal,
-      pnl_pct: pnlPct,
+      pnlLocal,
+      pnlPct,
       currency: first.currency,
       broker: first.broker,
     });
   }
 
   // Sort by value descending
-  holdings.sort((a, b) => b.current_value_eur - a.current_value_eur);
+  holdings.sort((a, b) => b.currentValueEur - a.currentValueEur);
   return holdings;
 };

@@ -9,14 +9,14 @@ const LABEL_CLASS = 'block text-xs text-gray-400 mb-1';
 const NewTransactionPage = () => {
   const { t } = useTranslation();
   const [form, setForm] = useState({
-    asset_type: 'stock',
+    assetType: 'stock',
     ticker: '',
     name: '',
     quantity: '',
     price: '',
     currency: 'EUR',
-    transaction_type: 'buy',
-    transaction_date: new Date().toISOString().slice(0, 10),
+    transactionType: 'buy',
+    transactionDate: new Date().toISOString().slice(0, 10),
     broker: '',
   });
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +38,7 @@ const NewTransactionPage = () => {
     if (!form.broker.trim()) { setError(t('transactions.errors.brokerRequired')); return; }
     if (!qty || qty <= 0) { setError(t('transactions.errors.quantityInvalid')); return; }
     if (!price || price <= 0) { setError(t('transactions.errors.priceInvalid')); return; }
-    if (!form.transaction_date) { setError(t('transactions.errors.dateRequired')); return; }
+    if (!form.transactionDate) { setError(t('transactions.errors.dateRequired')); return; }
 
     setSubmitting(true);
     try {
@@ -90,7 +90,7 @@ const NewTransactionPage = () => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={LABEL_CLASS}>{t('transactions.fields.assetType')}</label>
-            <select className={FIELD_CLASS} value={form.asset_type} onChange={(event) => set('asset_type', event.target.value)}>
+            <select className={FIELD_CLASS} value={form.assetType} onChange={(event) => set('assetType', event.target.value)}>
               <option value="stock">{t('transactions.assetTypes.stock')}</option>
               <option value="etf">{t('transactions.assetTypes.etf')}</option>
               <option value="mf">{t('transactions.assetTypes.mf')}</option>
@@ -99,7 +99,7 @@ const NewTransactionPage = () => {
           </div>
           <div>
             <label className={LABEL_CLASS}>{t('transactions.fields.transactionType')}</label>
-            <select className={FIELD_CLASS} value={form.transaction_type} onChange={(event) => set('transaction_type', event.target.value)}>
+            <select className={FIELD_CLASS} value={form.transactionType} onChange={(event) => set('transactionType', event.target.value)}>
               <option value="buy">{t('transactions.transactionTypes.buy')}</option>
               <option value="sell">{t('transactions.transactionTypes.sell')}</option>
               <option value="sip">{t('transactions.transactionTypes.sip')}</option>
@@ -171,8 +171,8 @@ const NewTransactionPage = () => {
             <input
               className={FIELD_CLASS}
               type="date"
-              value={form.transaction_date}
-              onChange={(event) => set('transaction_date', event.target.value)}
+              value={form.transactionDate}
+              onChange={(event) => set('transactionDate', event.target.value)}
             />
           </div>
         </div>

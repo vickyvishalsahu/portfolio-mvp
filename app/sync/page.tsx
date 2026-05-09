@@ -12,16 +12,16 @@ import { DangerZone } from './DangerZone';
 
 type ParseResult = {
   processed: number;
-  transactions_added: number;
-  skipped: { email_id: string; subject: string; reason: string }[];
-  errors: { email_id: string; subject: string; error: string }[];
+  transactionsAdded: number;
+  skipped: { emailId: string; subject: string; reason: string }[];
+  errors: { emailId: string; subject: string; error: string }[];
 };
 
 type FetchedEmail = {
   id: string;
   sender: string;
   subject: string;
-  received_at: string;
+  receivedAt: string;
   parsed: number;
 };
 
@@ -39,12 +39,12 @@ const SyncPage = () => {
   const [parseError, setParseError] = useState<string | null>(null);
   const [fetchedEmails, setFetchedEmails] = useState<FetchedEmail[]>([]);
 
-  const isConnected = status?.gmail_connected ?? false;
+  const isConnected = status?.gmailConnected ?? false;
   const hasInstitutions = institutions.length > 0;
-  const hasSynced = (status?.total_raw ?? 0) > 0;
+  const hasSynced = (status?.totalRaw ?? 0) > 0;
   const fetching = activeFetchJobId !== null;
   const parsing = activeParseJobId !== null;
-  const unparsedCount = status ? status.total_raw - status.total_parsed : 0;
+  const unparsedCount = status ? status.totalRaw - status.totalParsed : 0;
   const error = syncError || parseError;
 
   const loadFetchedEmails = async () => {
@@ -211,7 +211,7 @@ const SyncPage = () => {
       <div className="mt-4 space-y-2">
         <div className="bg-gray-800 rounded p-4">
           <p className="text-purple-400">
-            {t('sync.parse.result.summary', { processed: parseResult.processed, transactions: parseResult.transactions_added })}
+            {t('sync.parse.result.summary', { processed: parseResult.processed, transactions: parseResult.transactionsAdded })}
           </p>
         </div>
         {parseResult.skipped.length > 0 && (
@@ -219,7 +219,7 @@ const SyncPage = () => {
             <p className="text-yellow-400 text-sm mb-2">{t('sync.parse.result.skipped', { count: parseResult.skipped.length })}</p>
             <ul className="text-gray-400 text-sm space-y-1">
               {parseResult.skipped.map((skippedItem) => (
-                <li key={skippedItem.email_id} className="truncate">
+                <li key={skippedItem.emailId} className="truncate">
                   <span className="text-gray-500">{skippedItem.subject}</span> — {skippedItem.reason}
                 </li>
               ))}
@@ -231,7 +231,7 @@ const SyncPage = () => {
             <p className="text-red-400 text-sm mb-2">{t('sync.parse.result.errors', { count: parseResult.errors.length })}</p>
             <ul className="text-red-300 text-sm space-y-1">
               {parseResult.errors.map((errorItem) => (
-                <li key={errorItem.email_id}>
+                <li key={errorItem.emailId}>
                   <span className="text-red-500">{errorItem.subject}</span> — {errorItem.error}
                   <a href="/transactions/new" className="text-blue-400 hover:underline ml-2 text-xs">{t('sync.parse.result.addManually')}</a>
                 </li>

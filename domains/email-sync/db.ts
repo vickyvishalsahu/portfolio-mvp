@@ -11,12 +11,22 @@ import {
 
 export const insertRawEmail = (email: FetchedEmail) => {
   const db = getDb();
-  return db.prepare(INSERT_RAW_EMAIL).run(email.id, email.sender, email.subject, email.body, email.received_at);
+  return db.prepare(INSERT_RAW_EMAIL).run(email.id, email.sender, email.subject, email.body, email.receivedAt);
 };
 
 export const getUnparsedEmails = (): RawEmail[] => {
   const db = getDb();
-  return db.prepare(GET_UNPARSED_EMAILS).all() as RawEmail[];
+  const rows = db.prepare(GET_UNPARSED_EMAILS).all() as Array<{
+    id: string; sender: string; subject: string; body: string; received_at: string; parsed: number;
+  }>;
+  return rows.map((row) => ({
+    id: row.id,
+    sender: row.sender,
+    subject: row.subject,
+    body: row.body,
+    receivedAt: row.received_at,
+    parsed: row.parsed,
+  }));
 };
 
 export const markEmailParsed = (emailId: string) => {

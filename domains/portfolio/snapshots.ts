@@ -11,9 +11,10 @@ export const recordSnapshot = (byCurrency: Record<string, number>): void => {
   }
 };
 
-export const getAllSnapshots = (currency: string): { date: string; total_value: number }[] => {
+export const getAllSnapshots = (currency: string): { date: string; totalValue: number }[] => {
   const db = getDb();
-  return db.prepare(
+  const rows = db.prepare(
     'SELECT date, total_value FROM snapshots WHERE currency = ? ORDER BY date ASC'
   ).all(currency) as { date: string; total_value: number }[];
+  return rows.map((row) => ({ date: row.date, totalValue: row.total_value }));
 };

@@ -6,7 +6,7 @@ const makeSnapshots = (startDate: string, count: number, startValue: number, dai
     const date = new Date(new Date(startDate).getTime() + index * 86_400_000)
       .toISOString()
       .slice(0, 10);
-    return { date, total_value: startValue + index * dailyGain };
+    return { date, totalValue: startValue + index * dailyGain };
   });
 
 describe('computeNetWorthDelta', () => {
@@ -15,13 +15,13 @@ describe('computeNetWorthDelta', () => {
   });
 
   it('returns null for a single snapshot', () => {
-    expect(computeNetWorthDelta([{ date: '2026-04-01', total_value: 1000 }])).toBeNull();
+    expect(computeNetWorthDelta([{ date: '2026-04-01', totalValue: 1000 }])).toBeNull();
   });
 
   it('returns null when history is less than 7 days', () => {
     const snapshots = [
-      { date: '2026-04-27', total_value: 1000 },
-      { date: '2026-05-01', total_value: 1100 },
+      { date: '2026-04-27', totalValue: 1000 },
+      { date: '2026-05-01', totalValue: 1100 },
     ];
     expect(computeNetWorthDelta(snapshots)).toBeNull();
   });
@@ -38,9 +38,9 @@ describe('computeNetWorthDelta', () => {
 
   it('uses the snapshot closest to 30 days ago as reference', () => {
     const snapshots = [
-      { date: '2026-03-01', total_value: 800 },
-      { date: '2026-04-01', total_value: 1000 }, // exactly 30 days before 2026-05-01
-      { date: '2026-05-01', total_value: 1300 },
+      { date: '2026-03-01', totalValue: 800 },
+      { date: '2026-04-01', totalValue: 1000 }, // exactly 30 days before 2026-05-01
+      { date: '2026-05-01', totalValue: 1300 },
     ];
     const result = computeNetWorthDelta(snapshots);
     expect(result).not.toBeNull();
@@ -50,9 +50,9 @@ describe('computeNetWorthDelta', () => {
 
   it('picks the closer snapshot when reference is not exact', () => {
     const snapshots = [
-      { date: '2026-03-28', total_value: 950 }, // 34 days before latest — 4 days from 30-day mark
-      { date: '2026-04-03', total_value: 1000 }, // 28 days before latest — 2 days from 30-day mark
-      { date: '2026-05-01', total_value: 1200 },
+      { date: '2026-03-28', totalValue: 950 }, // 34 days before latest — 4 days from 30-day mark
+      { date: '2026-04-03', totalValue: 1000 }, // 28 days before latest — 2 days from 30-day mark
+      { date: '2026-05-01', totalValue: 1200 },
     ];
     const result = computeNetWorthDelta(snapshots);
     expect(result).not.toBeNull();
@@ -61,9 +61,9 @@ describe('computeNetWorthDelta', () => {
 
   it('computes a negative delta when portfolio declined', () => {
     const snapshots = [
-      { date: '2026-03-01', total_value: 2000 },
-      { date: '2026-04-01', total_value: 1800 }, // 30-day reference
-      { date: '2026-05-01', total_value: 1500 },
+      { date: '2026-03-01', totalValue: 2000 },
+      { date: '2026-04-01', totalValue: 1800 }, // 30-day reference
+      { date: '2026-05-01', totalValue: 1500 },
     ];
     const result = computeNetWorthDelta(snapshots);
     expect(result).not.toBeNull();
@@ -76,13 +76,13 @@ describe('computeNetWorthDelta', () => {
     const result = computeNetWorthDelta(snapshots);
     expect(result).not.toBeNull();
     const latest = snapshots[snapshots.length - 1];
-    expect(result!.delta).toBe(latest.total_value - (1000 + 31 * 10)); // reference is ~30 days back
+    expect(result!.delta).toBe(latest.totalValue - (1000 + 31 * 10)); // reference is ~30 days back
   });
 
   it('returns delta of zero when value is unchanged', () => {
     const snapshots = [
-      { date: '2026-04-01', total_value: 1000 },
-      { date: '2026-05-01', total_value: 1000 },
+      { date: '2026-04-01', totalValue: 1000 },
+      { date: '2026-05-01', totalValue: 1000 },
     ];
     const result = computeNetWorthDelta(snapshots);
     expect(result).not.toBeNull();

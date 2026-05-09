@@ -111,30 +111,50 @@ export const deleteSetting = (key: string): void => {
 };
 
 export const insertTransaction = (tx: {
-  email_id: string;
-  asset_type: string;
+  emailId: string;
+  assetType: string;
   ticker: string | null;
   name: string;
   quantity: number;
   price: number;
   currency: string;
-  transaction_type: string;
-  transaction_date: string;
+  transactionType: string;
+  transactionDate: string;
   broker: string;
-  raw_text: string;
+  rawText: string;
   confidence: string;
 }) => {
   const db = getDb();
   return db.prepare(INSERT_TRANSACTION).run(
-    tx.email_id, tx.asset_type, tx.ticker, tx.name, tx.quantity, tx.price,
-    tx.currency, tx.transaction_type, tx.transaction_date, tx.broker,
-    tx.raw_text, tx.confidence
+    tx.emailId, tx.assetType, tx.ticker, tx.name, tx.quantity, tx.price,
+    tx.currency, tx.transactionType, tx.transactionDate, tx.broker,
+    tx.rawText, tx.confidence
   );
 };
 
 export const getAllTransactions = (): Transaction[] => {
   const db = getDb();
-  return db.prepare(GET_ALL_TRANSACTIONS).all() as Transaction[];
+  const rows = db.prepare(GET_ALL_TRANSACTIONS).all() as Array<{
+    id: number; email_id: string; asset_type: string; ticker: string | null;
+    name: string; quantity: number; price: number; currency: string;
+    transaction_type: string; transaction_date: string; broker: string;
+    raw_text: string; confidence: string;
+  }>;
+  return rows.map((row) => ({
+    id: row.id,
+    emailId: row.email_id,
+    assetType: row.asset_type as Transaction['assetType'],
+    ticker: row.ticker,
+    name: row.name,
+    quantity: row.quantity,
+    price: row.price,
+    currency: row.currency as Transaction['currency'],
+    transactionType: row.transaction_type as Transaction['transactionType'],
+    transactionDate: row.transaction_date,
+    broker: row.broker,
+    rawText: row.raw_text,
+    confidence: row.confidence as Transaction['confidence'],
+  }));
 };
 
 export const getPriceCacheAge = (): string | null => {

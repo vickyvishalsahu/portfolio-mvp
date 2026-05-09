@@ -13,7 +13,7 @@ type Props = {
 export const GmailConnection = ({ status, onDisconnect }: Props) => {
   const renderStatus = () => {
     if (status === null) return <GmailLoading />;
-    if (status.gmail_connected) return <GmailConnected onDisconnect={onDisconnect} />;
+    if (status.gmailConnected) return <GmailConnected onDisconnect={onDisconnect} />;
     return <GmailDisconnected />;
   };
 

@@ -8,10 +8,10 @@ export const POST = async () => {
     const tickers = db.prepare(
       `SELECT DISTINCT
         COALESCE(ticker, name) as ticker,
-        asset_type,
+        asset_type AS assetType,
         currency
       FROM transactions`
-    ).all() as { ticker: string; asset_type: string; currency: string }[];
+    ).all() as { ticker: string; assetType: string; currency: string }[];
 
     if (tickers.length === 0) {
       return NextResponse.json({ message: 'No holdings to price', updated: 0, failed: [] });

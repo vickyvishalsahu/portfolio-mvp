@@ -11,21 +11,20 @@ export const GET = async () => {
     const byCurrency = holdings.reduce<Record<string, { value: number; cost: number }>>((acc, h) => {
       const cur = h.currency;
       if (!acc[cur]) acc[cur] = { value: 0, cost: 0 };
-      acc[cur].value += h.current_value_local;
-      acc[cur].cost += h.avg_cost_local * h.quantity;
+      acc[cur].value += h.currentValueLocal;
+      acc[cur].cost += h.avgCostLocal * h.quantity;
       return acc;
     }, {});
 
     const currencySummaries = Object.entries(byCurrency).map(([currency, { value, cost }]) => ({
       currency,
-      total_value: value,
-      total_pnl: value - cost,
-      total_pnl_pct: cost > 0 ? ((value - cost) / cost) * 100 : 0,
+      totalValue: value,
+      totalPnl: value - cost,
+      totalPnlPct: cost > 0 ? ((value - cost) / cost) * 100 : 0,
     }));
 
-    // Broker allocation uses local values (single-currency meaningful; multi-currency: TODO)
     const brokerAllocation = holdings.reduce<Record<string, number>>((acc, h) => {
-      acc[h.broker] = (acc[h.broker] || 0) + h.current_value_local;
+      acc[h.broker] = (acc[h.broker] || 0) + h.currentValueLocal;
       return acc;
     }, {});
 
@@ -36,13 +35,13 @@ export const GET = async () => {
 
     return NextResponse.json({
       summary: {
-        by_currency: currencySummaries,
-        holdings_count: holdings.length,
-        transaction_count: transactions.length,
+        byCurrency: currencySummaries,
+        holdingsCount: holdings.length,
+        transactionCount: transactions.length,
       },
       holdings,
-      broker_allocation: brokerAllocation,
-      price_cache_updated_at: getPriceCacheAge(),
+      brokerAllocation,
+      priceCacheUpdatedAt: getPriceCacheAge(),
     });
   } catch (error: any) {
     console.error('Portfolio error:', error);

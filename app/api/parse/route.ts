@@ -25,8 +25,8 @@ export const POST = async () => {
 
   (async () => {
     let totalTransactions = 0;
-    const errors: { email_id: string; subject: string; error: string }[] = [];
-    const skipped: { email_id: string; subject: string; reason: string }[] = [];
+    const errors: { emailId: string; subject: string; error: string }[] = [];
+    const skipped: { emailId: string; subject: string; reason: string }[] = [];
 
     for (let index = 0; index < unparsed.length; index++) {
       const email = unparsed[index];
@@ -41,7 +41,7 @@ export const POST = async () => {
 
         if (result.unparseable) {
           skipped.push({
-            email_id: email.id,
+            emailId: email.id,
             subject: email.subject,
             reason: result.reason || 'Not a transaction email',
           });
@@ -51,17 +51,17 @@ export const POST = async () => {
 
         for (const tx of result.transactions) {
           insertTransaction({
-            email_id: email.id,
-            asset_type: tx.asset_type,
+            emailId: email.id,
+            assetType: tx.assetType,
             ticker: tx.ticker,
             name: tx.name,
             quantity: tx.quantity,
             price: tx.price,
             currency: tx.currency,
-            transaction_type: tx.transaction_type,
-            transaction_date: tx.transaction_date,
+            transactionType: tx.transactionType,
+            transactionDate: tx.transactionDate,
             broker: tx.broker,
-            raw_text: email.body.substring(0, 500),
+            rawText: email.body.substring(0, 500),
             confidence: tx.confidence,
           });
           totalTransactions++;
@@ -70,7 +70,7 @@ export const POST = async () => {
         markEmailParsed(email.id);
       } catch (error: any) {
         errors.push({
-          email_id: email.id,
+          emailId: email.id,
           subject: email.subject,
           error: error.message || 'Parse failed',
         });
@@ -82,7 +82,7 @@ export const POST = async () => {
       detail: `Done — ${totalTransactions} transactions added`,
       result: {
         processed: unparsed.length,
-        transactions_added: totalTransactions,
+        transactionsAdded: totalTransactions,
         skipped,
         errors,
       },

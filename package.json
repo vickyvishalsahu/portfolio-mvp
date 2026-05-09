@@ -51,6 +51,7 @@
     ]
   },
   "devDependencies": {
+    "@stylistic/eslint-plugin": "^5.10.0",
     "vitest": "^4.1.5"
   }
 }

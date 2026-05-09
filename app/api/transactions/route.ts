@@ -3,9 +3,9 @@ import { insertTransaction } from '@/domains/shared/db';
 export const POST = async (req: Request) => {
   try {
     const body = await req.json();
-    const { asset_type, ticker, name, quantity, price, currency, transaction_type, transaction_date, broker } = body;
+    const { assetType, ticker, name, quantity, price, currency, transactionType, transactionDate, broker } = body;
 
-    if (!asset_type || !name || !currency || !transaction_type || !transaction_date || !broker) {
+    if (!assetType || !name || !currency || !transactionType || !transactionDate || !broker) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -18,17 +18,17 @@ export const POST = async (req: Request) => {
     }
 
     insertTransaction({
-      email_id: 'manual',
-      asset_type,
+      emailId: 'manual',
+      assetType,
       ticker: ticker || null,
       name,
       quantity: Number(quantity),
       price: Number(price),
       currency,
-      transaction_type,
-      transaction_date,
+      transactionType,
+      transactionDate,
       broker,
-      raw_text: '',
+      rawText: '',
       confidence: 'high',
     });
 

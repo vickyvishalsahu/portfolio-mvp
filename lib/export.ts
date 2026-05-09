@@ -11,12 +11,12 @@ export const buildCsv = (transactions: Transaction[]): string => {
   const header = 'date,broker,ticker,name,asset_type,transaction_type,quantity,price,currency';
   const rows = transactions.map((transaction) =>
     [
-      transaction.transaction_date,
+      transaction.transactionDate,
       transaction.broker,
       transaction.ticker ?? '',
       escapeField(transaction.name),
-      transaction.asset_type,
-      transaction.transaction_type,
+      transaction.assetType,
+      transaction.transactionType,
       transaction.quantity,
       transaction.price,
       transaction.currency,

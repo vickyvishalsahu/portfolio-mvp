@@ -7,7 +7,7 @@ type FetchedEmail = {
   id: string;
   sender: string;
   subject: string;
-  received_at: string;
+  receivedAt: string;
   parsed: number;
 };
 
@@ -54,7 +54,7 @@ export const FetchedEmailList = ({ emails }: Props) => {
           </thead>
           <tbody>
             {visibleEmails.map((email) => {
-              const date = new Date(email.received_at).toLocaleDateString('en-GB', {
+              const date = new Date(email.receivedAt).toLocaleDateString('en-GB', {
                 day: '2-digit', month: 'short', year: 'numeric',
               });
               const senderName = email.sender.replace(/<.*>/, '').trim() || email.sender;

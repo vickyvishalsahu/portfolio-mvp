@@ -37,19 +37,47 @@ Rules:
 - quantity should be positive for both buys and sells
 - broker should be lowercase: "scalable", "zerodha", "cams", "coinbase", "binance", etc.`;
 
-const validateResponse = (parsed: ParseResponse): ParseResponse => {
-  if (parsed.unparseable) return parsed;
+type RawLlmTransaction = {
+  asset_type: string; ticker: string | null; name: string;
+  quantity: number; price: number; currency: string;
+  transaction_type: string; transaction_date: string;
+  broker: string; confidence: string;
+};
 
-  parsed.transactions = parsed.transactions.filter((tx: ParsedTransaction) => {
-    if (!VALID_ASSET_TYPES.includes(tx.asset_type)) return false;
-    if (!VALID_TRANSACTION_TYPES.includes(tx.transaction_type)) return false;
-    if (!VALID_CURRENCIES.includes(tx.currency)) return false;
-    if (!tx.name || tx.quantity <= 0 || tx.price <= 0) return false;
-    if (!tx.transaction_date?.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
-    return true;
-  });
+type RawParseResponse = {
+  transactions: RawLlmTransaction[];
+  unparseable: boolean;
+  reason: string | null;
+};
 
-  return parsed;
+const mapTransaction = (raw: RawLlmTransaction): ParsedTransaction => ({
+  assetType: raw.asset_type as ParsedTransaction['assetType'],
+  ticker: raw.ticker,
+  name: raw.name,
+  quantity: raw.quantity,
+  price: raw.price,
+  currency: raw.currency as ParsedTransaction['currency'],
+  transactionType: raw.transaction_type as ParsedTransaction['transactionType'],
+  transactionDate: raw.transaction_date,
+  broker: raw.broker,
+  confidence: raw.confidence as ParsedTransaction['confidence'],
+});
+
+const validateResponse = (raw: RawParseResponse): ParseResponse => {
+  if (raw.unparseable) return { transactions: [], unparseable: true, reason: raw.reason };
+
+  const transactions = raw.transactions
+    .filter((tx) => {
+      if (!VALID_ASSET_TYPES.includes(tx.asset_type as ParsedTransaction['assetType'])) return false;
+      if (!VALID_TRANSACTION_TYPES.includes(tx.transaction_type as ParsedTransaction['transactionType'])) return false;
+      if (!VALID_CURRENCIES.includes(tx.currency as ParsedTransaction['currency'])) return false;
+      if (!tx.name || tx.quantity <= 0 || tx.price <= 0) return false;
+      if (!tx.transaction_date?.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
+      return true;
+    })
+    .map(mapTransaction);
+
+  return { transactions, unparseable: false, reason: null };
 };
 
 export const createGroqParser = (): EmailParser => {
@@ -81,7 +109,7 @@ ${emailBody}`;
       const text = response.choices[0].message.content ?? '';
 
       try {
-        const parsed: ParseResponse = JSON.parse(text);
+        const parsed: RawParseResponse = JSON.parse(text);
         return validateResponse(parsed);
       } catch {
         return {

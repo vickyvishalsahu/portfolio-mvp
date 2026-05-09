@@ -19,63 +19,63 @@ export interface RawEmail {
   sender: string;
   subject: string;
   body: string;
-  received_at: string;
+  receivedAt: string;
   parsed: number;
 }
 
 export interface Transaction {
   id?: number;
-  email_id: string;
-  asset_type: AssetType;
+  emailId: string;
+  assetType: AssetType;
   ticker: string | null;
   name: string;
   quantity: number;
   price: number;
   currency: Currency;
-  transaction_type: TransactionType;
-  transaction_date: string;
+  transactionType: TransactionType;
+  transactionDate: string;
   broker: string;
-  raw_text: string;
+  rawText: string;
   confidence: Confidence;
 }
 
 export interface PriceCache {
   ticker: string;
-  price_eur: number;
-  price_local: number;
+  priceEur: number;
+  priceLocal: number;
   currency: string;
-  updated_at: string;
+  updatedAt: string;
 }
 
 export interface Holding {
   ticker: string;
   name: string;
-  asset_type: string;
+  assetType: string;
   quantity: number;
-  avg_cost_eur: number;
-  avg_cost_local: number;
-  current_price_eur: number;
-  current_price_local: number;
-  current_value_eur: number;
-  current_value_local: number;
-  prev_value_eur: number | null;
-  prev_value_local: number | null;
+  avgCostEur: number;
+  avgCostLocal: number;
+  currentPriceEur: number;
+  currentPriceLocal: number;
+  currentValueEur: number;
+  currentValueLocal: number;
+  prevValueEur: number | null;
+  prevValueLocal: number | null;
   pnl: number;
-  pnl_local: number;
-  pnl_pct: number;
+  pnlLocal: number;
+  pnlPct: number;
   currency: string;
   broker: string;
 }
 
 export interface ParsedTransaction {
-  asset_type: AssetType;
+  assetType: AssetType;
   ticker: string | null;
   name: string;
   quantity: number;
   price: number;
   currency: Currency;
-  transaction_type: TransactionType;
-  transaction_date: string;
+  transactionType: TransactionType;
+  transactionDate: string;
   broker: string;
   confidence: Confidence;
 }

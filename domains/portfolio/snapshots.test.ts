@@ -71,7 +71,7 @@ describe('getAllSnapshots', () => {
     expect(inr).toHaveLength(2);
     expect(inr[0].date).toBe('2026-04-10');
     expect(inr[1].date).toBe('2026-04-20');
-    expect(inr[0]).not.toHaveProperty('currency'); // only date + total_value returned
+    expect(inr[0]).not.toHaveProperty('currency'); // only date + totalValue returned
   });
 
   it('returns only date and total_value fields', () => {
@@ -79,7 +79,7 @@ describe('getAllSnapshots', () => {
 
     const [snap] = getAllSnapshots('INR');
     expect(snap).toHaveProperty('date');
-    expect(snap).toHaveProperty('total_value');
+    expect(snap).toHaveProperty('totalValue');
     expect(snap).not.toHaveProperty('id');
     expect(snap).not.toHaveProperty('created_at');
     expect(snap).not.toHaveProperty('currency');
@@ -91,6 +91,6 @@ describe('getAllSnapshots', () => {
 
     const eur = getAllSnapshots('EUR');
     expect(eur).toHaveLength(1);
-    expect(eur[0].total_value).toBe(2400);
+    expect(eur[0].totalValue).toBe(2400);
   });
 });

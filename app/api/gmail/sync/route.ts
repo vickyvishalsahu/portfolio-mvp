@@ -45,9 +45,9 @@ export const POST = async () => {
 export const GET = async () => {
   try {
     return NextResponse.json({
-      total_raw: getRawEmailCount(),
-      total_parsed: getParsedEmailCount(),
-      gmail_connected: !!getRefreshToken(),
+      totalRaw: getRawEmailCount(),
+      totalParsed: getParsedEmailCount(),
+      gmailConnected: !!getRefreshToken(),
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

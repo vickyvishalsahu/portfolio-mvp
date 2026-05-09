@@ -8,30 +8,30 @@ import { computeNetWorthDelta } from '@/lib/snapshot-delta';
 
 type CurrencySummary = {
   currency: string;
-  total_value: number;
-  total_pnl: number;
-  total_pnl_pct: number;
+  totalValue: number;
+  totalPnl: number;
+  totalPnlPct: number;
 }
 
 type Summary = {
-  by_currency: CurrencySummary[];
-  holdings_count: number;
-  transaction_count: number;
+  byCurrency: CurrencySummary[];
+  holdingsCount: number;
+  transactionCount: number;
 }
 
 type Holding = {
   ticker: string;
   name: string;
-  asset_type: string;
+  assetType: string;
   quantity: number;
-  avg_cost_eur: number;
-  current_price_eur: number;
-  current_value_eur: number;
-  current_value_local: number;
-  prev_value_eur: number | null;
-  prev_value_local: number | null;
+  avgCostEur: number;
+  currentPriceEur: number;
+  currentValueEur: number;
+  currentValueLocal: number;
+  prevValueEur: number | null;
+  prevValueLocal: number | null;
   pnl: number;
-  pnl_pct: number;
+  pnlPct: number;
   currency: string;
   broker: string;
 }
@@ -39,7 +39,7 @@ type Holding = {
 type PortfolioData = {
   summary: Summary;
   holdings: Holding[];
-  broker_allocation: Record<string, number>;
+  brokerAllocation: Record<string, number>;
 }
 
 const ASSET_COLORS: Record<string, string> = {
@@ -54,13 +54,15 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [snapshots, setSnapshots] = useState<{ date: string; total_value: number }[]>([]);
+  const [snapshots, setSnapshots] = useState<{ date: string; totalValue: number }[]>([]);
   const [allocView, setAllocView] = useState<'type' | 'broker'>('type');
 
   useEffect(() => {
     fetch('/api/portfolio')
       .then((response) => response.json())
-      .then((data) => { if (data.summary) setData(data); })
+      .then((data) => {
+        if (data.summary) setData(data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -68,11 +70,13 @@ export default function Dashboard() {
   // Fetch snapshots for the primary currency once portfolio data is available
   useEffect(() => {
     if (!data) return;
-    const primaryCurrency = data.summary.by_currency[0]?.currency;
+    const primaryCurrency = data.summary.byCurrency[0]?.currency;
     if (!primaryCurrency) return;
     fetch(`/api/snapshots?currency=${primaryCurrency}`)
       .then((response) => response.json())
-      .then((data) => { if (Array.isArray(data)) setSnapshots(data); })
+      .then((data) => {
+        if (Array.isArray(data)) setSnapshots(data);
+      })
       .catch(() => {});
   }, [data]);
 
@@ -107,7 +111,7 @@ export default function Dashboard() {
   }
 
   const { summary, holdings } = data;
-  const primaryCurrency = summary.by_currency[0]?.currency ?? 'INR';
+  const primaryCurrency = summary.byCurrency[0]?.currency ?? 'INR';
   const netWorthDelta = computeNetWorthDelta(snapshots);
 
   const BROKER_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
@@ -115,16 +119,16 @@ export default function Dashboard() {
   // Allocation uses local values — valid for single currency; multi-currency: TODO
   const allocationByType = Object.entries(
     holdings.reduce<Record<string, number>>((acc, h) => {
-      acc[h.asset_type] = (acc[h.asset_type] || 0) + h.current_value_local;
+      acc[h.assetType] = (acc[h.assetType] || 0) + h.currentValueLocal;
       return acc;
     }, {})
   ).map(([type, value]) => ({
     name: t(`dashboard.assetLabels.${type}`, { defaultValue: type }),
     value: Math.round(value * 100) / 100,
-    color: ASSET_COLORS[type] || '#6b7280',
+    color: ASSET_COLORS[type] ?? '#6b7280',
   }));
 
-  const allocationByBroker = Object.entries(data.broker_allocation || {}).map(([broker, value], i) => ({
+  const allocationByBroker = Object.entries(data.brokerAllocation || {}).map(([broker, value], i) => ({
     name: broker,
     value: Math.round((value as number) * 100) / 100,
     color: BROKER_COLORS[i % BROKER_COLORS.length],
@@ -136,11 +140,11 @@ export default function Dashboard() {
 
   // Biggest movers — use local values, filter on prev_value_local
   const withChange = holdings
-    .filter((holding) => holding.prev_value_local !== null)
+    .filter((holding) => holding.prevValueLocal !== null)
     .map((holding) => ({
       ...holding,
-      change: holding.current_value_local - holding.prev_value_local!,
-      change_pct: ((holding.current_value_local - holding.prev_value_local!) / holding.prev_value_local!) * 100,
+      change: holding.currentValueLocal - holding.prevValueLocal!,
+      changePct: ((holding.currentValueLocal - holding.prevValueLocal!) / holding.prevValueLocal!) * 100,
     }))
     .sort((holdingA, holdingB) => holdingB.change - holdingA.change);
   const topGainers = withChange.slice(0, 3);
@@ -152,7 +156,7 @@ export default function Dashboard() {
 
       {/* Summary Cards — one per currency + counts */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {summary.by_currency.map((s) => {
+        {summary.byCurrency.map((s) => {
           const isPrimary = s.currency === primaryCurrency;
           const delta = isPrimary ? netWorthDelta : null;
 
@@ -170,9 +174,9 @@ export default function Dashboard() {
           return (
             <div key={s.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
               <p className="text-gray-400 text-sm">{t('dashboard.summary.totalValue')}</p>
-              <p className="text-2xl font-bold text-white">{fmtLocal(s.total_value, s.currency)}</p>
-              <p className={`text-sm font-medium mt-1 ${s.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {fmtLocal(s.total_pnl, s.currency)} {pct(s.total_pnl_pct)}
+              <p className="text-2xl font-bold text-white">{fmtLocal(s.totalValue, s.currency)}</p>
+              <p className={`text-sm font-medium mt-1 ${s.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {fmtLocal(s.totalPnl, s.currency)} {pct(s.totalPnlPct)}
               </p>
               {renderDelta()}
             </div>
@@ -180,11 +184,11 @@ export default function Dashboard() {
         })}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <p className="text-gray-400 text-sm">{t('dashboard.summary.holdings')}</p>
-          <p className="text-2xl font-bold text-white">{summary.holdings_count}</p>
+          <p className="text-2xl font-bold text-white">{summary.holdingsCount}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <p className="text-gray-400 text-sm">{t('dashboard.summary.transactions')}</p>
-          <p className="text-2xl font-bold text-white">{summary.transaction_count}</p>
+          <p className="text-2xl font-bold text-white">{summary.transactionCount}</p>
         </div>
       </div>
 
@@ -254,10 +258,10 @@ export default function Dashboard() {
                     <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
                   </td>
                   <td className="text-right text-white">
-                    {fmtHolding(h.current_value_local, h.current_value_eur, h.currency)}
+                    {fmtHolding(h.currentValueLocal, h.currentValueEur, h.currency)}
                   </td>
                   <td className={`text-right ${h.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {pct(h.pnl_pct)}
+                    {pct(h.pnlPct)}
                   </td>
                 </tr>
               ))}
@@ -292,7 +296,7 @@ export default function Dashboard() {
                           +{fmtLocal(h.change, h.currency)}
                         </td>
                         <td className="text-right text-green-500 text-xs w-16">
-                          +{h.change_pct.toFixed(1)}%
+                          +{h.changePct.toFixed(1)}%
                         </td>
                       </tr>
                     ))}
@@ -317,7 +321,7 @@ export default function Dashboard() {
                           {fmtLocal(h.change, h.currency)}
                         </td>
                         <td className="text-right text-red-500 text-xs w-16">
-                          {h.change_pct.toFixed(1)}%
+                          {h.changePct.toFixed(1)}%
                         </td>
                       </tr>
                     ))}
@@ -356,7 +360,7 @@ export default function Dashboard() {
               />
               <Line
                 type="monotone"
-                dataKey="total_value"
+                dataKey="totalValue"
                 stroke="#3b82f6"
                 strokeWidth={2}
                 dot={false}

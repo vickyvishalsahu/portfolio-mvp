@@ -5,17 +5,17 @@ import type { Transaction } from '@/domains/shared/types';
 function makeTx(overrides: Partial<Transaction> = {}): Transaction {
   return {
     id: 1,
-    email_id: 'test',
-    asset_type: 'stock',
+    emailId: 'test',
+    assetType: 'stock',
     ticker: 'AAPL',
     name: 'Apple Inc',
     quantity: 10,
     price: 150.50,
     currency: 'EUR',
-    transaction_type: 'buy',
-    transaction_date: '2026-04-01',
+    transactionType: 'buy',
+    transactionDate: '2026-04-01',
     broker: 'scalable',
-    raw_text: '',
+    rawText: '',
     confidence: 'high',
     ...overrides,
   };

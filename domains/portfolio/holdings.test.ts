@@ -23,7 +23,7 @@ vi.mock('@/domains/pricing', () => ({
     currency: 'EUR',
   }),
   convertToEur: vi.fn((amount: number) => Promise.resolve(amount)),
-  getPrevPrice: vi.fn(() => ({ prev_price_eur: mockPrevPriceEur, prev_price_local: mockPrevPriceLocal })),
+  getPrevPrice: vi.fn(() => ({ prevPriceEur: mockPrevPriceEur, prevPriceLocal: mockPrevPriceLocal })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -60,10 +60,10 @@ describe('computeHoldings', () => {
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(10);
-    expect(holdings[0].avg_cost_eur).toBe(10);
-    expect(holdings[0].avg_cost_local).toBe(10);
-    expect(holdings[0].current_value_eur).toBe(1000);
-    expect(holdings[0].current_value_local).toBe(1000);
+    expect(holdings[0].avgCostEur).toBe(10);
+    expect(holdings[0].avgCostLocal).toBe(10);
+    expect(holdings[0].currentValueEur).toBe(1000);
+    expect(holdings[0].currentValueLocal).toBe(1000);
   });
 
   it('INR holding — local values use source price, not EUR conversion', async () => {
@@ -75,10 +75,10 @@ describe('computeHoldings', () => {
     const holdings = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
-    expect(holdings[0].avg_cost_local).toBe(130);
-    expect(holdings[0].current_price_local).toBe(150);
-    expect(holdings[0].current_value_local).toBe(15000);
-    expect(holdings[0].pnl_local).toBe(2000);
+    expect(holdings[0].avgCostLocal).toBe(130);
+    expect(holdings[0].currentPriceLocal).toBe(150);
+    expect(holdings[0].currentValueLocal).toBe(15000);
+    expect(holdings[0].pnlLocal).toBe(2000);
   });
 
   it('partial sell — reduces qty and adjusts cost proportionally', async () => {
@@ -91,7 +91,7 @@ describe('computeHoldings', () => {
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(6);
-    expect(holdings[0].avg_cost_eur).toBeCloseTo(10);
+    expect(holdings[0].avgCostEur).toBeCloseTo(10);
   });
 
   it('full sell — position is removed from holdings', async () => {
@@ -127,7 +127,7 @@ describe('computeHoldings', () => {
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(8);
-    expect(holdings[0].avg_cost_eur).toBeCloseTo(12);
+    expect(holdings[0].avgCostEur).toBeCloseTo(12);
   });
 
   it('sell with no prior buy — position is skipped gracefully, no crash', async () => {
@@ -150,7 +150,7 @@ describe('computeHoldings', () => {
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(10);
-    expect(holdings[0].avg_cost_eur).toBe(10);
+    expect(holdings[0].avgCostEur).toBe(10);
   });
 
   it('multiple buys — avg cost weighted correctly', async () => {
@@ -163,43 +163,43 @@ describe('computeHoldings', () => {
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(20);
-    expect(holdings[0].avg_cost_eur).toBeCloseTo(15);
+    expect(holdings[0].avgCostEur).toBeCloseTo(15);
   });
 
-  it('prev_value_eur is null when no previous price exists', async () => {
+  it('prevValueEur is null when no previous price exists', async () => {
     mockRows = [makeTx({ quantity: 10, price: 10 })];
     mockPrevPriceEur = null;
 
     const holdings = await computeHoldings();
 
-    expect(holdings[0].prev_value_eur).toBeNull();
+    expect(holdings[0].prevValueEur).toBeNull();
   });
 
-  it('prev_value_eur is qty × prev_price_eur when previous price exists', async () => {
+  it('prevValueEur is qty × prevPriceEur when previous price exists', async () => {
     mockRows = [makeTx({ quantity: 10, price: 10 })];
     mockPrevPriceEur = 80;
 
     const holdings = await computeHoldings();
 
-    expect(holdings[0].prev_value_eur).toBe(800);
+    expect(holdings[0].prevValueEur).toBe(800);
   });
 
-  it('prev_value_local is null when no prev_price_local in cache', async () => {
+  it('prevValueLocal is null when no prevPriceLocal in cache', async () => {
     mockRows = [makeTx({ quantity: 10, price: 130, currency: 'INR' })];
     mockPrevPriceLocal = null;
 
     const holdings = await computeHoldings();
 
-    expect(holdings[0].prev_value_local).toBeNull();
+    expect(holdings[0].prevValueLocal).toBeNull();
   });
 
-  it('prev_value_local is qty × prev_price_local when it exists', async () => {
+  it('prevValueLocal is qty × prevPriceLocal when it exists', async () => {
     mockRows = [makeTx({ quantity: 100, price: 130, currency: 'INR' })];
     mockPrevPriceLocal = 145;
 
     const holdings = await computeHoldings();
 
-    expect(holdings[0].prev_value_local).toBe(14500);
+    expect(holdings[0].prevValueLocal).toBe(14500);
   });
 
 });

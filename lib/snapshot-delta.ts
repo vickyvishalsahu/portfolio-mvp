@@ -1,4 +1,4 @@
-type Snapshot = { date: string; total_value: number };
+type Snapshot = { date: string; totalValue: number };
 
 export type NetWorthDelta = { delta: number; deltaPct: number };
 
@@ -24,9 +24,9 @@ export const computeNetWorthDelta = (snapshots: Snapshot[]): NetWorthDelta | nul
 
   if (referenceSnapshot.date === latest.date) return null;
 
-  const delta = latest.total_value - referenceSnapshot.total_value;
+  const delta = latest.totalValue - referenceSnapshot.totalValue;
   const deltaPct =
-    referenceSnapshot.total_value > 0 ? (delta / referenceSnapshot.total_value) * 100 : 0;
+    referenceSnapshot.totalValue > 0 ? (delta / referenceSnapshot.totalValue) * 100 : 0;
 
   return { delta, deltaPct };
 };

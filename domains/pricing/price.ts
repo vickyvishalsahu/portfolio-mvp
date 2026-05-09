@@ -12,7 +12,7 @@ export const getPrice = async (
 ): Promise<PriceResult | null> => {
   const cached = getCachedPrice(ticker);
   if (cached) {
-    return { priceEur: cached.price_eur, priceLocal: cached.price_local, currency: cached.currency };
+    return { priceEur: cached.priceEur, priceLocal: cached.priceLocal, currency: cached.currency };
   }
 
   let result: RawPrice | null = null;
@@ -41,13 +41,13 @@ export const getPrice = async (
 };
 
 export const refreshPrices = async (
-  tickers: { ticker: string; asset_type: string; currency: string }[]
+  tickers: { ticker: string; assetType: string; currency: string }[]
 ): Promise<{ updated: number; failed: string[] }> => {
   let updated = 0;
   const failed: string[] = [];
 
-  for (const { ticker, asset_type, currency } of tickers) {
-    const result = await getPrice(ticker, asset_type, currency);
+  for (const { ticker, assetType, currency } of tickers) {
+    const result = await getPrice(ticker, assetType, currency);
     if (result) {
       updated++;
     } else {

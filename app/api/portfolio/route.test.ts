@@ -12,21 +12,21 @@ import { computeHoldings, recordSnapshot } from '@/domains/portfolio';
 
 const TWO_INR_HOLDINGS = [
   {
-    ticker: 'HDFC', name: 'HDFC MF', asset_type: 'mf',
-    quantity: 100, avg_cost_local: 130, avg_cost_eur: 1.44,
-    current_price_local: 150, current_price_eur: 1.65,
-    current_value_local: 15000, current_value_eur: 165,
-    prev_value_eur: null, prev_value_local: null,
-    pnl: 21, pnl_local: 2000, pnl_pct: 15.38,
+    ticker: 'HDFC', name: 'HDFC MF', assetType: 'mf',
+    quantity: 100, avgCostLocal: 130, avgCostEur: 1.44,
+    currentPriceLocal: 150, currentPriceEur: 1.65,
+    currentValueLocal: 15000, currentValueEur: 165,
+    prevValueEur: null, prevValueLocal: null,
+    pnl: 21, pnlLocal: 2000, pnlPct: 15.38,
     currency: 'INR', broker: 'cams',
   },
   {
-    ticker: 'SBI', name: 'SBI MF', asset_type: 'mf',
-    quantity: 50, avg_cost_local: 200, avg_cost_eur: 2.21,
-    current_price_local: 9000, current_price_eur: 99.5,
-    current_value_local: 9000, current_value_eur: 99.5,
-    prev_value_eur: null, prev_value_local: null,
-    pnl: -11, pnl_local: -1000, pnl_pct: -10,
+    ticker: 'SBI', name: 'SBI MF', assetType: 'mf',
+    quantity: 50, avgCostLocal: 200, avgCostEur: 2.21,
+    currentPriceLocal: 9000, currentPriceEur: 99.5,
+    currentValueLocal: 9000, currentValueEur: 99.5,
+    prevValueEur: null, prevValueLocal: null,
+    pnl: -11, pnlLocal: -1000, pnlPct: -10,
     currency: 'INR', broker: 'cams',
   },
 ];
@@ -41,36 +41,36 @@ describe('GET /api/portfolio', () => {
     const res = await GET();
     const data = await res.json();
 
-    expect(data.summary.by_currency).toHaveLength(1);
-    expect(data.summary.by_currency[0].currency).toBe('INR');
-    expect(data.summary.by_currency[0].total_value).toBe(24000);
-    expect(data.summary.by_currency[0].total_pnl).toBe(1000);
+    expect(data.summary.byCurrency).toHaveLength(1);
+    expect(data.summary.byCurrency[0].currency).toBe('INR');
+    expect(data.summary.byCurrency[0].totalValue).toBe(24000);
+    expect(data.summary.byCurrency[0].totalPnl).toBe(1000);
   });
 
-  it('total_pnl_pct is based on local cost', async () => {
+  it('totalPnlPct is based on local cost', async () => {
     const res = await GET();
     const data = await res.json();
 
     // cost = 100×130 + 50×200 = 13000 + 10000 = 23000; pnl = 1000; pct = 1000/23000
-    expect(data.summary.by_currency[0].total_pnl_pct).toBeCloseTo(4.35);
+    expect(data.summary.byCurrency[0].totalPnlPct).toBeCloseTo(4.35);
   });
 
-  it('summary has holdings_count and transaction_count', async () => {
+  it('summary has holdingsCount and transactionCount', async () => {
     const res = await GET();
     const data = await res.json();
 
-    expect(data.summary.holdings_count).toBe(2);
-    expect(data.summary.transaction_count).toBe(2);
+    expect(data.summary.holdingsCount).toBe(2);
+    expect(data.summary.transactionCount).toBe(2);
   });
 
   it('summary has no EUR aggregate fields', async () => {
     const res = await GET();
     const data = await res.json();
 
-    expect(data.summary).not.toHaveProperty('total_value_eur');
-    expect(data.summary).not.toHaveProperty('total_pnl');
-    expect(data.summary).not.toHaveProperty('delta_30d');
-    expect(data.summary).not.toHaveProperty('delta_7d');
+    expect(data.summary).not.toHaveProperty('totalValueEur');
+    expect(data.summary).not.toHaveProperty('totalPnl');
+    expect(data.summary).not.toHaveProperty('delta30d');
+    expect(data.summary).not.toHaveProperty('delta7d');
   });
 
   it('calls recordSnapshot with per-currency local values', async () => {
@@ -78,10 +78,10 @@ describe('GET /api/portfolio', () => {
     expect(recordSnapshot).toHaveBeenCalledWith({ INR: 24000 });
   });
 
-  it('broker_allocation uses local values', async () => {
+  it('brokerAllocation uses local values', async () => {
     const res = await GET();
     const data = await res.json();
 
-    expect(data.broker_allocation.cams).toBe(24000);
+    expect(data.brokerAllocation.cams).toBe(24000);
   });
 });

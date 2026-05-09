@@ -7,22 +7,22 @@ import { fmtEur, fmtHolding, pct } from '@/lib/format';
 type Holding = {
   ticker: string;
   name: string;
-  asset_type: string;
+  assetType: string;
   quantity: number;
-  avg_cost_eur: number;
-  avg_cost_local: number;
-  current_price_eur: number;
-  current_price_local: number;
-  current_value_eur: number;
-  current_value_local: number;
+  avgCostEur: number;
+  avgCostLocal: number;
+  currentPriceEur: number;
+  currentPriceLocal: number;
+  currentValueEur: number;
+  currentValueLocal: number;
   pnl: number;
-  pnl_local: number;
-  pnl_pct: number;
+  pnlLocal: number;
+  pnlPct: number;
   currency: string;
   broker: string;
 }
 
-type SortKey = 'name' | 'current_value_eur' | 'pnl_pct' | 'quantity' | 'broker' | 'asset_type';
+type SortKey = 'name' | 'currentValueEur' | 'pnlPct' | 'quantity' | 'broker' | 'assetType';
 
 const TYPE_BADGE: Record<string, string> = {
   stock: 'bg-blue-900 text-blue-300',
@@ -47,7 +47,7 @@ const HoldingsPage = () => {
 
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<SortKey>('current_value_eur');
+  const [sortKey, setSortKey] = useState<SortKey>('currentValueEur');
   const [sortAsc, setSortAsc] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [priceAge, setPriceAge] = useState<string | null>(null);
@@ -58,7 +58,7 @@ const HoldingsPage = () => {
       const res = await fetch('/api/portfolio');
       const data = await res.json();
       if (data.holdings) setHoldings(data.holdings);
-      if ('price_cache_updated_at' in data) setPriceAge(data.price_cache_updated_at);
+      if ('priceCacheUpdatedAt' in data) setPriceAge(data.priceCacheUpdatedAt);
     } catch {}
     setLoading(false);
   };
@@ -84,13 +84,13 @@ const HoldingsPage = () => {
       setSortAsc(!sortAsc);
     } else {
       setSortKey(key);
-      setSortAsc(key === 'name' || key === 'broker' || key === 'asset_type');
+      setSortAsc(key === 'name' || key === 'broker' || key === 'assetType');
     }
   };
 
   const sorted = [...holdings].sort((holdingA, holdingB) => {
     let cmp: number;
-    if (sortKey === 'name' || sortKey === 'broker' || sortKey === 'asset_type') {
+    if (sortKey === 'name' || sortKey === 'broker' || sortKey === 'assetType') {
       cmp = holdingA[sortKey].localeCompare(holdingB[sortKey]);
     } else {
       cmp = holdingA[sortKey] - holdingB[sortKey];
@@ -167,12 +167,12 @@ const HoldingsPage = () => {
               <tr className="text-gray-400 border-b border-gray-800 text-xs uppercase tracking-wider">
                 <SortHeader label={t('holdings.columns.name')} field="name" />
                 <th className="text-left pb-3">{t('holdings.columns.ticker')}</th>
-                <SortHeader label={t('holdings.columns.type')} field="asset_type" />
+                <SortHeader label={t('holdings.columns.type')} field="assetType" />
                 <SortHeader label={t('holdings.columns.qty')} field="quantity" />
                 <th className="text-right pb-3">{t('holdings.columns.avgCost')}</th>
                 <th className="text-right pb-3">{t('holdings.columns.price')}</th>
-                <SortHeader label={t('holdings.columns.value')} field="current_value_eur" />
-                <SortHeader label={t('holdings.columns.pnlPct')} field="pnl_pct" />
+                <SortHeader label={t('holdings.columns.value')} field="currentValueEur" />
+                <SortHeader label={t('holdings.columns.pnlPct')} field="pnlPct" />
                 <SortHeader label={t('holdings.columns.broker')} field="broker" />
               </tr>
             </thead>
@@ -182,31 +182,31 @@ const HoldingsPage = () => {
                   <td className="py-3 pl-1 text-white font-medium">{holding.name}</td>
                   <td className="py-3 text-gray-400 font-mono text-xs">{holding.ticker}</td>
                   <td className="py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded ${TYPE_BADGE[holding.asset_type] || 'bg-gray-800 text-gray-400'}`}>
-                      {holding.asset_type}
+                    <span className={`text-xs px-2 py-0.5 rounded ${TYPE_BADGE[holding.assetType] ?? 'bg-gray-800 text-gray-400'}`}>
+                      {holding.assetType}
                     </span>
                   </td>
                   <td className="py-3 text-right text-gray-300">
                     {holding.quantity < 1 ? holding.quantity.toFixed(6) : holding.quantity.toFixed(2)}
                   </td>
                   <td className="py-3 text-right text-gray-400">
-                    {fmtHolding(holding.avg_cost_local, holding.avg_cost_eur, holding.currency)}
+                    {fmtHolding(holding.avgCostLocal, holding.avgCostEur, holding.currency)}
                   </td>
                   <td className="py-3 text-right text-gray-300">
-                    {fmtHolding(holding.current_price_local, holding.current_price_eur, holding.currency)}
+                    {fmtHolding(holding.currentPriceLocal, holding.currentPriceEur, holding.currency)}
                   </td>
                   <td className="py-3 text-right">
                     <div className="text-white font-medium">
-                      {fmtHolding(holding.current_value_local, holding.current_value_eur, holding.currency)}
+                      {fmtHolding(holding.currentValueLocal, holding.currentValueEur, holding.currency)}
                     </div>
                     {holding.currency !== 'EUR' && (
-                      <div className="text-gray-600 text-xs">{fmtEur(holding.current_value_eur)}</div>
+                      <div className="text-gray-600 text-xs">{fmtEur(holding.currentValueEur)}</div>
                     )}
                   </td>
-                  <td className={`py-3 text-right font-medium ${holding.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    <div>{pct(holding.pnl_pct)}</div>
+                  <td className={`py-3 text-right font-medium ${holding.pnlPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <div>{pct(holding.pnlPct)}</div>
                     <div className="text-xs opacity-70">
-                      {fmtHolding(holding.pnl_local, holding.pnl, holding.currency)}
+                      {fmtHolding(holding.pnlLocal, holding.pnl, holding.currency)}
                     </div>
                   </td>
                   <td className="py-3 text-gray-500 text-xs">{holding.broker}</td>

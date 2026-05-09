@@ -68,7 +68,7 @@ export const fetchBrokerEmails = async (
         sender,
         subject,
         body: body.substring(0, 10000),
-        received_at: date ? new Date(date).toISOString() : new Date().toISOString(),
+        receivedAt: date ? new Date(date).toISOString() : new Date().toISOString(),
       });
     }
   }

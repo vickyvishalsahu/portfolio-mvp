@@ -16,14 +16,14 @@ function makeRequest(body: unknown) {
 }
 
 const validBody = {
-  asset_type: 'stock',
+  assetType: 'stock',
   ticker: 'AAPL',
   name: 'Apple Inc',
   quantity: 10,
   price: 150,
   currency: 'EUR',
-  transaction_type: 'buy',
-  transaction_date: '2026-04-26',
+  transactionType: 'buy',
+  transactionDate: '2026-04-26',
   broker: 'scalable',
 };
 
@@ -36,10 +36,10 @@ describe('POST /api/transactions', () => {
     expect(insertTransaction).toHaveBeenCalledOnce();
   });
 
-  it('passes email_id as "manual" for manually entered transactions', async () => {
+  it('passes emailId as "manual" for manually entered transactions', async () => {
     await POST(makeRequest(validBody));
     expect(insertTransaction).toHaveBeenCalledWith(
-      expect.objectContaining({ email_id: 'manual' })
+      expect.objectContaining({ emailId: 'manual' })
     );
   });
 

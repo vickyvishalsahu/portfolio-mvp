@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 
 export interface SyncStatus {
-  total_raw: number;
-  total_parsed: number;
-  gmail_connected: boolean;
+  totalRaw: number;
+  totalParsed: number;
+  gmailConnected: boolean;
 }
 
 export const useGmailSync = () => {
