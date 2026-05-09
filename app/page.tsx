@@ -1,50 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { fmtLocal, fmtHolding, pct } from '@/lib/format';
 import { computeNetWorthDelta } from '@/lib/snapshot-delta';
-import type { Holding } from '@/domains/shared/types';
-import type { CurrencySummary, Summary, PortfolioData } from '@/domains/portfolio/types';
-
-const ASSET_COLORS: Record<string, string> = {
-  stock: '#3b82f6',
-  etf: '#8b5cf6',
-  mf: '#f59e0b',
-  crypto: '#10b981',
-};
-
+import { usePortfolio } from '@/app/hooks/usePortfolio';
+import { DashboardSummaryCards } from './_dashboard/DashboardSummaryCards';
+import { DashboardAllocationChart } from './_dashboard/DashboardAllocationChart';
+import { DashboardTopHoldings } from './_dashboard/DashboardTopHoldings';
+import { DashboardMovers } from './_dashboard/DashboardMovers';
+import { DashboardNetWorthChart } from './_dashboard/DashboardNetWorthChart';
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const [data, setData] = useState<PortfolioData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [snapshots, setSnapshots] = useState<{ date: string; totalValue: number }[]>([]);
-  const [allocView, setAllocView] = useState<'type' | 'broker'>('type');
-
-  useEffect(() => {
-    fetch('/api/portfolio')
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.summary) setData(data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  // Fetch snapshots for the primary currency once portfolio data is available
-  useEffect(() => {
-    if (!data) return;
-    const primaryCurrency = data.summary.byCurrency[0]?.currency;
-    if (!primaryCurrency) return;
-    fetch(`/api/snapshots?currency=${primaryCurrency}`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (Array.isArray(data)) setSnapshots(data);
-      })
-      .catch(() => {});
-  }, [data]);
+  const { data, loading, snapshots } = usePortfolio();
 
   if (loading) {
     return (
@@ -80,262 +47,16 @@ export default function Dashboard() {
   const primaryCurrency = summary.byCurrency[0]?.currency ?? 'INR';
   const netWorthDelta = computeNetWorthDelta(snapshots);
 
-  const BROKER_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
-
-  // Allocation uses local values — valid for single currency; multi-currency: TODO
-  const allocationByType = Object.entries(
-    holdings.reduce<Record<string, number>>((acc, h) => {
-      acc[h.assetType] = (acc[h.assetType] || 0) + h.currentValueLocal;
-      return acc;
-    }, {})
-  ).map(([type, value]) => ({
-    name: t(`dashboard.assetLabels.${type}`, { defaultValue: type }),
-    value: Math.round(value * 100) / 100,
-    color: ASSET_COLORS[type] ?? '#6b7280',
-  }));
-
-  const allocationByBroker = Object.entries(data.brokerAllocation || {}).map(([broker, value], i) => ({
-    name: broker,
-    value: Math.round((value as number) * 100) / 100,
-    color: BROKER_COLORS[i % BROKER_COLORS.length],
-  }));
-
-  const allocationData = allocView === 'type' ? allocationByType : allocationByBroker;
-
-  const topHoldings = holdings.slice(0, 5);
-
-  // Biggest movers — use local values, filter on prev_value_local
-  const withChange = holdings
-    .filter((holding) => holding.prevValueLocal !== null)
-    .map((holding) => ({
-      ...holding,
-      change: holding.currentValueLocal - holding.prevValueLocal!,
-      changePct: ((holding.currentValueLocal - holding.prevValueLocal!) / holding.prevValueLocal!) * 100,
-    }))
-    .sort((holdingA, holdingB) => holdingB.change - holdingA.change);
-  const topGainers = withChange.slice(0, 3);
-  const topLosers = [...withChange].reverse().slice(0, 3).filter((holding) => holding.change < 0);
-
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">{t('dashboard.title')}</h1>
-
-      {/* Summary Cards — one per currency + counts */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {summary.byCurrency.map((s) => {
-          const isPrimary = s.currency === primaryCurrency;
-          const delta = isPrimary ? netWorthDelta : null;
-
-          const renderDelta = () => {
-            if (!delta) return null;
-            const isPositive = delta.delta >= 0;
-            const sign = isPositive ? '+' : '';
-            return (
-              <p className={`text-xs mt-2 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? '↑' : '↓'} {sign}{fmtLocal(delta.delta, s.currency)} ({sign}{delta.deltaPct.toFixed(1)}%) {t('dashboard.movers.vsLast30d')}
-              </p>
-            );
-          };
-
-          return (
-            <div key={s.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-              <p className="text-gray-400 text-sm">{t('dashboard.summary.totalValue')}</p>
-              <p className="text-2xl font-bold text-white">{fmtLocal(s.totalValue, s.currency)}</p>
-              <p className={`text-sm font-medium mt-1 ${s.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {fmtLocal(s.totalPnl, s.currency)} {pct(s.totalPnlPct)}
-              </p>
-              {renderDelta()}
-            </div>
-          );
-        })}
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <p className="text-gray-400 text-sm">{t('dashboard.summary.holdings')}</p>
-          <p className="text-2xl font-bold text-white">{summary.holdingsCount}</p>
-        </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <p className="text-gray-400 text-sm">{t('dashboard.summary.transactions')}</p>
-          <p className="text-2xl font-bold text-white">{summary.transactionCount}</p>
-        </div>
-      </div>
-
+      <DashboardSummaryCards summary={summary} netWorthDelta={netWorthDelta} primaryCurrency={primaryCurrency} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Allocation Chart */}
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">{t('dashboard.allocation.title')}</h2>
-            <div className="flex text-xs rounded overflow-hidden border border-gray-700">
-              <button
-                onClick={() => setAllocView('type')}
-                className={`px-3 py-1 transition ${allocView === 'type' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                {t('dashboard.allocation.byType')}
-              </button>
-              <button
-                onClick={() => setAllocView('broker')}
-                className={`px-3 py-1 transition ${allocView === 'broker' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                {t('dashboard.allocation.byBroker')}
-              </button>
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={allocationData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                innerRadius={60}
-                paddingAngle={2}
-                label={({ name, percent }: any) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-              >
-                {allocationData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: any) => fmtLocal(Number(value), primaryCurrency)}
-                contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-                labelStyle={{ color: '#e5e7eb' }}
-                itemStyle={{ color: '#e5e7eb' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Top Holdings */}
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('dashboard.topHoldings.title')}</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-400 border-b border-gray-800">
-                <th className="text-left pb-2">{t('dashboard.topHoldings.name')}</th>
-                <th className="text-right pb-2">{t('dashboard.topHoldings.value')}</th>
-                <th className="text-right pb-2">{t('dashboard.topHoldings.pnl')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topHoldings.map((h) => (
-                <tr key={h.ticker} className="border-b border-gray-800/50">
-                  <td className="py-2">
-                    <span className="text-white">{h.name}</span>
-                    <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
-                  </td>
-                  <td className="text-right text-white">
-                    {fmtHolding(h.currentValueLocal, h.currentValueEur, h.currency)}
-                  </td>
-                  <td className={`text-right ${h.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {pct(h.pnlPct)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {holdings.length > 5 && (
-            <a href="/holdings" className="text-blue-400 hover:underline text-sm mt-3 inline-block">
-              {t('dashboard.topHoldings.viewAll', { count: holdings.length })}
-            </a>
-          )}
-        </div>
+        <DashboardAllocationChart holdings={holdings} brokerAllocation={data.brokerAllocation} primaryCurrency={primaryCurrency} />
+        <DashboardTopHoldings holdings={holdings} />
       </div>
-
-      {withChange.length > 0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">{t('dashboard.movers.title')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('dashboard.movers.gainers')}</p>
-              {topGainers.length === 0 ? (
-                <p className="text-gray-600 text-sm">{t('dashboard.movers.noGains')}</p>
-              ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {topGainers.map((h) => (
-                      <tr key={h.ticker} className="border-b border-gray-800/50">
-                        <td className="py-2">
-                          <span className="text-white">{h.name}</span>
-                          <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
-                        </td>
-                        <td className="text-right text-green-400 font-medium">
-                          +{fmtLocal(h.change, h.currency)}
-                        </td>
-                        <td className="text-right text-green-500 text-xs w-16">
-                          +{h.changePct.toFixed(1)}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('dashboard.movers.losers')}</p>
-              {topLosers.length === 0 ? (
-                <p className="text-gray-600 text-sm">{t('dashboard.movers.noLosses')}</p>
-              ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {topLosers.map((h) => (
-                      <tr key={h.ticker} className="border-b border-gray-800/50">
-                        <td className="py-2">
-                          <span className="text-white">{h.name}</span>
-                          <span className="text-gray-500 text-xs ml-2">{h.ticker}</span>
-                        </td>
-                        <td className="text-right text-red-400 font-medium">
-                          {fmtLocal(h.change, h.currency)}
-                        </td>
-                        <td className="text-right text-red-500 text-xs w-16">
-                          {h.changePct.toFixed(1)}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {snapshots.length > 1 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('dashboard.netWorth.title')}</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={snapshots} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis
-                dataKey="date"
-                tick={{ fill: '#9ca3af', fontSize: 11 }}
-                tickFormatter={(dateString) => {
-                  const [, month, day] = dateString.split('dashboard.-');
-                  return `${day}/${month}`;
-                }}
-              />
-              <YAxis
-                tick={{ fill: '#9ca3af', fontSize: 11 }}
-                tickFormatter={(value) => fmtLocal(value, primaryCurrency)}
-                width={64}
-              />
-              <Tooltip
-                formatter={(value: any) => [fmtLocal(Number(value), primaryCurrency), t('dashboard.netWorth.portfolio')]}
-                contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-                labelStyle={{ color: '#e5e7eb' }}
-                itemStyle={{ color: '#3b82f6' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="totalValue"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, fill: '#3b82f6' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <DashboardMovers holdings={holdings} />
+      {snapshots.length > 1 && <DashboardNetWorthChart snapshots={snapshots} primaryCurrency={primaryCurrency} />}
     </div>
   );
 }
