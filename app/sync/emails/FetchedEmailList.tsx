@@ -2,17 +2,10 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-type FetchedEmail = {
-  id: string;
-  sender: string;
-  subject: string;
-  receivedAt: string;
-  parsed: number;
-};
+import { EmailListItem } from '@/domains/email-sync';
 
 type Props = {
-  emails: FetchedEmail[];
+  emails: EmailListItem[];
 };
 
 const MAX_DEFAULT = 50;

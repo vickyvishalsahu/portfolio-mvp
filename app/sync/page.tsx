@@ -1,29 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGmailSync } from '@/domains/email-sync/hooks/useGmailSync';
 import { useInstitutionSettings } from '@/domains/email-sync/hooks/useInstitutionSettings';
+import { useSyncJobs } from '@/domains/email-sync/hooks/useSyncJobs';
 import { GmailConnection } from './gmail/GmailConnection';
 import { InstitutionSearch } from './institutions/InstitutionSearch';
 import { FetchedEmailList } from './emails/FetchedEmailList';
 import { SyncStats } from './SyncStats';
 import { DangerZone } from './DangerZone';
-
-type ParseResult = {
-  processed: number;
-  transactionsAdded: number;
-  skipped: { emailId: string; subject: string; reason: string }[];
-  errors: { emailId: string; subject: string; error: string }[];
-};
-
-type FetchedEmail = {
-  id: string;
-  sender: string;
-  subject: string;
-  receivedAt: string;
-  parsed: number;
-};
 
 const SyncPage = () => {
   const { t } = useTranslation();
@@ -32,110 +17,11 @@ const SyncPage = () => {
     institutions, searchQuery, setSearchQuery, suggestions, searching,
     addInstitution, removeInstitution, updateDomain,
   } = useInstitutionSettings();
-
-  const [activeFetchJobId, setActiveFetchJobId] = useState<string | null>(null);
-  const [activeParseJobId, setActiveParseJobId] = useState<string | null>(null);
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [parseError, setParseError] = useState<string | null>(null);
-  const [fetchedEmails, setFetchedEmails] = useState<FetchedEmail[]>([]);
-
-  const isConnected = status?.gmailConnected ?? false;
-  const hasInstitutions = institutions.length > 0;
-  const hasSynced = (status?.totalRaw ?? 0) > 0;
-  const fetching = activeFetchJobId !== null;
-  const parsing = activeParseJobId !== null;
-  const unparsedCount = status ? status.totalRaw - status.totalParsed : 0;
-  const error = syncError || parseError;
-
-  const loadFetchedEmails = async () => {
-    try {
-      const response = await fetch('/api/emails');
-      const data = await response.json();
-      setFetchedEmails(data.emails ?? []);
-    } catch {
-      // non-fatal
-    }
-  };
-
-  useEffect(() => {
-    if (hasSynced) loadFetchedEmails();
-  }, [hasSynced]);
-
-  const handleFetch = async () => {
-    const jobId = await handleSync();
-    if (jobId) setActiveFetchJobId(jobId);
-  };
-
-  const handleParse = async () => {
-    setParseError(null);
-    setParseResult(null);
-    try {
-      const response = await fetch('/api/parse', { method: 'POST' });
-      const data = await response.json();
-      if (response.ok && data.jobId) setActiveParseJobId(data.jobId);
-      else if (!response.ok) setParseError(data.error);
-    } catch {
-      setParseError(t('sync.parse.error'));
-    }
-  };
-
-  useEffect(() => {
-    if (!activeFetchJobId) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/jobs');
-        const jobs: { id: string; status: string }[] = await response.json();
-        const job = jobs.find((jobItem) => jobItem.id === activeFetchJobId);
-        if (job?.status === 'success' || job?.status === 'error') {
-          await loadFetchedEmails();
-          setActiveFetchJobId(null);
-        }
-      } catch {
-        // non-fatal
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [activeFetchJobId]);
-
-  useEffect(() => {
-    if (!activeParseJobId) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/jobs');
-        const jobs: { id: string; status: string; result?: ParseResult; detail: string }[] = await response.json();
-        const job = jobs.find((jobItem) => jobItem.id === activeParseJobId);
-        if (job?.status === 'success') {
-          if (job.result) setParseResult(job.result as ParseResult);
-          setActiveParseJobId(null);
-        } else if (job?.status === 'error') {
-          setParseError(job.detail);
-          setActiveParseJobId(null);
-        }
-      } catch {
-        // non-fatal
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [activeParseJobId]);
-
-  const handleTokenReset = async () => {
-    await fetchStatus();
-  };
-
-  const handleDbCleared = async () => {
-    await fetchStatus();
-    setFetchedEmails([]);
-    setParseResult(null);
-  };
-
-  const handleDisconnect = async () => {
-    await fetch('/api/gmail/disconnect', { method: 'POST' });
-    await fetchStatus();
-  };
+  const {
+    isConnected, hasSynced, fetching, parsing, unparsedCount, error,
+    fetchedEmails, parseResult,
+    handleFetch, handleParse, handleTokenReset, handleDbCleared, handleDisconnect,
+  } = useSyncJobs({ status, syncError, handleSync, fetchStatus, t });
 
   const renderGmailStep = () => (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">

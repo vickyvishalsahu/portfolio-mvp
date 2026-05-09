@@ -6,8 +6,6 @@ import type { Holding } from '@/domains/shared/types';
 
 const TOP_MOVERS_COUNT = 3;
 
-type HoldingWithChange = Holding & { change: number; changePct: number };
-
 type Props = {
   holdings: Holding[];
 };
