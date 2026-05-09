@@ -19,6 +19,23 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
   const [parseError, setParseError] = useState<string | null>(null);
   const [fetchedEmails, setFetchedEmails] = useState<EmailListItem[]>([]);
 
+  useEffect(() => {
+    const resumeActiveJobs = async () => {
+      try {
+        const response = await fetch('/api/jobs');
+        const jobs: { id: string; type: string; status: string }[] = await response.json();
+        const activeFetch = jobs.find((job) => job.type === 'fetch' && job.status === 'in-progress');
+        const activeParse = jobs.find((job) => job.type === 'parse' && job.status === 'in-progress');
+        if (activeFetch) setActiveFetchJobId(activeFetch.id);
+        if (activeParse) setActiveParseJobId(activeParse.id);
+      } catch {
+        // non-fatal
+      }
+    };
+
+    resumeActiveJobs();
+  }, []);
+
   const isConnected = status?.gmailConnected ?? false;
   const hasSynced = (status?.totalRaw ?? 0) > 0;
   const fetching = activeFetchJobId !== null;
