@@ -73,7 +73,10 @@ export const DangerZone = ({ onTokenReset, onDbCleared }: Props) => {
 
     return (
       <button
-        onClick={() => { setConfirming('token'); setError(null); }}
+        onClick={() => {
+          setConfirming('token');
+          setError(null);
+        }}
         className="bg-gray-700 hover:bg-red-900 text-gray-300 hover:text-red-300 text-sm px-4 py-1.5 rounded transition border border-gray-600 hover:border-red-800"
       >
         {t('sync.danger.token.button')}
@@ -108,7 +111,10 @@ export const DangerZone = ({ onTokenReset, onDbCleared }: Props) => {
 
     return (
       <button
-        onClick={() => { setConfirming('db'); setError(null); }}
+        onClick={() => {
+          setConfirming('db');
+          setError(null);
+        }}
         className="bg-gray-700 hover:bg-red-900 text-gray-300 hover:text-red-300 text-sm px-4 py-1.5 rounded transition border border-gray-600 hover:border-red-800"
       >
         {t('sync.danger.db.button')}

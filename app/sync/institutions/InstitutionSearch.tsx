@@ -66,7 +66,10 @@ export const InstitutionSearch = ({
         <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg z-10 p-3">
           <p className="text-gray-500 text-sm">{t('sync.institutions.noResults')}</p>
           <button
-            onClick={() => { setShowManual(true); setSearchQuery(''); }}
+            onClick={() => {
+              setShowManual(true);
+              setSearchQuery('');
+            }}
             className="text-blue-400 text-sm mt-1 hover:underline"
           >
             {t('sync.institutions.addManually')}
@@ -123,7 +126,10 @@ export const InstitutionSearch = ({
           {t('sync.institutions.add')}
         </button>
         <button
-          onClick={() => { setShowManual(false); setManualDomain(''); }}
+          onClick={() => {
+            setShowManual(false);
+            setManualDomain('');
+          }}
           className="text-gray-500 hover:text-gray-300 text-sm px-2"
         >
           {t('sync.institutions.cancel')}

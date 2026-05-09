@@ -34,11 +34,26 @@ const NewTransactionPage = () => {
     const qty = Number(form.quantity);
     const price = Number(form.price);
 
-    if (!form.name.trim()) { setError(t('transactions.errors.nameRequired')); return; }
-    if (!form.broker.trim()) { setError(t('transactions.errors.brokerRequired')); return; }
-    if (!qty || qty <= 0) { setError(t('transactions.errors.quantityInvalid')); return; }
-    if (!price || price <= 0) { setError(t('transactions.errors.priceInvalid')); return; }
-    if (!form.transactionDate) { setError(t('transactions.errors.dateRequired')); return; }
+    if (!form.name.trim()) {
+      setError(t('transactions.errors.nameRequired'));
+      return;
+    }
+    if (!form.broker.trim()) {
+      setError(t('transactions.errors.brokerRequired'));
+      return;
+    }
+    if (!qty || qty <= 0) {
+      setError(t('transactions.errors.quantityInvalid'));
+      return;
+    }
+    if (!price || price <= 0) {
+      setError(t('transactions.errors.priceInvalid'));
+      return;
+    }
+    if (!form.transactionDate) {
+      setError(t('transactions.errors.dateRequired'));
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -69,7 +84,10 @@ const NewTransactionPage = () => {
         </div>
         <div className="flex gap-4">
           <button
-            onClick={() => { setSuccess(false); setForm((prevForm) => ({ ...prevForm, ticker: '', name: '', quantity: '', price: '' })); }}
+            onClick={() => {
+              setSuccess(false);
+              setForm((prevForm) => ({ ...prevForm, ticker: '', name: '', quantity: '', price: '' }));
+            }}
             className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition"
           >
             {t('transactions.actions.addAnother')}

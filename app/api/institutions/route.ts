@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSelectedInstitutions, setSelectedInstitutions } from '@/domains/email-sync/db';
 
-export const GET = async () => {
-  return NextResponse.json({ institutions: getSelectedInstitutions() });
-};
+export const GET = async () =>
+  NextResponse.json({ institutions: getSelectedInstitutions() });
 
 export const PUT = async (request: Request) => {
   const body = await request.json();
