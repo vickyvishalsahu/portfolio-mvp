@@ -1,94 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fmtEur, fmtHolding, pct } from '@/lib/format';
-import type { Holding } from '@/domains/shared/types';
-
-type SortKey = 'name' | 'currentValueEur' | 'pnlPct' | 'quantity' | 'broker' | 'assetType';
-
-const TYPE_BADGE: Record<string, string> = {
-  stock: 'bg-blue-900 text-blue-300',
-  etf: 'bg-purple-900 text-purple-300',
-  mf: 'bg-amber-900 text-amber-300',
-  crypto: 'bg-emerald-900 text-emerald-300',
-};
-
+import { useHoldings } from '@/domains/portfolio/hooks/useHoldings';
+import { HoldingTable } from '@/app/components/holdings/HoldingTable';
+import { HoldingHeader } from '@/app/components/holdings/HoldingHeader';
+import { EmptyHoldingState } from '@/app/components/holdings/EmptyHoldingState';
 
 const HoldingsPage = () => {
   const { t } = useTranslation();
-
-  const formatAge = (updatedAt: string | null): string => {
-    if (!updatedAt) return t('holdings.priceAge.never');
-    const mins = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60000);
-    if (mins < 1) return t('holdings.priceAge.justNow');
-    if (mins === 1) return t('holdings.priceAge.oneMinAgo');
-    if (mins < 60) return t('holdings.priceAge.minsAgo', { mins });
-    const hrs = Math.floor(mins / 60);
-    return hrs === 1 ? t('holdings.priceAge.oneHourAgo') : t('holdings.priceAge.hoursAgo', { hrs });
-  };
-
-  const [holdings, setHoldings] = useState<Holding[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<SortKey>('currentValueEur');
-  const [sortAsc, setSortAsc] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [priceAge, setPriceAge] = useState<string | null>(null);
-  const [failedTickers, setFailedTickers] = useState<string[]>([]);
-
-  const fetchHoldings = async () => {
-    try {
-      const res = await fetch('/api/portfolio');
-      const data = await res.json();
-      if (data.holdings) setHoldings(data.holdings);
-      if ('priceCacheUpdatedAt' in data) setPriceAge(data.priceCacheUpdatedAt);
-    } catch {}
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchHoldings();
-  }, []);
-
-  const handleRefreshPrices = async () => {
-    setRefreshing(true);
-    setFailedTickers([]);
-    try {
-      const res = await fetch('/api/prices', { method: 'POST' });
-      const data = await res.json();
-      if (data.failed?.length) setFailedTickers(data.failed);
-      await fetchHoldings();
-    } catch {}
-    setRefreshing(false);
-  };
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortAsc(!sortAsc);
-    } else {
-      setSortKey(key);
-      setSortAsc(key === 'name' || key === 'broker' || key === 'assetType');
-    }
-  };
-
-  const sorted = [...holdings].sort((holdingA, holdingB) => {
-    let cmp: number;
-    if (sortKey === 'name' || sortKey === 'broker' || sortKey === 'assetType') {
-      cmp = holdingA[sortKey].localeCompare(holdingB[sortKey]);
-    } else {
-      cmp = holdingA[sortKey] - holdingB[sortKey];
-    }
-    return sortAsc ? cmp : -cmp;
-  });
-
-  const SortHeader = ({ label, field }: { label: string; field: SortKey }) => (
-    <th
-      className="text-left pb-3 cursor-pointer hover:text-white transition select-none"
-      onClick={() => handleSort(field)}
-    >
-      {label} {sortKey === field ? (sortAsc ? '▲' : '▼') : ''}
-    </th>
-  );
+  const {
+    holdings,
+    loading,
+    refreshing,
+    priceAge,
+    failedTickers,
+    sortKey,
+    sortAsc,
+    handleSort,
+    handleRefreshPrices,
+    formatAge,
+  } = useHoldings();
 
   if (loading) {
     return (
@@ -99,43 +30,16 @@ const HoldingsPage = () => {
     );
   }
 
-  if (holdings.length === 0) {
-    return (
-      <div>
-        <h1 className="text-3xl font-bold mb-6">{t('holdings.title')}</h1>
-        <p className="text-gray-500">
-          {t('holdings.empty.description')}{' '}
-          <a href="/sync" className="text-blue-400 hover:underline">{t('holdings.empty.syncLink')}</a>{' '}
-          {t('holdings.empty.toGetStarted')}
-        </p>
-      </div>
-    );
-  }
+  if (holdings.length === 0) return <EmptyHoldingState />;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">{t('holdings.title')}</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">
-            {refreshing ? t('holdings.priceAge.updating') : t('holdings.priceAge.label', { age: formatAge(priceAge) })}
-          </span>
-          <a
-            href="/api/export"
-            download
-            className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition"
-          >
-            {t('holdings.actions.exportCsv')}
-          </a>
-          <button
-            onClick={handleRefreshPrices}
-            disabled={refreshing}
-            className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm px-4 py-2 rounded transition"
-          >
-            {refreshing ? t('holdings.actions.refreshing') : t('holdings.actions.refreshPrices')}
-          </button>
-        </div>
-      </div>
+      <HoldingHeader
+        refreshing={refreshing}
+        priceAge={priceAge}
+        formatAge={formatAge}
+        onRefreshPrices={handleRefreshPrices}
+      />
 
       {failedTickers.length > 0 && (
         <div className="bg-amber-950 border border-amber-800 rounded p-3 mb-4 text-sm text-amber-400">
@@ -143,62 +47,7 @@ const HoldingsPage = () => {
         </div>
       )}
 
-      <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-400 border-b border-gray-800 text-xs uppercase tracking-wider">
-                <SortHeader label={t('holdings.columns.name')} field="name" />
-                <th className="text-left pb-3">{t('holdings.columns.ticker')}</th>
-                <SortHeader label={t('holdings.columns.type')} field="assetType" />
-                <SortHeader label={t('holdings.columns.qty')} field="quantity" />
-                <th className="text-right pb-3">{t('holdings.columns.avgCost')}</th>
-                <th className="text-right pb-3">{t('holdings.columns.price')}</th>
-                <SortHeader label={t('holdings.columns.value')} field="currentValueEur" />
-                <SortHeader label={t('holdings.columns.pnlPct')} field="pnlPct" />
-                <SortHeader label={t('holdings.columns.broker')} field="broker" />
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((holding) => (
-                <tr key={holding.ticker} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
-                  <td className="py-3 pl-1 text-white font-medium">{holding.name}</td>
-                  <td className="py-3 text-gray-400 font-mono text-xs">{holding.ticker}</td>
-                  <td className="py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded ${TYPE_BADGE[holding.assetType] ?? 'bg-gray-800 text-gray-400'}`}>
-                      {holding.assetType}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right text-gray-300">
-                    {holding.quantity < 1 ? holding.quantity.toFixed(6) : holding.quantity.toFixed(2)}
-                  </td>
-                  <td className="py-3 text-right text-gray-400">
-                    {fmtHolding(holding.avgCostLocal, holding.avgCostEur, holding.currency)}
-                  </td>
-                  <td className="py-3 text-right text-gray-300">
-                    {fmtHolding(holding.currentPriceLocal, holding.currentPriceEur, holding.currency)}
-                  </td>
-                  <td className="py-3 text-right">
-                    <div className="text-white font-medium">
-                      {fmtHolding(holding.currentValueLocal, holding.currentValueEur, holding.currency)}
-                    </div>
-                    {holding.currency !== 'EUR' && (
-                      <div className="text-gray-600 text-xs">{fmtEur(holding.currentValueEur)}</div>
-                    )}
-                  </td>
-                  <td className={`py-3 text-right font-medium ${holding.pnlPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    <div>{pct(holding.pnlPct)}</div>
-                    <div className="text-xs opacity-70">
-                      {fmtHolding(holding.pnlLocal, holding.pnl, holding.currency)}
-                    </div>
-                  </td>
-                  <td className="py-3 text-gray-500 text-xs">{holding.broker}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <HoldingTable holdings={holdings} sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
     </div>
   );
 };
