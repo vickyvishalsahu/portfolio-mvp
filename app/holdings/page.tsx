@@ -3,24 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fmtEur, fmtHolding, pct } from '@/lib/format';
-
-type Holding = {
-  ticker: string;
-  name: string;
-  assetType: string;
-  quantity: number;
-  avgCostEur: number;
-  avgCostLocal: number;
-  currentPriceEur: number;
-  currentPriceLocal: number;
-  currentValueEur: number;
-  currentValueLocal: number;
-  pnl: number;
-  pnlLocal: number;
-  pnlPct: number;
-  currency: string;
-  broker: string;
-}
+import type { Holding } from '@/domains/shared/types';
 
 type SortKey = 'name' | 'currentValueEur' | 'pnlPct' | 'quantity' | 'broker' | 'assetType';
 

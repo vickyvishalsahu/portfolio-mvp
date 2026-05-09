@@ -5,42 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { fmtLocal, fmtHolding, pct } from '@/lib/format';
 import { computeNetWorthDelta } from '@/lib/snapshot-delta';
-
-type CurrencySummary = {
-  currency: string;
-  totalValue: number;
-  totalPnl: number;
-  totalPnlPct: number;
-}
-
-type Summary = {
-  byCurrency: CurrencySummary[];
-  holdingsCount: number;
-  transactionCount: number;
-}
-
-type Holding = {
-  ticker: string;
-  name: string;
-  assetType: string;
-  quantity: number;
-  avgCostEur: number;
-  currentPriceEur: number;
-  currentValueEur: number;
-  currentValueLocal: number;
-  prevValueEur: number | null;
-  prevValueLocal: number | null;
-  pnl: number;
-  pnlPct: number;
-  currency: string;
-  broker: string;
-}
-
-type PortfolioData = {
-  summary: Summary;
-  holdings: Holding[];
-  brokerAllocation: Record<string, number>;
-}
+import type { Holding } from '@/domains/shared/types';
+import type { CurrencySummary, Summary, PortfolioData } from '@/domains/portfolio/types';
 
 const ASSET_COLORS: Record<string, string> = {
   stock: '#3b82f6',
