@@ -3,11 +3,11 @@
 import { useTranslation } from 'react-i18next';
 import { computeNetWorthDelta } from '@/lib/snapshot-delta';
 import { usePortfolio } from '@/app/hooks/usePortfolio';
-import { DashboardSummaryCards } from './_dashboard/DashboardSummaryCards';
-import { DashboardAllocationChart } from './_dashboard/DashboardAllocationChart';
-import { DashboardTopHoldings } from './_dashboard/DashboardTopHoldings';
-import { DashboardMovers } from './_dashboard/DashboardMovers';
-import { DashboardNetWorthChart } from './_dashboard/DashboardNetWorthChart'
+import { DashboardSummaryCards } from './components/dashboard/DashboardSummaryCards';
+import { DashboardAllocationChart } from './components/dashboard/DashboardAllocationChart';
+import { DashboardTopHoldings } from './components/dashboard/DashboardTopHoldings';
+import { DashboardMovers } from './components/dashboard/DashboardMovers';
+import { DashboardNetWorthChart } from './components/dashboard/DashboardNetWorthChart'
 import { SkeletonLoading } from '@/app/components/SkeletonLoading';
 
 export default function Dashboard() {
