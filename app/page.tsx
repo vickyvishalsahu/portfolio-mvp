@@ -7,7 +7,8 @@ import { DashboardSummaryCards } from './_dashboard/DashboardSummaryCards';
 import { DashboardAllocationChart } from './_dashboard/DashboardAllocationChart';
 import { DashboardTopHoldings } from './_dashboard/DashboardTopHoldings';
 import { DashboardMovers } from './_dashboard/DashboardMovers';
-import { DashboardNetWorthChart } from './_dashboard/DashboardNetWorthChart';
+import { DashboardNetWorthChart } from './_dashboard/DashboardNetWorthChart'
+import { SkeletonLoading } from '@/app/components/SkeletonLoading';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -17,7 +18,18 @@ export default function Dashboard() {
     return (
       <div>
         <h1 className="text-3xl font-bold mb-6">{t('dashboard.title')}</h1>
-        <p className="text-gray-500">{t('dashboard.loading')}</p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <SkeletonLoading classNameList="h-28" />
+          <SkeletonLoading classNameList="h-28" />
+          <SkeletonLoading classNameList="h-28" />
+          <SkeletonLoading classNameList="h-28" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <SkeletonLoading classNameList="h-72" />
+          <SkeletonLoading classNameList="h-72" />
+        </div>
+        <SkeletonLoading classNameList="h-48 mb-8" />
+        <SkeletonLoading classNameList="h-64" />
       </div>
     );
   }
