@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { fmtEur, fmtHolding, pct } from '@/lib/format';
 import type { Holding } from '@/domains/shared/types';
 import type { SortKey } from '@/domains/portfolio/hooks/useHoldings';
+import { SkeletonLoading } from '@/app/components/SkeletonLoading';
 
 type Props = {
+  loading?: boolean;
   holdings: Holding[];
   sortKey: SortKey;
   sortAsc: boolean;
@@ -19,8 +21,23 @@ const TYPE_BADGE: Record<string, string> = {
   crypto: 'bg-emerald-900 text-emerald-300',
 };
 
-export const HoldingTable = ({ holdings, sortKey, sortAsc, onSort }: Props) => {
+export const HoldingTable = ({ loading, holdings, sortKey, sortAsc, onSort }: Props) => {
   const { t } = useTranslation();
+
+  const renderSkeletonRows = () =>
+    Array.from({ length: 6 }).map((_, i) => (
+      <tr key={i} className="border-b border-gray-800/50">
+        <td className="py-3 pl-1"><SkeletonLoading classNameList="h-4 w-28" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-3 w-14" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-5 w-10" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-4 w-12 ml-auto" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-4 w-16 ml-auto" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-4 w-16 ml-auto" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-4 w-20 ml-auto" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-4 w-14 ml-auto" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-3 w-16" /></td>
+      </tr>
+    ));
 
   const renderSortHeader = (label: string, field: SortKey) => (
     <th
@@ -49,7 +66,7 @@ export const HoldingTable = ({ holdings, sortKey, sortAsc, onSort }: Props) => {
             </tr>
           </thead>
           <tbody>
-            {holdings.map((holding) => (
+            {loading ? renderSkeletonRows() : holdings.map((holding) => (
               <tr key={holding.ticker} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
                 <td className="py-3 pl-1 text-white font-medium">{holding.name}</td>
                 <td className="py-3 text-gray-400 font-mono text-xs">{holding.ticker}</td>

@@ -21,33 +21,25 @@ const HoldingsPage = () => {
     formatAge,
   } = useHoldings();
 
-  if (loading) {
-    return (
-      <div>
-        <h1 className="text-3xl font-bold mb-6">{t('holdings.title')}</h1>
-        <p className="text-gray-500">{t('holdings.loading')}</p>
-      </div>
-    );
-  }
-
-  if (holdings.length === 0) return <EmptyHoldingState />;
+  if (!loading && holdings.length === 0) return <EmptyHoldingState />;
 
   return (
     <div>
       <HoldingHeader
+        loading={loading}
         refreshing={refreshing}
         priceAge={priceAge}
         formatAge={formatAge}
         onRefreshPrices={handleRefreshPrices}
       />
 
-      {failedTickers.length > 0 && (
+      {!loading && failedTickers.length > 0 && (
         <div className="bg-amber-950 border border-amber-800 rounded p-3 mb-4 text-sm text-amber-400">
           {t('holdings.failedPrices', { tickers: failedTickers.join(', ') })}
         </div>
       )}
 
-      <HoldingTable holdings={holdings} sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+      <HoldingTable loading={loading} holdings={holdings} sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
     </div>
   );
 };
