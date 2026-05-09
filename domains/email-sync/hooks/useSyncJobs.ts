@@ -50,6 +50,7 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
         const job = jobs.find((jobItem) => jobItem.id === activeFetchJobId);
         if (job?.status === 'success' || job?.status === 'error') {
           await loadFetchedEmails();
+          await fetchStatus();
           setActiveFetchJobId(null);
         }
       } catch {
@@ -70,6 +71,7 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
         const job = jobs.find((jobItem) => jobItem.id === activeParseJobId);
         if (job?.status === 'success') {
           if (job.result) setParseResult(job.result as ParseResult);
+          await fetchStatus();
           setActiveParseJobId(null);
         } else if (job?.status === 'error') {
           setParseError(job.detail);
@@ -85,7 +87,10 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
 
   const handleFetch = async () => {
     const jobId = await handleSync();
-    if (jobId) setActiveFetchJobId(jobId);
+    if (jobId) {
+      setActiveFetchJobId(jobId);
+      window.dispatchEvent(new CustomEvent('portfolio:sync-started'));
+    }
   };
 
   const handleParse = async () => {
@@ -94,8 +99,10 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
     try {
       const response = await fetch('/api/parse', { method: 'POST' });
       const data = await response.json();
-      if (response.ok && data.jobId) setActiveParseJobId(data.jobId);
-      else if (!response.ok) setParseError(data.error);
+      if (response.ok && data.jobId) {
+        setActiveParseJobId(data.jobId);
+        window.dispatchEvent(new CustomEvent('portfolio:sync-started'));
+      } else if (!response.ok) setParseError(data.error);
     } catch {
       setParseError(t('sync.parse.error'));
     }

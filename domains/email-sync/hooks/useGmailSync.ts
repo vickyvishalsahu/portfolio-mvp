@@ -25,8 +25,6 @@ export const useGmailSync = () => {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleSync = async (): Promise<string | undefined> => {

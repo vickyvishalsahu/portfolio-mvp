@@ -29,15 +29,28 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
+    let stopped = false;
+
     const poll = async () => {
+      if (stopped) return;
       await fetchJobs();
       const hasActive = jobsRef.current.some((job) => job.status === 'in-progress');
-      timeoutRef.current = setTimeout(poll, hasActive ? 3000 : 10000);
+      if (hasActive && !stopped) {
+        timeoutRef.current = setTimeout(poll, 3000);
+      }
     };
 
+    const onSyncStarted = () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      poll();
+    };
+
+    window.addEventListener('portfolio:sync-started', onSyncStarted);
     poll();
 
     return () => {
+      stopped = true;
+      window.removeEventListener('portfolio:sync-started', onSyncStarted);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
