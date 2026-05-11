@@ -24,7 +24,7 @@ export interface RawEmail {
 }
 
 export interface Transaction {
-  id?: number;
+  id: number;
   emailId: string;
   assetType: AssetType;
   ticker: string | null;
