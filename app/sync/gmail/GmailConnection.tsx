@@ -1,7 +1,7 @@
 'use client';
 
 import type { SyncStatus } from '@/domains/email-sync/hooks/useGmailSync';
-import { GmailLoading } from './GmailLoading';
+import { GmailLoading } from './gmail.loading';
 import { GmailConnected } from './GmailConnected';
 import { GmailDisconnected } from './GmailDisconnected';
 

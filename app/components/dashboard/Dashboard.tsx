@@ -8,31 +8,13 @@ import { DashboardAllocationChart } from './DashboardAllocationChart';
 import { DashboardTopHoldings } from './DashboardTopHoldings';
 import { DashboardMovers } from './DashboardMovers';
 import { DashboardNetWorthChart } from './DashboardNetWorthChart';
-import { SkeletonLoading } from '@/app/components/SkeletonLoading';
+import { DashboardLoading } from './dashboard.loading';
 
 export const Dashboard = () => {
   const { t } = useTranslation();
   const { data, loading, snapshots } = usePortfolio();
 
-  if (loading) {
-    return (
-      <div>
-        <h1 className="text-3xl font-bold mb-6">{t('dashboard.title')}</h1>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <SkeletonLoading classNameList="h-28" />
-          <SkeletonLoading classNameList="h-28" />
-          <SkeletonLoading classNameList="h-28" />
-          <SkeletonLoading classNameList="h-28" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <SkeletonLoading classNameList="h-72" />
-          <SkeletonLoading classNameList="h-72" />
-        </div>
-        <SkeletonLoading classNameList="h-48 mb-8" />
-        <SkeletonLoading classNameList="h-64" />
-      </div>
-    );
-  }
+  if (loading) return <DashboardLoading />;
 
   if (!data || data.holdings.length === 0) {
     const emptyLabels = [t('dashboard.summary.totalValue'), t('dashboard.summary.totalPnl'), t('dashboard.summary.holdings')];
