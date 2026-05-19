@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export interface SyncStatus {
   totalRaw: number;
@@ -22,10 +22,6 @@ export const useGmailSync = () => {
       setError('Failed to fetch status');
     }
   };
-
-  useEffect(() => {
-    fetchStatus();
-  }, []);
 
   const handleSync = async (): Promise<string | undefined> => {
     setError(null);
