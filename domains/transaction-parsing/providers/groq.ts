@@ -1,47 +1,26 @@
-import Groq from 'groq-sdk';
-import type { ParseResponse, ParsedTransaction } from '@/domains/shared/types';
-import { VALID_ASSET_TYPES, VALID_TRANSACTION_TYPES, VALID_CURRENCIES } from '../constants';
-import type { EmailParser } from '../types';
+import Groq from "groq-sdk";
+import type { ParseResponse, ParsedTransaction } from "@/domains/shared/types";
+import {
+  VALID_ASSET_TYPES,
+  VALID_TRANSACTION_TYPES,
+  VALID_CURRENCIES,
+} from "../constants";
+import type { EmailParser } from "../types";
+import { SYSTEM_PROMPT } from "./constants/prompts";
 
-const SYSTEM_PROMPT = `You are a financial transaction parser.
-Extract investment transaction data from broker confirmation emails.
 
-Return ONLY valid JSON in this exact shape:
-{
-  "transactions": [
-    {
-      "asset_type": "stock" | "etf" | "mf" | "crypto",
-      "ticker": string | null,
-      "name": string,
-      "quantity": number,
-      "price": number,
-      "currency": "EUR" | "INR" | "USD",
-      "transaction_type": "buy" | "sell" | "dividend" | "sip",
-      "transaction_date": "YYYY-MM-DD",
-      "broker": string,
-      "confidence": "high" | "medium" | "low"
-    }
-  ],
-  "unparseable": boolean,
-  "reason": string | null
-}
-
-Rules:
-- If ticker is not in the email, set it to null and use name
-- For Indian mutual funds, use ISIN as ticker if present
-- For European ETFs/stocks on Scalable Capital, use the ISIN or exchange ticker (e.g. "VWCE.DE")
-- For Indian stocks on Zerodha, use NSE ticker (e.g. "HDFCBANK")
-- confidence = "low" if you had to guess any field
-- unparseable = true if this is not a transaction email (e.g. marketing, account alerts)
-- price should be the per-unit price, not total amount
-- quantity should be positive for both buys and sells
-- broker should be lowercase: "scalable", "zerodha", "cams", "coinbase", "binance", etc.`;
 
 type RawLlmTransaction = {
-  asset_type: string; ticker: string | null; name: string;
-  quantity: number; price: number; currency: string;
-  transaction_type: string; transaction_date: string;
-  broker: string; confidence: string;
+  asset_type: string;
+  ticker: string | null;
+  name: string;
+  quantity: number;
+  price: number;
+  currency: string;
+  transaction_type: string;
+  transaction_date: string;
+  broker: string;
+  confidence: string;
 };
 
 type RawParseResponse = {
@@ -51,26 +30,40 @@ type RawParseResponse = {
 };
 
 const mapTransaction = (raw: RawLlmTransaction): ParsedTransaction => ({
-  assetType: raw.asset_type as ParsedTransaction['assetType'],
+  assetType: raw.asset_type as ParsedTransaction["assetType"],
   ticker: raw.ticker,
   name: raw.name,
   quantity: raw.quantity,
   price: raw.price,
-  currency: raw.currency as ParsedTransaction['currency'],
-  transactionType: raw.transaction_type as ParsedTransaction['transactionType'],
+  currency: raw.currency as ParsedTransaction["currency"],
+  transactionType: raw.transaction_type as ParsedTransaction["transactionType"],
   transactionDate: raw.transaction_date,
   broker: raw.broker,
-  confidence: raw.confidence as ParsedTransaction['confidence'],
+  confidence: raw.confidence as ParsedTransaction["confidence"],
 });
 
 const validateResponse = (raw: RawParseResponse): ParseResponse => {
-  if (raw.unparseable) return { transactions: [], unparseable: true, reason: raw.reason };
+  if (raw.unparseable)
+    return { transactions: [], unparseable: true, reason: raw.reason };
 
   const transactions = raw.transactions
     .filter((tx) => {
-      if (!VALID_ASSET_TYPES.includes(tx.asset_type as ParsedTransaction['assetType'])) return false;
-      if (!VALID_TRANSACTION_TYPES.includes(tx.transaction_type as ParsedTransaction['transactionType'])) return false;
-      if (!VALID_CURRENCIES.includes(tx.currency as ParsedTransaction['currency'])) return false;
+      if (
+        !VALID_ASSET_TYPES.includes(
+          tx.asset_type as ParsedTransaction["assetType"],
+        )
+      )
+        return false;
+      if (
+        !VALID_TRANSACTION_TYPES.includes(
+          tx.transaction_type as ParsedTransaction["transactionType"],
+        )
+      )
+        return false;
+      if (
+        !VALID_CURRENCIES.includes(tx.currency as ParsedTransaction["currency"])
+      )
+        return false;
       if (!tx.name || tx.quantity <= 0 || tx.price <= 0) return false;
       if (!tx.transaction_date?.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
       return true;
@@ -82,12 +75,16 @@ const validateResponse = (raw: RawParseResponse): ParseResponse => {
 
 export const createGroqParser = (): EmailParser => {
   if (!process.env.GROQ_API_KEY) {
-    throw new Error('GROQ_API_KEY is not set in environment variables');
+    throw new Error("GROQ_API_KEY is not set in environment variables");
   }
   const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
   return {
-    parse: async (emailBody: string, sender: string, subject: string): Promise<ParseResponse> => {
+    parse: async (
+      emailBody: string,
+      sender: string,
+      subject: string,
+    ): Promise<ParseResponse> => {
       const userMessage = `Parse this broker email:
 
 From: ${sender}
@@ -97,16 +94,16 @@ Body:
 ${emailBody}`;
 
       const response = await client.chat.completions.create({
-        model: 'llama-3.1-8b-instant',
+        model: "llama-3.1-8b-instant",
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userMessage },
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
         ],
-        response_format: { type: 'json_object' },
+        response_format: { type: "json_object" },
         max_tokens: 1024,
       });
 
-      const text = response.choices[0].message.content ?? '';
+      const text = response.choices[0].message.content ?? "";
 
       try {
         const parsed: RawParseResponse = JSON.parse(text);
