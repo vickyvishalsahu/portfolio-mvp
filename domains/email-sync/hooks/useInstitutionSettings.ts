@@ -11,6 +11,9 @@ export const useInstitutionSettings = () => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [autoDetectedNames, setAutoDetectedNames] = useState<string[]>([]);
+  const [autoDetectDone, setAutoDetectDone] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchInstitutions = async () => {
@@ -77,6 +80,30 @@ export const useInstitutionSettings = () => {
     saveInstitutions(next);
   };
 
+  const runAutoDetect = async () => {
+    if (autoDetectDone || detecting) return;
+    setDetecting(true);
+    try {
+      const res = await fetch('/api/institutions/detect');
+      const data = await res.json();
+      if (data.detected?.length) {
+        const next = (prev: Institution[]) => {
+          const merged = [...prev, ...data.detected].filter(
+            (item: Institution, i: number, arr: Institution[]) =>
+              arr.findIndex((x) => x.domain === item.domain) === i
+          );
+          saveInstitutions(merged);
+          return merged;
+        };
+        setInstitutions(next);
+        setAutoDetectedNames((data.detected as Institution[]).map((d) => d.name));
+      }
+    } finally {
+      setDetecting(false);
+      setAutoDetectDone(true);
+    }
+  };
+
   const updateDomain = (oldDomain: string, newDomain: string) => {
     const trimmed = newDomain.trim().toLowerCase();
     if (!trimmed || trimmed === oldDomain) return;
@@ -94,6 +121,10 @@ export const useInstitutionSettings = () => {
     suggestions,
     searching,
     saving,
+    detecting,
+    autoDetectedNames,
+    autoDetectDone,
+    runAutoDetect,
     addInstitution,
     removeInstitution,
     updateDomain,

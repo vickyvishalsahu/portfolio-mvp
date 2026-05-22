@@ -153,7 +153,10 @@
       "chip": {
         "editTitle": "Click to edit domain",
         "removeTitle": "Remove"
-      }
+      },
+      "detecting": "Checking your Gmail for known broker emails…",
+      "autoDetected": "Found emails from {{names}} — added automatically.",
+      "autoDetectedNone": "No known broker emails found. Add your institutions manually below."
     },
     "brokers": {
       "title": "Your Brokers",

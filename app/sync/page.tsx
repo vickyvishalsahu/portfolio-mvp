@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { useGmailSync } from '@/domains/email-sync/hooks/useGmailSync';
 import { useInstitutionSettings } from '@/domains/email-sync/hooks/useInstitutionSettings';
 import { useSyncJobs } from '@/domains/email-sync/hooks/useSyncJobs';
@@ -15,6 +16,7 @@ const SyncPage = () => {
   const { status, error: syncError, handleSync, fetchStatus } = useGmailSync();
   const {
     institutions, searchQuery, setSearchQuery, suggestions, searching,
+    detecting, autoDetectedNames, autoDetectDone, runAutoDetect,
     addInstitution, removeInstitution, updateDomain,
   } = useInstitutionSettings();
   const {
@@ -22,6 +24,33 @@ const SyncPage = () => {
     fetchedEmails, parseResult,
     handleFetch, handleFullHistoryFetch, handleParse, handleTokenReset, handleDbCleared, handleDisconnect,
   } = useSyncJobs({ status, syncError, handleSync, fetchStatus, t });
+
+  useEffect(() => {
+    if (isConnected && institutions.length === 0 && !autoDetectDone) {
+      runAutoDetect();
+    }
+  }, [isConnected]);
+
+  const renderAutoDetectCallout = () => {
+    if (detecting) {
+      return (
+        <p className="text-gray-400 text-sm mb-3 italic">{t('sync.institutions.detecting')}</p>
+      );
+    }
+    if (autoDetectDone && autoDetectedNames.length > 0) {
+      return (
+        <p className="text-blue-400 text-sm mb-3">
+          {t('sync.institutions.autoDetected', { names: autoDetectedNames.join(', ') })}
+        </p>
+      );
+    }
+    if (autoDetectDone && autoDetectedNames.length === 0) {
+      return (
+        <p className="text-gray-500 text-sm mb-3">{t('sync.institutions.autoDetectedNone')}</p>
+      );
+    }
+    return null;
+  };
 
   const renderGmailStep = () => (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
@@ -36,6 +65,7 @@ const SyncPage = () => {
     const locked = !isConnected;
     return (
       <div className={`bg-gray-900 border rounded-lg p-6 mb-6 transition ${locked ? 'border-gray-800 opacity-40 pointer-events-none' : 'border-gray-800'}`}>
+        {renderAutoDetectCallout()}
         <InstitutionSearch
           institutions={institutions}
           searchQuery={searchQuery}
