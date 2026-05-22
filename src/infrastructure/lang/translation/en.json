@@ -87,6 +87,7 @@
       "refreshing": "Refreshing..."
     },
     "failedPrices": "Failed to update prices for: {{tickers}}",
+    "orphanedSells": "Missing buy history for: {{tickers}}. Quantities shown may be higher than actual. Add the missing buy transactions manually to fix this.",
     "columns": {
       "name": "Name",
       "ticker": "Ticker",

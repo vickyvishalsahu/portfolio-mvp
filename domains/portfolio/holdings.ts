@@ -13,7 +13,12 @@ type TransactionRow = {
   broker: string;
 }
 
-export const computeHoldings = async (): Promise<Holding[]> => {
+export type HoldingsResult = {
+  holdings: Holding[];
+  orphanedSells: string[];
+};
+
+export const computeHoldings = async (): Promise<HoldingsResult> => {
   const db = getDb();
   const transactions = db.prepare(
     'SELECT ticker, name, asset_type, quantity, price, currency, transaction_type, broker FROM transactions ORDER BY transaction_date ASC'
@@ -28,33 +33,51 @@ export const computeHoldings = async (): Promise<Holding[]> => {
   }
 
   const holdings: Holding[] = [];
+  const orphanedSells: string[] = [];
 
   for (const [key, txs] of groups) {
     let totalQty = 0;
     let totalCostEur = 0;
     let totalCostLocal = 0;
+    let sellDebt = 0;
     const first = txs[0];
 
     for (const tx of txs) {
       const priceEur = await convertToEur(tx.price, tx.currency);
 
       if (tx.transaction_type === 'buy' || tx.transaction_type === 'sip') {
-        totalCostEur += tx.quantity * priceEur;
-        totalCostLocal += tx.quantity * tx.price;
-        totalQty += tx.quantity;
+        if (sellDebt > 0) {
+          // Absorb outstanding sell debt before accumulating new cost basis
+          const absorbed = Math.min(tx.quantity, sellDebt);
+          sellDebt -= absorbed;
+          const remaining = tx.quantity - absorbed;
+          if (remaining > 0) {
+            totalCostEur += remaining * priceEur;
+            totalCostLocal += remaining * tx.price;
+            totalQty += remaining;
+          }
+        } else {
+          totalCostEur += tx.quantity * priceEur;
+          totalCostLocal += tx.quantity * tx.price;
+          totalQty += tx.quantity;
+        }
       } else if (tx.transaction_type === 'sell') {
-        // Reduce quantity; clamp to 0 so an oversell never corrupts subsequent buys
         if (totalQty > 0) {
+          // Reduce quantity; clamp to 0 so an oversell never corrupts subsequent buys
           const avgCostEur = totalCostEur / totalQty;
           const avgCostLocal = totalCostLocal / totalQty;
           totalQty = Math.max(0, totalQty - tx.quantity);
           totalCostEur = totalQty * avgCostEur;
           totalCostLocal = totalQty * avgCostLocal;
+        } else {
+          // Sell arrived with no prior buy in DB — track the debt to apply against future buys
+          sellDebt += tx.quantity;
         }
       }
       // dividends don't affect quantity/cost
     }
 
+    if (sellDebt > 0) orphanedSells.push(first.ticker || key);
     if (totalQty <= 0.0001) continue; // skip fully sold positions
 
     const avgCostEur = totalCostEur / totalQty;
@@ -99,5 +122,5 @@ export const computeHoldings = async (): Promise<Holding[]> => {
 
   // Sort by value descending
   holdings.sort((a, b) => b.currentValueEur - a.currentValueEur);
-  return holdings;
+  return { holdings, orphanedSells };
 };

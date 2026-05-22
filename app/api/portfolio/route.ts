@@ -4,7 +4,7 @@ import { computeHoldings, recordSnapshot } from '@/domains/portfolio';
 
 export const GET = async () => {
   try {
-    const holdings = await computeHoldings();
+    const { holdings, orphanedSells } = await computeHoldings();
     const transactions = getAllTransactions();
 
     // Group totals by source currency — never convert, never sum across currencies
@@ -43,6 +43,7 @@ export const GET = async () => {
       },
       holdings,
       brokerAllocation,
+      orphanedSells,
       priceCacheUpdatedAt: getPriceCacheAge(),
     });
   } catch (error: any) {

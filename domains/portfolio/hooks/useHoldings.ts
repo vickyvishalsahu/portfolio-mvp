@@ -17,6 +17,7 @@ export const useHoldings = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [priceAge, setPriceAge] = useState<string | null>(null);
   const [failedTickers, setFailedTickers] = useState<string[]>([]);
+  const [orphanedSells, setOrphanedSells] = useState<string[]>([]);
 
   const fetchHoldings = async () => {
     try {
@@ -24,6 +25,7 @@ export const useHoldings = () => {
       const data = await res.json();
       if (data.holdings) setHoldings(data.holdings);
       if ('priceCacheUpdatedAt' in data) setPriceAge(data.priceCacheUpdatedAt);
+      if (data.orphanedSells) setOrphanedSells(data.orphanedSells);
     } catch {}
     setLoading(false);
   };
@@ -76,6 +78,7 @@ export const useHoldings = () => {
     refreshing,
     priceAge,
     failedTickers,
+    orphanedSells,
     sortKey,
     sortAsc,
     handleSort,

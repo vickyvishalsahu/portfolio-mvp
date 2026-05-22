@@ -19,7 +19,7 @@ const classifyGermany = (assetType: string, holdingDays: number): TaxClass => {
 };
 
 export const computeTaxHoldings = async (): Promise<TaxData> => {
-  const holdings = await computeHoldings();
+  const { holdings } = await computeHoldings();
   const earliestDates = getEarliestBuyDates();
   const today = new Date();
 

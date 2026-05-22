@@ -14,6 +14,7 @@ const HoldingsPage = () => {
     refreshing,
     priceAge,
     failedTickers,
+    orphanedSells,
     sortKey,
     sortAsc,
     handleSort,
@@ -36,6 +37,12 @@ const HoldingsPage = () => {
       {!loading && failedTickers.length > 0 && (
         <div className="bg-amber-950 border border-amber-800 rounded p-3 mb-4 text-sm text-amber-400">
           {t('holdings.failedPrices', { tickers: failedTickers.join(', ') })}
+        </div>
+      )}
+
+      {!loading && orphanedSells.length > 0 && (
+        <div className="bg-red-950 border border-red-800 rounded p-3 mb-4 text-sm text-red-400">
+          {t('holdings.orphanedSells', { tickers: orphanedSells.join(', ') })}
         </div>
       )}
 

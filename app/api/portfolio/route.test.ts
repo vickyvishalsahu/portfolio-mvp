@@ -32,7 +32,7 @@ const TWO_INR_HOLDINGS = [
 ];
 
 beforeEach(() => {
-  vi.mocked(computeHoldings).mockResolvedValue(TWO_INR_HOLDINGS as any);
+  vi.mocked(computeHoldings).mockResolvedValue({ holdings: TWO_INR_HOLDINGS, orphanedSells: [] } as any);
   vi.mocked(recordSnapshot).mockClear();
 });
 

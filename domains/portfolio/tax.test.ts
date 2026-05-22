@@ -9,7 +9,7 @@ let mockHoldings: Partial<Holding>[] = [];
 let mockEarliestDates: Record<string, string> = {};
 
 vi.mock('./holdings', () => ({
-  computeHoldings: vi.fn(async () => mockHoldings),
+  computeHoldings: vi.fn(async () => ({ holdings: mockHoldings, orphanedSells: [] })),
 }));
 
 vi.mock('@/domains/shared/db', () => ({

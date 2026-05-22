@@ -56,7 +56,7 @@ describe('computeHoldings', () => {
   it('simple buy — creates holding with correct qty and avg cost', async () => {
     mockRows = [makeTx({ quantity: 10, price: 10 })];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(10);
@@ -72,7 +72,7 @@ describe('computeHoldings', () => {
 
     mockRows = [makeTx({ quantity: 100, price: 130, currency: 'INR', asset_type: 'mf' })];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].avgCostLocal).toBe(130);
@@ -87,7 +87,7 @@ describe('computeHoldings', () => {
       makeTx({ quantity: 4,  price: 15, transaction_type: 'sell' }),
     ];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(6);
@@ -100,7 +100,7 @@ describe('computeHoldings', () => {
       makeTx({ quantity: 10, price: 20, transaction_type: 'sell' }),
     ];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(0);
   });
@@ -111,7 +111,7 @@ describe('computeHoldings', () => {
       makeTx({ quantity: 20, price: 15, transaction_type: 'sell' }),
     ];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(0);
   });
@@ -123,21 +123,71 @@ describe('computeHoldings', () => {
       makeTx({ quantity: 8,  price: 12, transaction_type: 'buy' }),
     ];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(8);
     expect(holdings[0].avgCostEur).toBeCloseTo(12);
   });
 
-  it('sell with no prior buy — position is skipped gracefully, no crash', async () => {
+  it('sell with no prior buy — position is skipped, ticker in orphanedSells', async () => {
     mockRows = [
       makeTx({ quantity: 5, price: 15, transaction_type: 'sell' }),
     ];
 
-    const holdings = await computeHoldings();
+    const { holdings, orphanedSells } = await computeHoldings();
 
     expect(holdings).toHaveLength(0);
+    expect(orphanedSells).toContain('AAPL');
+  });
+
+  it('sell arrives before matching buy — qty correctly accounts for the debt', async () => {
+    mockRows = [
+      makeTx({ quantity: 5,  price: 15, transaction_type: 'sell' }),
+      makeTx({ quantity: 10, price: 12, transaction_type: 'buy' }),
+    ];
+
+    const { holdings, orphanedSells } = await computeHoldings();
+
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0].quantity).toBe(5);
+    expect(holdings[0].avgCostEur).toBeCloseTo(12);
+    expect(orphanedSells).toHaveLength(0);
+  });
+
+  it('sell debt fully absorbed by buy — not in orphanedSells', async () => {
+    mockRows = [
+      makeTx({ quantity: 5,  price: 15, transaction_type: 'sell' }),
+      makeTx({ quantity: 5,  price: 12, transaction_type: 'buy' }),
+    ];
+
+    const { holdings, orphanedSells } = await computeHoldings();
+
+    expect(holdings).toHaveLength(0);
+    expect(orphanedSells).toHaveLength(0);
+  });
+
+  it('sell debt partially absorbed — ticker remains in orphanedSells', async () => {
+    mockRows = [
+      makeTx({ quantity: 10, price: 15, transaction_type: 'sell' }),
+      makeTx({ quantity: 5,  price: 12, transaction_type: 'buy' }),
+    ];
+
+    const { holdings, orphanedSells } = await computeHoldings();
+
+    expect(holdings).toHaveLength(0);
+    expect(orphanedSells).toContain('AAPL');
+  });
+
+  it('clean buy-sell history — orphanedSells is empty', async () => {
+    mockRows = [
+      makeTx({ quantity: 10, price: 10, transaction_type: 'buy' }),
+      makeTx({ quantity: 4,  price: 15, transaction_type: 'sell' }),
+    ];
+
+    const { orphanedSells } = await computeHoldings();
+
+    expect(orphanedSells).toHaveLength(0);
   });
 
   it('dividend — does not affect qty or cost', async () => {
@@ -146,7 +196,7 @@ describe('computeHoldings', () => {
       makeTx({ quantity: 1,  price: 0.50, transaction_type: 'dividend' }),
     ];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(10);
@@ -159,7 +209,7 @@ describe('computeHoldings', () => {
       makeTx({ quantity: 10, price: 20, transaction_type: 'buy' }),
     ];
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(20);
@@ -170,7 +220,7 @@ describe('computeHoldings', () => {
     mockRows = [makeTx({ quantity: 10, price: 10 })];
     mockPrevPriceEur = null;
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings[0].prevValueEur).toBeNull();
   });
@@ -179,7 +229,7 @@ describe('computeHoldings', () => {
     mockRows = [makeTx({ quantity: 10, price: 10 })];
     mockPrevPriceEur = 80;
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings[0].prevValueEur).toBe(800);
   });
@@ -188,7 +238,7 @@ describe('computeHoldings', () => {
     mockRows = [makeTx({ quantity: 10, price: 130, currency: 'INR' })];
     mockPrevPriceLocal = null;
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings[0].prevValueLocal).toBeNull();
   });
@@ -197,7 +247,7 @@ describe('computeHoldings', () => {
     mockRows = [makeTx({ quantity: 100, price: 130, currency: 'INR' })];
     mockPrevPriceLocal = 145;
 
-    const holdings = await computeHoldings();
+    const { holdings } = await computeHoldings();
 
     expect(holdings[0].prevValueLocal).toBe(14500);
   });
