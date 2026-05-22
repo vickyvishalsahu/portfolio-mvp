@@ -1,4 +1,13 @@
-import { insertTransaction } from '@/domains/shared/db';
+import { insertTransaction, getManualTransactions } from '@/domains/shared/db';
+
+export const GET = async () => {
+  try {
+    const transactions = getManualTransactions();
+    return Response.json({ transactions });
+  } catch (error: any) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+};
 
 export const POST = async (req: Request) => {
   try {

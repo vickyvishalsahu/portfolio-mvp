@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import type { Transaction } from './types';
-import { GET_SETTING, UPSERT_SETTING, DELETE_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_PRICE_CACHE_AGE, GET_EARLIEST_BUY_DATES } from './constants';
+import { GET_SETTING, UPSERT_SETTING, DELETE_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_MANUAL_TRANSACTIONS, DELETE_MANUAL_TRANSACTION, GET_PRICE_CACHE_AGE, GET_EARLIEST_BUY_DATES } from './constants';
 
 const DB_PATH = path.join(process.cwd(), 'portfolio.db');
 
@@ -155,6 +155,37 @@ export const getAllTransactions = (): Transaction[] => {
     rawText: row.raw_text,
     confidence: row.confidence as Transaction['confidence'],
   }));
+};
+
+export const getManualTransactions = (): Transaction[] => {
+  const db = getDb();
+  const rows = db.prepare(GET_MANUAL_TRANSACTIONS).all() as Array<{
+    id: number; email_id: string; asset_type: string; ticker: string | null;
+    name: string; quantity: number; price: number; currency: string;
+    transaction_type: string; transaction_date: string; broker: string;
+    raw_text: string; confidence: string;
+  }>;
+  return rows.map((row) => ({
+    id: row.id,
+    emailId: row.email_id,
+    assetType: row.asset_type as Transaction['assetType'],
+    ticker: row.ticker,
+    name: row.name,
+    quantity: row.quantity,
+    price: row.price,
+    currency: row.currency as Transaction['currency'],
+    transactionType: row.transaction_type as Transaction['transactionType'],
+    transactionDate: row.transaction_date,
+    broker: row.broker,
+    rawText: row.raw_text,
+    confidence: row.confidence as Transaction['confidence'],
+  }));
+};
+
+export const deleteManualTransaction = (id: number): boolean => {
+  const db = getDb();
+  const result = db.prepare(DELETE_MANUAL_TRANSACTION).run(id);
+  return result.changes > 0;
 };
 
 export const getEarliestBuyDates = (): Record<string, string> => {

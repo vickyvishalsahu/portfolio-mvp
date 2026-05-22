@@ -89,7 +89,7 @@ const NewTransactionPage = () => {
         <div className="bg-green-950 border border-green-800 rounded-lg p-6 mb-6">
           <p className="text-green-400 font-medium">{t('transactions.success')}</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
           <button
             onClick={() => {
               setSuccess(false);
@@ -101,6 +101,9 @@ const NewTransactionPage = () => {
           </button>
           <a href="/holdings" className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded transition">
             {t('transactions.actions.viewHoldings')}
+          </a>
+          <a href="/transactions" className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition">
+            {t('transactions.actions.viewTransactions')}
           </a>
         </div>
       </div>

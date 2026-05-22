@@ -223,14 +223,32 @@
   },
   "transactions": {
     "title": "Add Transaction",
+    "listTitle": "Manual Transactions",
     "success": "Transaction added successfully.",
     "required": "(required)",
     "optional": "(optional)",
     "actions": {
       "addAnother": "Add Another",
       "viewHoldings": "View Holdings",
+      "viewTransactions": "View manual transactions",
       "saving": "Saving...",
       "submit": "Add Transaction"
+    },
+    "list": {
+      "empty": "No manual transactions yet.",
+      "addFirst": "Add your first transaction →",
+      "columns": {
+        "date": "Date",
+        "name": "Name",
+        "type": "Type",
+        "qty": "Qty",
+        "price": "Price",
+        "broker": "Broker"
+      },
+      "delete": "Delete",
+      "confirmDelete": "Confirm",
+      "cancelDelete": "Cancel",
+      "deleteError": "Failed to delete transaction."
     },
     "fields": {
       "assetType": "Asset Type",
