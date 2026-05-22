@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import type { Transaction } from './types';
-import { GET_SETTING, UPSERT_SETTING, DELETE_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_PRICE_CACHE_AGE } from './constants';
+import { GET_SETTING, UPSERT_SETTING, DELETE_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_PRICE_CACHE_AGE, GET_EARLIEST_BUY_DATES } from './constants';
 
 const DB_PATH = path.join(process.cwd(), 'portfolio.db');
 
@@ -155,6 +155,12 @@ export const getAllTransactions = (): Transaction[] => {
     rawText: row.raw_text,
     confidence: row.confidence as Transaction['confidence'],
   }));
+};
+
+export const getEarliestBuyDates = (): Record<string, string> => {
+  const db = getDb();
+  const rows = db.prepare(GET_EARLIEST_BUY_DATES).all() as { key: string; earliest_date: string }[];
+  return Object.fromEntries(rows.map((row) => [row.key, row.earliest_date]));
 };
 
 export const getPriceCacheAge = (): string | null => {

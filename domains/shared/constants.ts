@@ -11,3 +11,9 @@ export const INSERT_TRANSACTION = `
 `;
 export const GET_ALL_TRANSACTIONS = 'SELECT * FROM transactions ORDER BY transaction_date DESC';
 export const GET_PRICE_CACHE_AGE = 'SELECT MAX(updated_at) as latest FROM price_cache';
+export const GET_EARLIEST_BUY_DATES = `
+  SELECT COALESCE(ticker, name) AS key, MIN(transaction_date) AS earliest_date
+  FROM transactions
+  WHERE transaction_type IN ('buy', 'sip')
+  GROUP BY COALESCE(ticker, name)
+`;
