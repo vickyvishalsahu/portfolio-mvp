@@ -49,7 +49,7 @@ export const HoldingHeader = ({ loading, refreshing, priceAge, formatAge, onRefr
   };
 
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
       <h1 className="text-3xl font-bold">{t('holdings.title')}</h1>
       {renderActions()}
     </div>

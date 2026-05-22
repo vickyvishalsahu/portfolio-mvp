@@ -28,6 +28,8 @@ export const GET = async () => {
       return acc;
     }, {});
 
+    
+
     const snapshotInput = Object.fromEntries(
       Object.entries(byCurrency).map(([cur, { value }]) => [cur, value])
     );
