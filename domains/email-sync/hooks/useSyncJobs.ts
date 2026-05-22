@@ -114,14 +114,6 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
   }, [activeParseJobId]);
 
   const handleFetch = async () => {
-    const jobId = await handleSync();
-    if (jobId) {
-      setActiveFetchJobId(jobId);
-      window.dispatchEvent(new CustomEvent('portfolio:sync-started'));
-    }
-  };
-
-  const handleFullHistoryFetch = async () => {
     const jobId = await handleSync(true);
     if (jobId) {
       setActiveFetchJobId(jobId);
@@ -173,7 +165,6 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
     parseDetail,
     parseProgress,
     handleFetch,
-    handleFullHistoryFetch,
     handleParse,
     handleTokenReset,
     handleDbCleared,

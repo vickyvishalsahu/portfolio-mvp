@@ -104,13 +104,10 @@
   "sync": {
     "title": "Email Sync",
     "fetch": {
-      "title": "Fetch Emails",
-      "button": "Fetch emails from these senders",
-      "buttonFetching": "Fetching… (see bell)",
-      "progressHint": "Progress shown in the bell →",
-      "buttonFullHistory": "Fetch full history",
-      "buttonFetchingHistory": "Fetching history… (see bell)",
-      "fullHistoryHint": "Fetches all matching emails since your account was created. May take a few minutes."
+      "title": "Sync Emails",
+      "button": "Sync emails",
+      "buttonSyncing": "Syncing…",
+      "hint": "Fetches all matching emails. Already-seen emails are skipped automatically."
     },
     "parse": {
       "title": "Parse Emails",
