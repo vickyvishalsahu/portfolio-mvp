@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchBrokerEmails, insertRawEmail, getRawEmailCount, getParsedEmailCount, getSelectedInstitutions } from '@/domains/email-sync';
 import { getRefreshToken } from '@/domains/email-sync';
 import { createJob, updateJob } from '@/domains/notifications/jobStore';
+import { KNOWN_BROKERS } from '@/domains/shared/constants';
+import type { Institution } from '@/domains/shared/types';
+
+const dedupeByDomain = (list: Institution[]) =>
+  list.filter((item, i, arr) => arr.findIndex((x) => x.domain === item.domain) === i);
 
 export const POST = async (req: NextRequest) => {
   if (!getRefreshToken()) {
@@ -12,7 +17,13 @@ export const POST = async (req: NextRequest) => {
   }
 
   const fullHistory = req.nextUrl.searchParams.get('full') === 'true';
-  const institutions = getSelectedInstitutions();
+  const userInstitutions = getSelectedInstitutions();
+  const knownDomainInstitutions: Institution[] = KNOWN_BROKERS.flatMap((b) =>
+    b.senderDomains.map((d) => ({ name: b.name, domain: d }))
+  );
+  const institutions = fullHistory
+    ? dedupeByDomain([...userInstitutions, ...knownDomainInstitutions])
+    : userInstitutions;
   const job = createJob('fetch');
 
   (async () => {

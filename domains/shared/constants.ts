@@ -2,14 +2,14 @@ import type { BrokerDefinition } from './types';
 
 export const BROKER_CATALOG: BrokerDefinition[] = [];
 
-export const KNOWN_BROKERS: { id: string; name: string }[] = [
-  { id: 'zerodha',  name: 'Zerodha' },
-  { id: 'cams',     name: 'CAMS' },
-  { id: 'groww',    name: 'Groww' },
-  { id: 'angelone', name: 'Angel One' },
-  { id: 'scalable', name: 'Scalable Capital' },
-  { id: 'binance',  name: 'Binance' },
-  { id: 'coinbase', name: 'Coinbase' },
+export const KNOWN_BROKERS: { id: string; name: string; senderDomains: string[] }[] = [
+  { id: 'zerodha',  name: 'Zerodha',          senderDomains: ['zerodha.com'] },
+  { id: 'cams',     name: 'CAMS',             senderDomains: ['camsonline.com', 'camsmail.com'] },
+  { id: 'groww',    name: 'Groww',            senderDomains: ['groww.in'] },
+  { id: 'angelone', name: 'Angel One',        senderDomains: ['angelone.in', 'angelbroking.com'] },
+  { id: 'scalable', name: 'Scalable Capital', senderDomains: ['scalable.capital'] },
+  { id: 'binance',  name: 'Binance',          senderDomains: ['binance.com', 'mail.binance.com'] },
+  { id: 'coinbase', name: 'Coinbase',         senderDomains: ['coinbase.com', 'mail.coinbase.com'] },
 ];
 
 export const GET_SETTING = 'SELECT value FROM settings WHERE key = ?';
