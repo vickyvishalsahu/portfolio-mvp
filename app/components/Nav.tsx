@@ -13,6 +13,7 @@ export const Nav = () => {
         <a href="/sync" className="text-gray-400 hover:text-white transition">{t('nav.links.sync')}</a>
         <a href="/holdings" className="text-gray-400 hover:text-white transition">{t('nav.links.holdings')}</a>
         <a href="/transactions/new" className="text-gray-400 hover:text-white transition">{t('nav.links.addTransaction')}</a>
+        <a href="/tax" className="text-gray-400 hover:text-white transition">{t('nav.links.tax')}</a>
         <a href="/setup" className="text-gray-400 hover:text-white transition">{t('nav.links.setup')}</a>
         <div className="ml-auto">
           <NotificationBell />

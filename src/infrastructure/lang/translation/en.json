@@ -14,6 +14,7 @@
       "sync": "Sync",
       "holdings": "Holdings",
       "addTransaction": "Add Transaction",
+      "tax": "Tax",
       "setup": "Setup"
     },
     "footer": "Your data stays on your device — nothing is uploaded except during Gmail sync and live price lookups."
@@ -268,6 +269,36 @@
       "generic": "Something went wrong",
       "network": "Network error — please try again"
     }
+  },
+  "tax": {
+    "title": "Tax Exposure",
+    "disclaimer": "This page shows your unrealised gains and estimated holding periods for reference only. It is not financial or tax advice. Tax rules change — consult a tax advisor before making any decisions.",
+    "holdingPeriodNote": "Holding period is calculated from your earliest buy date for each ticker. Actual tax treatment may vary depending on lot selection.",
+    "dualJurisdictionNote": "Crypto holdings appear in both sections — India and Germany each tax crypto differently.",
+    "india": {
+      "title": "India",
+      "subtitle": "LTCG / STCG rules (Finance Act 2024)",
+      "empty": "No Indian holdings found."
+    },
+    "germany": {
+      "title": "Germany",
+      "subtitle": "Abgeltungsteuer · €1,000 annual exemption",
+      "empty": "No German holdings found."
+    },
+    "columns": {
+      "holding": "Holding",
+      "period": "Held",
+      "gain": "Unrealised Gain",
+      "class": "Classification"
+    },
+    "classes": {
+      "LTCG": "LTCG",
+      "STCG": "STCG",
+      "FLAT_30": "30% flat",
+      "TAXABLE": "Taxable",
+      "TAX_FREE": "Tax-free"
+    },
+    "loading": "Loading tax data..."
   },
   "setup": {
     "title": "Setup",
