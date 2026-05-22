@@ -42,7 +42,10 @@ const HoldingsPage = () => {
 
       {!loading && orphanedSells.length > 0 && (
         <div className="bg-red-950 border border-red-800 rounded p-3 mb-4 text-sm text-red-400">
-          {t('holdings.orphanedSells', { tickers: orphanedSells.join(', ') })}
+          {t('holdings.orphanedSells', { tickers: orphanedSells.join(', ') })}{' '}
+          <a href="/transactions/new" className="underline hover:text-red-300 transition">
+            {t('holdings.orphanedSellsCta')}
+          </a>
         </div>
       )}
 
