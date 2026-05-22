@@ -22,6 +22,7 @@ const SyncPage = () => {
   const {
     isConnected, hasSynced, fetching, parsing, unparsedCount, error,
     fetchedEmails, parseResult,
+    fetchDetail, parseDetail, parseProgress,
     handleFetch, handleFullHistoryFetch, handleParse, handleTokenReset, handleDbCleared, handleDisconnect,
   } = useSyncJobs({ status, syncError, handleSync, fetchStatus, t });
 
@@ -107,6 +108,9 @@ const SyncPage = () => {
             <p className="text-gray-500 text-xs mt-2">{t('sync.fetch.fullHistoryHint')}</p>
           </div>
         </div>
+        {fetching && fetchDetail && (
+          <p className="text-blue-400 text-sm mt-3">{fetchDetail}</p>
+        )}
         {fetchedEmails.length > 0 && (
           <div className="mt-4">
             <FetchedEmailList emails={fetchedEmails} />
@@ -128,7 +132,21 @@ const SyncPage = () => {
         >
           {parsing ? t('sync.parse.buttonParsing') : t('sync.parse.button', { count: unparsedCount })}
         </button>
-        <p className="text-gray-500 text-xs mt-2">{t('sync.parse.progressHint')}</p>
+        {parsing && parseProgress && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+              <span>{parseDetail}</span>
+              <span>{parseProgress.current}/{parseProgress.total}</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-1.5">
+              <div
+                className="bg-purple-500 h-1.5 rounded-full transition-all"
+                style={{ width: `${Math.round((parseProgress.current / parseProgress.total) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {!parsing && <p className="text-gray-500 text-xs mt-2">{t('sync.parse.progressHint')}</p>}
         {renderParseResult()}
       </div>
     );

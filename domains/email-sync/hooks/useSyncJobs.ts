@@ -18,6 +18,9 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const [fetchedEmails, setFetchedEmails] = useState<EmailListItem[]>([]);
+  const [fetchDetail, setFetchDetail] = useState<string | null>(null);
+  const [parseDetail, setParseDetail] = useState<string | null>(null);
+  const [parseProgress, setParseProgress] = useState<{ current: number; total: number } | null>(null);
 
   useEffect(() => {
     const resumeActiveJobs = async () => {
@@ -63,12 +66,14 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
     const interval = setInterval(async () => {
       try {
         const response = await fetch('/api/jobs');
-        const jobs: { id: string; status: string }[] = await response.json();
+        const jobs: { id: string; status: string; detail: string }[] = await response.json();
         const job = jobs.find((jobItem) => jobItem.id === activeFetchJobId);
+        if (job?.detail) setFetchDetail(job.detail);
         if (job?.status === 'success' || job?.status === 'error') {
           await loadFetchedEmails();
           await fetchStatus();
           setActiveFetchJobId(null);
+          setFetchDetail(null);
         }
       } catch {
         // non-fatal
@@ -84,15 +89,21 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
     const interval = setInterval(async () => {
       try {
         const response = await fetch('/api/jobs');
-        const jobs: { id: string; status: string; result?: ParseResult; detail: string }[] = await response.json();
+        const jobs: { id: string; status: string; result?: ParseResult; detail: string; progress?: { current: number; total: number } }[] = await response.json();
         const job = jobs.find((jobItem) => jobItem.id === activeParseJobId);
+        if (job?.detail) setParseDetail(job.detail);
+        if (job?.progress) setParseProgress(job.progress);
         if (job?.status === 'success') {
           if (job.result) setParseResult(job.result as ParseResult);
           await fetchStatus();
           setActiveParseJobId(null);
+          setParseDetail(null);
+          setParseProgress(null);
         } else if (job?.status === 'error') {
           setParseError(job.detail);
           setActiveParseJobId(null);
+          setParseDetail(null);
+          setParseProgress(null);
         }
       } catch {
         // non-fatal
@@ -158,6 +169,9 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
     fetchedEmails,
     parseResult,
     parseError,
+    fetchDetail,
+    parseDetail,
+    parseProgress,
     handleFetch,
     handleFullHistoryFetch,
     handleParse,
