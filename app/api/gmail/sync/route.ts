@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { fetchBrokerEmails, insertRawEmail, getRawEmailCount, getParsedEmailCount, getSelectedInstitutions } from '@/domains/email-sync';
 import { getRefreshToken } from '@/domains/email-sync';
 import { createJob, updateJob } from '@/domains/notifications/jobStore';
 
-export const POST = async () => {
+export const POST = async (req: NextRequest) => {
   if (!getRefreshToken()) {
     return NextResponse.json(
       { error: 'Gmail not connected. Visit /sync to connect.' },
@@ -11,13 +11,18 @@ export const POST = async () => {
     );
   }
 
+  const fullHistory = req.nextUrl.searchParams.get('full') === 'true';
   const institutions = getSelectedInstitutions();
-
   const job = createJob('fetch');
 
   (async () => {
     try {
-      const emails = await fetchBrokerEmails(institutions, 100);
+      const emails = await fetchBrokerEmails(institutions, {
+        fullHistory,
+        onProgress: (fetched) => {
+          updateJob(job.id, { detail: `Fetching… ${fetched} emails so far` });
+        },
+      });
       let newCount = 0;
       for (const email of emails) {
         const result = insertRawEmail(email);
@@ -30,7 +35,6 @@ export const POST = async () => {
         finishedAt: new Date(),
       });
     } catch (error: any) {
-      console.error('Sync error:', error);
       updateJob(job.id, {
         status: 'error',
         detail: error.message || 'Fetch failed',
