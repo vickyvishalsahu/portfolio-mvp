@@ -13,7 +13,8 @@
     "links": {
       "sync": "Sync",
       "holdings": "Holdings",
-      "addTransaction": "Add Transaction"
+      "addTransaction": "Add Transaction",
+      "setup": "Setup"
     },
     "footer": "Your data stays on your device — nothing is uploaded except during Gmail sync and live price lookups."
   },
@@ -266,6 +267,29 @@
       "dateRequired": "Date is required",
       "generic": "Something went wrong",
       "network": "Network error — please try again"
+    }
+  },
+  "setup": {
+    "title": "Setup",
+    "subtitle": "Get your portfolio tracker running in three steps.",
+    "steps": {
+      "appRunning": {
+        "label": "App is running",
+        "description": "Your local server is running and the database is ready."
+      },
+      "connectGmail": {
+        "label": "Connect Gmail",
+        "connected": "Gmail is connected. Broker emails will be fetched on your next sync.",
+        "beforeConnectTitle": "Before you connect",
+        "beforeConnectBody": "We request read-only Gmail access to find investment emails from senders you choose. No other emails are read or stored.",
+        "localFirst": "Your data stays on your device.",
+        "connectButton": "Connect Gmail →"
+      },
+      "sync": {
+        "label": "Sync your emails",
+        "locked": "Complete step 2 first.",
+        "goToSync": "Go to Sync →"
+      }
     }
   },
   "notifications": {
