@@ -28,21 +28,23 @@ export const POST = async (req: NextRequest) => {
 
   (async () => {
     try {
-      const emails = await fetchBrokerEmails(institutions, {
+      let fetchedCount = 0;
+      let newCount = 0;
+      await fetchBrokerEmails(institutions, {
         fullHistory,
+        onEmail: (email) => {
+          const result = insertRawEmail(email);
+          if (result.changes > 0) newCount++;
+        },
         onProgress: (fetched) => {
+          fetchedCount = fetched;
           updateJob(job.id, { detail: `Fetching… ${fetched} emails so far` });
         },
       });
-      let newCount = 0;
-      for (const email of emails) {
-        const result = insertRawEmail(email);
-        if (result.changes > 0) newCount++;
-      }
       updateJob(job.id, {
         status: 'success',
-        detail: `Found ${emails.length} emails (${newCount} new)`,
-        result: { fetched: emails.length, new: newCount },
+        detail: `Found ${fetchedCount} emails (${newCount} new)`,
+        result: { fetched: fetchedCount, new: newCount },
         finishedAt: new Date(),
       });
     } catch (error: any) {

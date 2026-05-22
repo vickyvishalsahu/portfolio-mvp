@@ -38,6 +38,7 @@ const PAGE_SIZE_RECENT = 100;
 
 export type FetchOptions = {
   fullHistory?: boolean;
+  onEmail?: (email: FetchedEmail) => void;
   onProgress?: (fetched: number) => void;
 };
 
@@ -77,13 +78,15 @@ export const fetchBrokerEmails = async (
       const body = extractBody(detail.data.payload);
 
       if (body) {
-        emails.push({
+        const email: FetchedEmail = {
           id: msg.id!,
           sender,
           subject,
           body: body.substring(0, 10000),
           receivedAt: date ? new Date(date).toISOString() : new Date().toISOString(),
-        });
+        };
+        emails.push(email);
+        options.onEmail?.(email);
       }
     }
 

@@ -69,9 +69,9 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
         const jobs: { id: string; status: string; detail: string }[] = await response.json();
         const job = jobs.find((jobItem) => jobItem.id === activeFetchJobId);
         if (job?.detail) setFetchDetail(job.detail);
+        await fetchStatus();
         if (job?.status === 'success' || job?.status === 'error') {
           await loadFetchedEmails();
-          await fetchStatus();
           setActiveFetchJobId(null);
           setFetchDetail(null);
         }
