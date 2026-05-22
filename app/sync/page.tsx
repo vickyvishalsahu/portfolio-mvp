@@ -20,7 +20,7 @@ const SyncPage = () => {
   const {
     isConnected, hasSynced, fetching, parsing, unparsedCount, error,
     fetchedEmails, parseResult,
-    handleFetch, handleParse, handleTokenReset, handleDbCleared, handleDisconnect,
+    handleFetch, handleFullHistoryFetch, handleParse, handleTokenReset, handleDbCleared, handleDisconnect,
   } = useSyncJobs({ status, syncError, handleSync, fetchStatus, t });
 
   const renderGmailStep = () => (
@@ -55,14 +55,28 @@ const SyncPage = () => {
     return (
       <div className={`bg-gray-900 border rounded-lg p-6 mb-6 transition ${locked ? 'border-gray-800 opacity-40 pointer-events-none' : 'border-gray-800'}`}>
         <h2 className="text-lg font-semibold mb-4">{t('sync.fetch.title')}</h2>
-        <button
-          onClick={handleFetch}
-          disabled={fetching || locked}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
-        >
-          {fetching ? t('sync.fetch.buttonFetching') : t('sync.fetch.button')}
-        </button>
-        <p className="text-gray-500 text-xs mt-2">{t('sync.fetch.progressHint')}</p>
+        <div className="flex flex-wrap gap-3 items-start">
+          <div>
+            <button
+              onClick={handleFetch}
+              disabled={fetching || locked}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
+            >
+              {fetching ? t('sync.fetch.buttonFetching') : t('sync.fetch.button')}
+            </button>
+            <p className="text-gray-500 text-xs mt-2">{t('sync.fetch.progressHint')}</p>
+          </div>
+          <div>
+            <button
+              onClick={handleFullHistoryFetch}
+              disabled={fetching || locked}
+              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white px-6 py-2 rounded transition"
+            >
+              {fetching ? t('sync.fetch.buttonFetchingHistory') : t('sync.fetch.buttonFullHistory')}
+            </button>
+            <p className="text-gray-500 text-xs mt-2">{t('sync.fetch.fullHistoryHint')}</p>
+          </div>
+        </div>
         {fetchedEmails.length > 0 && (
           <div className="mt-4">
             <FetchedEmailList emails={fetchedEmails} />

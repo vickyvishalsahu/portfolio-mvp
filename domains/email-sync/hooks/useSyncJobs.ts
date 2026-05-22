@@ -7,7 +7,7 @@ import { ParseResult, EmailListItem } from '@/domains/email-sync/types';
 type UseSyncJobsParams = {
   status: SyncStatus | null;
   syncError: string | null;
-  handleSync: () => Promise<string | undefined>;
+  handleSync: (fullHistory?: boolean) => Promise<string | undefined>;
   fetchStatus: () => Promise<void>;
   t: (key: string) => string;
 };
@@ -110,6 +110,14 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
     }
   };
 
+  const handleFullHistoryFetch = async () => {
+    const jobId = await handleSync(true);
+    if (jobId) {
+      setActiveFetchJobId(jobId);
+      window.dispatchEvent(new CustomEvent('portfolio:sync-started'));
+    }
+  };
+
   const handleParse = async () => {
     setParseError(null);
     setParseResult(null);
@@ -151,6 +159,7 @@ export const useSyncJobs = ({ status, syncError, handleSync, fetchStatus, t }: U
     parseResult,
     parseError,
     handleFetch,
+    handleFullHistoryFetch,
     handleParse,
     handleTokenReset,
     handleDbCleared,

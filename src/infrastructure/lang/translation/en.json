@@ -107,7 +107,10 @@
       "title": "Fetch Emails",
       "button": "Fetch emails from these senders",
       "buttonFetching": "Fetching… (see bell)",
-      "progressHint": "Progress shown in the bell →"
+      "progressHint": "Progress shown in the bell →",
+      "buttonFullHistory": "Fetch full history",
+      "buttonFetchingHistory": "Fetching history… (see bell)",
+      "fullHistoryHint": "Fetches all matching emails since your account was created. May take a few minutes."
     },
     "parse": {
       "title": "Parse Emails",

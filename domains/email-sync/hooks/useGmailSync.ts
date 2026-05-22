@@ -23,10 +23,11 @@ export const useGmailSync = () => {
     }
   };
 
-  const handleSync = async (): Promise<string | undefined> => {
+  const handleSync = async (fullHistory = false): Promise<string | undefined> => {
     setError(null);
+    const url = fullHistory ? '/api/gmail/sync?full=true' : '/api/gmail/sync';
     try {
-      const res = await fetch('/api/gmail/sync', { method: 'POST' });
+      const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) setError(data.error);
       else return data.jobId as string;
