@@ -2,6 +2,16 @@ import type { BrokerDefinition } from './types';
 
 export const BROKER_CATALOG: BrokerDefinition[] = [];
 
+export const KNOWN_BROKERS: { id: string; name: string }[] = [
+  { id: 'zerodha',  name: 'Zerodha' },
+  { id: 'cams',     name: 'CAMS' },
+  { id: 'groww',    name: 'Groww' },
+  { id: 'angelone', name: 'Angel One' },
+  { id: 'scalable', name: 'Scalable Capital' },
+  { id: 'binance',  name: 'Binance' },
+  { id: 'coinbase', name: 'Coinbase' },
+];
+
 export const GET_SETTING = 'SELECT value FROM settings WHERE key = ?';
 export const DELETE_SETTING = 'DELETE FROM settings WHERE key = ?';
 export const UPSERT_SETTING = 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)';

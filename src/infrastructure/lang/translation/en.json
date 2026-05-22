@@ -248,7 +248,8 @@
       "ticker": "e.g. AAPL",
       "quantity": "0",
       "price": "0.00",
-      "broker": "e.g. scalable, zerodha"
+      "broker": "e.g. scalable, zerodha",
+      "brokerOther": "Other (type manually)"
     },
     "assetTypes": {
       "stock": "Stock",

@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { KNOWN_BROKERS } from '@/domains/shared/constants';
+
+const OTHER_BROKER = '__other__';
 
 const FIELD_CLASS = 'w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500';
 const LABEL_CLASS = 'block text-xs text-gray-400 mb-1';
@@ -19,6 +22,7 @@ const NewTransactionPage = () => {
     transactionDate: new Date().toISOString().slice(0, 10),
     broker: '',
   });
+  const [brokerSelect, setBrokerSelect] = useState(KNOWN_BROKERS[0].id);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -38,10 +42,7 @@ const NewTransactionPage = () => {
       setError(t('transactions.errors.nameRequired'));
       return;
     }
-    if (!form.broker.trim()) {
-      setError(t('transactions.errors.brokerRequired'));
-      return;
-    }
+
     if (!qty || qty <= 0) {
       setError(t('transactions.errors.quantityInvalid'));
       return;
@@ -55,12 +56,18 @@ const NewTransactionPage = () => {
       return;
     }
 
+    const resolvedBroker = brokerSelect === OTHER_BROKER ? form.broker : brokerSelect;
+    if (!resolvedBroker.trim()) {
+      setError(t('transactions.errors.brokerRequired'));
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, quantity: qty, price }),
+        body: JSON.stringify({ ...form, broker: resolvedBroker, quantity: qty, price }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -197,13 +204,25 @@ const NewTransactionPage = () => {
 
         <div>
           <label className={LABEL_CLASS}>{t('transactions.fields.broker')}</label>
-          <input
+          <select
             className={FIELD_CLASS}
-            type="text"
-            placeholder={t('transactions.placeholders.broker')}
-            value={form.broker}
-            onChange={(event) => set('broker', event.target.value)}
-          />
+            value={brokerSelect}
+            onChange={(event) => setBrokerSelect(event.target.value)}
+          >
+            {KNOWN_BROKERS.map((broker) => (
+              <option key={broker.id} value={broker.id}>{broker.name}</option>
+            ))}
+            <option value={OTHER_BROKER}>{t('transactions.placeholders.brokerOther')}</option>
+          </select>
+          {brokerSelect === OTHER_BROKER && (
+            <input
+              className={`${FIELD_CLASS} mt-2`}
+              type="text"
+              placeholder={t('transactions.placeholders.broker')}
+              value={form.broker}
+              onChange={(event) => set('broker', event.target.value)}
+            />
+          )}
         </div>
 
         {error && (

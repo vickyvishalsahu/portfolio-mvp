@@ -1,10 +1,11 @@
 import { getEarliestBuyDates } from '@/domains/shared/db';
+import { KNOWN_BROKERS } from '@/domains/shared/constants';
 import { computeHoldings } from './holdings';
 import type { TaxClass, TaxHolding, TaxData } from './types';
 
-const INDIA_BROKERS = new Set(['zerodha', 'cams', 'groww', 'angelone']);
-const DE_BROKERS = new Set(['scalable']);
-const CRYPTO_BROKERS = new Set(['binance', 'coinbase']);
+const INDIA_BROKERS  = new Set(KNOWN_BROKERS.filter((b) => ['zerodha', 'cams', 'groww', 'angelone'].includes(b.id)).map((b) => b.id));
+const DE_BROKERS     = new Set(KNOWN_BROKERS.filter((b) => ['scalable'].includes(b.id)).map((b) => b.id));
+const CRYPTO_BROKERS = new Set(KNOWN_BROKERS.filter((b) => ['binance', 'coinbase'].includes(b.id)).map((b) => b.id));
 
 const LTCG_THRESHOLD_DAYS = 365;
 
