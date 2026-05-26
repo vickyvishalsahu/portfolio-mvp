@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUnparsedEmails, markEmailParsed } from '@/domains/email-sync/db';
 import { insertTransaction } from '@/domains/shared/db';
-import { parseEmail } from '@/domains/transaction-parsing';
+import { parseEmail, learnPatternsFromSkipped } from '@/domains/transaction-parsing';
 import { createJob, updateJob } from '@/domains/notifications/jobStore';
 import type { RawEmail } from '@/domains/shared/types';
 
@@ -26,7 +26,8 @@ export const POST = async () => {
   (async () => {
     let totalTransactions = 0;
     const errors: { emailId: string; subject: string; error: string }[] = [];
-    const skipped: { emailId: string; subject: string; reason: string }[] = [];
+    const skipped: { emailId: string; subject: string; reason: string; sender?: string }[] = [];
+    const PATTERN_SKIP_REASON = 'Matched learned ignore pattern';
 
     for (let index = 0; index < unparsed.length; index++) {
       const email = unparsed[index];
@@ -44,6 +45,7 @@ export const POST = async () => {
             emailId: email.id,
             subject: email.subject,
             reason: result.reason || 'Not a transaction email',
+            sender: email.sender,
           });
           markEmailParsed(email.id);
           continue;
@@ -77,17 +79,24 @@ export const POST = async () => {
       }
     }
 
+    const patternSkipped = skipped.filter((s) => s.reason === PATTERN_SKIP_REASON).length;
+    const llmSkipped = skipped.filter((s) => s.reason !== PATTERN_SKIP_REASON);
+
     updateJob(job.id, {
       status: errors.length > 0 && totalTransactions === 0 ? 'error' : 'success',
       detail: `Done — ${totalTransactions} transactions added`,
       result: {
         processed: unparsed.length,
         transactionsAdded: totalTransactions,
-        skipped,
+        skipped: llmSkipped,
         errors,
+        patternSkipped,
       },
       finishedAt: new Date(),
     });
+
+    // Fire-and-forget: learn patterns from emails the LLM decided were non-transactions
+    void learnPatternsFromSkipped(llmSkipped.map((s) => ({ emailId: s.emailId, subject: s.subject, sender: s.sender })));
   })();
 
   return NextResponse.json({ jobId: job.id });

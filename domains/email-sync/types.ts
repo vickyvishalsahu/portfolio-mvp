@@ -19,4 +19,5 @@ export type ParseResult = {
   transactionsAdded: number;
   skipped: { emailId: string; subject: string; reason: string }[];
   errors: { emailId: string; subject: string; error: string }[];
+  patternSkipped: number;
 };

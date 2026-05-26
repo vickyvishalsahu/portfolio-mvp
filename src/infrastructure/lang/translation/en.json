@@ -117,6 +117,7 @@
       "result": {
         "summary": "Processed {{processed}} emails, added {{transactions}} transactions",
         "skipped": "Skipped ({{count}}):",
+        "patternSkipped": "{{count}} emails skipped via learned patterns",
         "errors": "Errors ({{count}}):",
         "addManually": "Add manually →"
       },

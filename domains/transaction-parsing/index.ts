@@ -3,3 +3,5 @@ export * from './types';
 export * from './utils';
 export * from './providers';
 export * from './parser';
+export * from './pattern-cache';
+export * from './pattern-learner';

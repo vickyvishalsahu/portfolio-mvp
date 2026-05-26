@@ -150,6 +150,11 @@ const SyncPage = () => {
             {t('sync.parse.result.summary', { processed: parseResult.processed, transactions: parseResult.transactionsAdded })}
           </p>
         </div>
+        {parseResult.patternSkipped > 0 && (
+          <div className="bg-gray-800 rounded p-3">
+            <p className="text-gray-400 text-sm">{t('sync.parse.result.patternSkipped', { count: parseResult.patternSkipped })}</p>
+          </div>
+        )}
         {parseResult.skipped.length > 0 && (
           <div className="bg-gray-800 rounded p-4">
             <p className="text-yellow-400 text-sm mb-2">{t('sync.parse.result.skipped', { count: parseResult.skipped.length })}</p>

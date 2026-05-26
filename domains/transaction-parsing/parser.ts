@@ -1,6 +1,7 @@
 import type { ParseResponse } from '@/domains/shared/types';
 import { isLikelyTransaction } from './utils';
 import { getParser } from './providers';
+import { getIgnorePatterns, matchesIgnorePattern } from './pattern-cache';
 
 export const parseEmail = async (
   emailBody: string,
@@ -12,6 +13,15 @@ export const parseEmail = async (
       transactions: [],
       unparseable: true,
       reason: 'Pre-filter: not a transaction email (sender and subject did not match)',
+    };
+  }
+
+  const patterns = getIgnorePatterns();
+  if (matchesIgnorePattern(sender, subject, patterns)) {
+    return {
+      transactions: [],
+      unparseable: true,
+      reason: 'Matched learned ignore pattern',
     };
   }
 
