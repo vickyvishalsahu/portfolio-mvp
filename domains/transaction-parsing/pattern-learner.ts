@@ -18,10 +18,11 @@ const extractDomain = (sender: string): string => {
 const extractKeywordsForDomain = async (
   client: Groq,
   domain: string,
-  subjects: string[]
+  subjects: string[],
+  model: string // Pass model as a parameter
 ): Promise<string[]> => {
   const response = await client.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+    model, // Use the model parameter
     messages: [
       {
         role: 'user',
@@ -70,7 +71,7 @@ const mergePatterns = (
   ];
 };
 
-export const learnPatternsFromSkipped = async (skipped: SkippedEmail[]): Promise<void> => {
+export const learnPatternsFromSkipped = async (skipped: SkippedEmail[], model: string): Promise<void> => {
   if (!process.env.GROQ_API_KEY || skipped.length === 0) return;
 
   const byDomain = new Map<string, string[]>();
@@ -93,7 +94,7 @@ export const learnPatternsFromSkipped = async (skipped: SkippedEmail[]): Promise
 
   for (const [domain, subjects] of qualifyingDomains) {
     try {
-      const keywords = await extractKeywordsForDomain(client, domain, subjects);
+      const keywords = await extractKeywordsForDomain(client, domain, subjects, model);
       if (keywords.length > 0) {
         patterns = mergePatterns(patterns, domain, keywords);
       }
