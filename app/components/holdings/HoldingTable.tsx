@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { fmtEur, fmtHolding, pct } from '@/lib/format';
+import { fmtEur, fmtHolding, formatPercent } from '@/lib/format';
 import type { Holding } from '@/domains/shared/types';
 import type { SortKey } from '@/domains/portfolio/hooks/useHoldings';
 import { SkeletonLoading } from '@/app/components/SkeletonLoading';
@@ -93,7 +93,7 @@ export const HoldingTable = ({ loading, holdings, sortKey, sortAsc, onSort }: Pr
                   )}
                 </td>
                 <td className={`py-3 text-right font-medium ${holding.pnlPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  <div>{pct(holding.pnlPct)}</div>
+                  <div>{formatPercent(holding.pnlPct)}</div>
                   <div className="text-xs opacity-70">
                     {fmtHolding(holding.pnlLocal, holding.pnl, holding.currency)}
                   </div>

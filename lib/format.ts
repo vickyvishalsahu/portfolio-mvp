@@ -23,5 +23,5 @@ export const fmtLocal = (amount: number, currency: string): string => {
 export const fmtHolding = (localAmount: number, eurAmount: number, currency: string): string =>
   currency !== 'EUR' ? fmtLocal(localAmount, currency) : fmtEur(eurAmount);
 
-export const pct = (n: number): string =>
+export const formatPercent = (n: number): string =>
   `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;

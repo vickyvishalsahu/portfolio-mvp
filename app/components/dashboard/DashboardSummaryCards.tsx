@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { fmtLocal, pct } from '@/lib/format';
+import { fmtLocal, formatPercent } from '@/lib/format';
 import type { NetWorthDelta } from '@/lib/snapshot-delta';
 import type { Summary } from '@/domains/portfolio/types';
 
@@ -36,7 +36,7 @@ export const DashboardSummaryCards = ({ summary, netWorthDelta, primaryCurrency 
             <p className="text-gray-400 text-sm">{t('dashboard.summary.totalValue')}</p>
             <p className="text-2xl font-bold text-white">{fmtLocal(currencySummary.totalValue, currencySummary.currency)}</p>
             <p className={`text-sm font-medium mt-1 ${currencySummary.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {fmtLocal(currencySummary.totalPnl, currencySummary.currency)} {pct(currencySummary.totalPnlPct)}
+              {fmtLocal(currencySummary.totalPnl, currencySummary.currency)} {formatPercent(currencySummary.totalPnlPct)}
             </p>
             {renderDelta(currencySummary.currency, delta)}
           </div>

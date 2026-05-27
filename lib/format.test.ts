@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fmtEur, fmtLocal, fmtHolding, pct } from './format';
+import { fmtEur, fmtLocal, fmtHolding, formatPercent } from './format';
 
 describe('fmtEur', () => {
   it('produces the same output as the canonical Intl formatter', () => {
@@ -74,21 +74,21 @@ describe('fmtHolding', () => {
   });
 });
 
-describe('pct', () => {
+describe('formatPercent', () => {
   it('prefixes positive values with +', () => {
-    expect(pct(3.45)).toBe('+3.45%');
+    expect(formatPercent(3.45)).toBe('+3.45%');
   });
 
   it('does not double-sign negative values', () => {
-    expect(pct(-3.45)).toBe('-3.45%');
+    expect(formatPercent(-3.45)).toBe('-3.45%');
   });
 
   it('treats zero as positive', () => {
-    expect(pct(0)).toBe('+0.00%');
+    expect(formatPercent(0)).toBe('+0.00%');
   });
 
   it('always formats to 2 decimal places', () => {
-    expect(pct(1)).toBe('+1.00%');
-    expect(pct(-0.1)).toBe('-0.10%');
+    expect(formatPercent(1)).toBe('+1.00%');
+    expect(formatPercent(-0.1)).toBe('-0.10%');
   });
 });
