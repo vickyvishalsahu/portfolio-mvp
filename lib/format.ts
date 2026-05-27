@@ -1,4 +1,4 @@
-export const fmtEur = (n: number): string =>
+export const formatEur = (n: number): string =>
   new Intl.NumberFormat('en-DE', {
     style: 'currency',
     currency: 'EUR',
@@ -6,7 +6,7 @@ export const fmtEur = (n: number): string =>
     maximumFractionDigits: 2,
   }).format(n);
 
-export const fmtLocal = (amount: number, currency: string): string => {
+export const formatLocal = (amount: number, currency: string): string => {
   if (currency === 'INR') {
     if (amount >= 10_000_000) return `₹${(amount / 10_000_000).toFixed(2)}Cr`;
     if (amount >= 100_000) return `₹${(amount / 100_000).toFixed(1)}L`;
@@ -20,8 +20,8 @@ export const fmtLocal = (amount: number, currency: string): string => {
 };
 
 // Use local currency for non-EUR holdings; EUR for everything else.
-export const fmtHolding = (localAmount: number, eurAmount: number, currency: string): string =>
-  currency !== 'EUR' ? fmtLocal(localAmount, currency) : fmtEur(eurAmount);
+export const formatHolding = (localAmount: number, eurAmount: number, currency: string): string =>
+  currency !== 'EUR' ? formatLocal(localAmount, currency) : formatEur(eurAmount);
 
 export const formatPercent = (n: number): string =>
   `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;

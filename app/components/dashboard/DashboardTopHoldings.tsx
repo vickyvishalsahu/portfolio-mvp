@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { fmtHolding, formatPercent } from '@/lib/format';
+import { formatHolding, formatPercent } from '@/lib/format';
 import type { Holding } from '@/domains/shared/types';
 
 const TOP_HOLDINGS_COUNT = 5;
@@ -33,7 +33,7 @@ export const DashboardTopHoldings = ({ holdings }: Props) => {
                 <span className="text-gray-500 text-xs ml-2">{holding.ticker}</span>
               </td>
               <td className="text-right text-white">
-                {fmtHolding(holding.currentValueLocal, holding.currentValueEur, holding.currency)}
+                {formatHolding(holding.currentValueLocal, holding.currentValueEur, holding.currency)}
               </td>
               <td className={`text-right ${holding.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {formatPercent(holding.pnlPct)}

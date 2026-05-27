@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { fmtLocal } from '@/lib/format';
+import { formatLocal } from '@/lib/format';
 import type { TaxHolding, Jurisdiction } from '@/domains/portfolio/types';
 import { TaxClassBadge } from './TaxClassBadge';
 
@@ -57,7 +57,7 @@ export const TaxSection = ({ jurisdiction, holdings }: Props) => {
                 </td>
                 <td className="py-3 text-gray-400">{formatHoldingPeriod(holding.holdingDays)}</td>
                 <td className={`py-3 text-right font-medium ${gainColor}`}>
-                  {fmtLocal(holding.unrealisedGain, holding.currency)}
+                  {formatLocal(holding.unrealisedGain, holding.currency)}
                 </td>
                 <td className="py-3 text-right">
                   <TaxClassBadge taxClass={holding.taxClass} />
@@ -75,7 +75,7 @@ export const TaxSection = ({ jurisdiction, holdings }: Props) => {
     const gainColor = totalGain >= 0 ? 'text-green-400' : 'text-red-400';
     return (
       <p className={`text-sm mt-4 pt-4 border-t border-gray-800 ${gainColor}`}>
-        {fmtLocal(totalGain, gainCurrency)} unrealised gains
+        {formatLocal(totalGain, gainCurrency)} unrealised gains
       </p>
     );
   };

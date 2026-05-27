@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { fmtLocal, formatPercent } from '@/lib/format';
+import { formatLocal, formatPercent } from '@/lib/format';
 import type { NetWorthDelta } from '@/lib/snapshot-delta';
 import type { Summary } from '@/domains/portfolio/types';
 
@@ -20,7 +20,7 @@ export const DashboardSummaryCards = ({ summary, netWorthDelta, primaryCurrency 
     const sign = isPositive ? '+' : '';
     return (
       <p className={`text-xs mt-2 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-        {isPositive ? '↑' : '↓'} {sign}{fmtLocal(delta.delta, currency)} ({sign}{delta.deltaPct.toFixed(1)}%) {t('dashboard.movers.vsLast30d')}
+        {isPositive ? '↑' : '↓'} {sign}{formatLocal(delta.delta, currency)} ({sign}{delta.deltaPct.toFixed(1)}%) {t('dashboard.movers.vsLast30d')}
       </p>
     );
   };
@@ -34,9 +34,9 @@ export const DashboardSummaryCards = ({ summary, netWorthDelta, primaryCurrency 
         return (
           <div key={currencySummary.currency} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <p className="text-gray-400 text-sm">{t('dashboard.summary.totalValue')}</p>
-            <p className="text-2xl font-bold text-white">{fmtLocal(currencySummary.totalValue, currencySummary.currency)}</p>
+            <p className="text-2xl font-bold text-white">{formatLocal(currencySummary.totalValue, currencySummary.currency)}</p>
             <p className={`text-sm font-medium mt-1 ${currencySummary.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {fmtLocal(currencySummary.totalPnl, currencySummary.currency)} {formatPercent(currencySummary.totalPnlPct)}
+              {formatLocal(currencySummary.totalPnl, currencySummary.currency)} {formatPercent(currencySummary.totalPnlPct)}
             </p>
             {renderDelta(currencySummary.currency, delta)}
           </div>

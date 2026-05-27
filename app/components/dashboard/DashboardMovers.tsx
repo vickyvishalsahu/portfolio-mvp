@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { fmtLocal } from '@/lib/format';
+import { formatLocal } from '@/lib/format';
 import type { Holding } from '@/domains/shared/types';
 
 const TOP_MOVERS_COUNT = 3;
@@ -38,7 +38,7 @@ export const DashboardMovers = ({ holdings }: Props) => {
                 <span className="text-white">{holding.name}</span>
                 <span className="text-gray-500 text-xs ml-2">{holding.ticker}</span>
               </td>
-              <td className="text-right text-green-400 font-medium">+{fmtLocal(holding.change, holding.currency)}</td>
+              <td className="text-right text-green-400 font-medium">+{formatLocal(holding.change, holding.currency)}</td>
               <td className="text-right text-green-500 text-xs w-16">+{holding.changePct.toFixed(1)}%</td>
             </tr>
           ))}
@@ -58,7 +58,7 @@ export const DashboardMovers = ({ holdings }: Props) => {
                 <span className="text-white">{holding.name}</span>
                 <span className="text-gray-500 text-xs ml-2">{holding.ticker}</span>
               </td>
-              <td className="text-right text-red-400 font-medium">{fmtLocal(holding.change, holding.currency)}</td>
+              <td className="text-right text-red-400 font-medium">{formatLocal(holding.change, holding.currency)}</td>
               <td className="text-right text-red-500 text-xs w-16">{holding.changePct.toFixed(1)}%</td>
             </tr>
           ))}

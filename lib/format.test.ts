@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { fmtEur, fmtLocal, fmtHolding, formatPercent } from './format';
+import { formatEur, formatLocal, formatHolding, formatPercent } from './format';
 
-describe('fmtEur', () => {
+describe('formatEur', () => {
   it('produces the same output as the canonical Intl formatter', () => {
     const canonical = new Intl.NumberFormat('en-DE', {
       style: 'currency',
@@ -9,68 +9,68 @@ describe('fmtEur', () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(1234.56);
-    expect(fmtEur(1234.56)).toBe(canonical);
+    expect(formatEur(1234.56)).toBe(canonical);
   });
 
   it('always contains the EUR currency marker', () => {
-    expect(fmtEur(0)).toMatch(/€|EUR/);
-    expect(fmtEur(9999)).toMatch(/€|EUR/);
+    expect(formatEur(0)).toMatch(/€|EUR/);
+    expect(formatEur(9999)).toMatch(/€|EUR/);
   });
 
   it('formats to exactly 2 decimal places', () => {
-    expect(fmtEur(100)).toMatch(/[.,]00/);
+    expect(formatEur(100)).toMatch(/[.,]00/);
   });
 });
 
-describe('fmtLocal — INR', () => {
+describe('formatLocal — INR', () => {
   it('formats crores for values ≥ 1 Cr (10,000,000)', () => {
-    expect(fmtLocal(10_000_000, 'INR')).toBe('₹1.00Cr');
-    expect(fmtLocal(15_000_000, 'INR')).toBe('₹1.50Cr');
+    expect(formatLocal(10_000_000, 'INR')).toBe('₹1.00Cr');
+    expect(formatLocal(15_000_000, 'INR')).toBe('₹1.50Cr');
   });
 
   it('formats lakhs for values ≥ 1L (100,000) and < 1Cr', () => {
-    expect(fmtLocal(100_000, 'INR')).toBe('₹1.0L');
-    expect(fmtLocal(150_000, 'INR')).toBe('₹1.5L');
-    expect(fmtLocal(9_999_999, 'INR')).toBe('₹100.0L');
+    expect(formatLocal(100_000, 'INR')).toBe('₹1.0L');
+    expect(formatLocal(150_000, 'INR')).toBe('₹1.5L');
+    expect(formatLocal(9_999_999, 'INR')).toBe('₹100.0L');
   });
 
   it('formats small values as plain ₹ with comma grouping', () => {
-    expect(fmtLocal(99, 'INR')).toBe('₹99');
-    expect(fmtLocal(1_500, 'INR')).toBe('₹1,500');
+    expect(formatLocal(99, 'INR')).toBe('₹99');
+    expect(formatLocal(1_500, 'INR')).toBe('₹1,500');
   });
 
   it('rounds sub-rupee amounts', () => {
-    expect(fmtLocal(99.75, 'INR')).toBe('₹100');
-    expect(fmtLocal(99.4, 'INR')).toBe('₹99');
+    expect(formatLocal(99.75, 'INR')).toBe('₹100');
+    expect(formatLocal(99.4, 'INR')).toBe('₹99');
   });
 
   it('never shows EUR symbol for INR', () => {
-    expect(fmtLocal(500_000, 'INR')).not.toMatch(/€|EUR/);
+    expect(formatLocal(500_000, 'INR')).not.toMatch(/€|EUR/);
   });
 });
 
-describe('fmtHolding', () => {
+describe('formatHolding', () => {
   it('returns EUR format when currency is EUR', () => {
-    const result = fmtHolding(100, 100, 'EUR');
+    const result = formatHolding(100, 100, 'EUR');
     expect(result).toMatch(/€|EUR/);
     expect(result).not.toContain('₹');
   });
 
   it('returns local format when currency is INR — never shows €', () => {
-    const result = fmtHolding(15_000, 165, 'INR');
+    const result = formatHolding(15_000, 165, 'INR');
     expect(result).toContain('₹');
     expect(result).not.toMatch(/€|EUR/);
   });
 
   it('uses localAmount for INR, not eurAmount', () => {
     // localAmount=15000 → ₹15,000; eurAmount=165 → would show ~€165
-    expect(fmtHolding(15_000, 165, 'INR')).toBe('₹15,000');
+    expect(formatHolding(15_000, 165, 'INR')).toBe('₹15,000');
   });
 
   it('uses eurAmount for EUR, not localAmount', () => {
     // same inputs, only currency differs
-    const eurResult = fmtHolding(15_000, 165, 'EUR');
-    expect(eurResult).toBe(fmtEur(165));
+    const eurResult = formatHolding(15_000, 165, 'EUR');
+    expect(eurResult).toBe(formatEur(165));
   });
 });
 

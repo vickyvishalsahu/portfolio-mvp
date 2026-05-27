@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { fmtEur, fmtHolding, formatPercent } from '@/lib/format';
+import { formatEur, formatHolding, formatPercent } from '@/lib/format';
 import type { Holding } from '@/domains/shared/types';
 import type { SortKey } from '@/domains/portfolio/hooks/useHoldings';
 import { SkeletonLoading } from '@/app/components/SkeletonLoading';
@@ -79,23 +79,23 @@ export const HoldingTable = ({ loading, holdings, sortKey, sortAsc, onSort }: Pr
                   {holding.quantity < 1 ? holding.quantity.toFixed(6) : holding.quantity.toFixed(2)}
                 </td>
                 <td className="py-3 text-right text-gray-400">
-                  {fmtHolding(holding.avgCostLocal, holding.avgCostEur, holding.currency)}
+                  {formatHolding(holding.avgCostLocal, holding.avgCostEur, holding.currency)}
                 </td>
                 <td className="py-3 text-right text-gray-300">
-                  {fmtHolding(holding.currentPriceLocal, holding.currentPriceEur, holding.currency)}
+                  {formatHolding(holding.currentPriceLocal, holding.currentPriceEur, holding.currency)}
                 </td>
                 <td className="py-3 text-right">
                   <div className="text-white font-medium">
-                    {fmtHolding(holding.currentValueLocal, holding.currentValueEur, holding.currency)}
+                    {formatHolding(holding.currentValueLocal, holding.currentValueEur, holding.currency)}
                   </div>
                   {holding.currency !== 'EUR' && (
-                    <div className="text-gray-600 text-xs">{fmtEur(holding.currentValueEur)}</div>
+                    <div className="text-gray-600 text-xs">{formatEur(holding.currentValueEur)}</div>
                   )}
                 </td>
                 <td className={`py-3 text-right font-medium ${holding.pnlPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   <div>{formatPercent(holding.pnlPct)}</div>
                   <div className="text-xs opacity-70">
-                    {fmtHolding(holding.pnlLocal, holding.pnl, holding.currency)}
+                    {formatHolding(holding.pnlLocal, holding.pnl, holding.currency)}
                   </div>
                 </td>
                 <td className="py-3 text-gray-500 text-xs">{holding.broker}</td>

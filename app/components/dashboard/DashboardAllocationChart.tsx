@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { fmtLocal } from '@/lib/format';
+import { formatLocal } from '@/lib/format';
 import type { Holding } from '@/domains/shared/types';
 
 const ASSET_COLORS: Record<string, string> = {
@@ -81,7 +81,7 @@ export const DashboardAllocationChart = ({ holdings, brokerAllocation, primaryCu
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: any) => fmtLocal(Number(value), primaryCurrency)}
+            formatter={(value: any) => formatLocal(Number(value), primaryCurrency)}
             contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
             labelStyle={{ color: '#e5e7eb' }}
             itemStyle={{ color: '#e5e7eb' }}

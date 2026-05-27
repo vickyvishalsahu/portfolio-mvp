@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { fmtLocal } from '@/lib/format';
+import { formatLocal } from '@/lib/format';
 
 type Snapshot = { date: string; totalValue: number };
 
@@ -30,11 +30,11 @@ export const DashboardNetWorthChart = ({ snapshots, primaryCurrency }: Props) =>
           />
           <YAxis
             tick={{ fill: '#9ca3af', fontSize: 11 }}
-            tickFormatter={(value) => fmtLocal(value, primaryCurrency)}
+            tickFormatter={(value) => formatLocal(value, primaryCurrency)}
             width={64}
           />
           <Tooltip
-            formatter={(value: any) => [fmtLocal(Number(value), primaryCurrency), t('dashboard.netWorth.portfolio')]}
+            formatter={(value: any) => [formatLocal(Number(value), primaryCurrency), t('dashboard.netWorth.portfolio')]}
             contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
             labelStyle={{ color: '#e5e7eb' }}
             itemStyle={{ color: '#3b82f6' }}
