@@ -2,6 +2,7 @@ import type { ParseResponse } from '@/domains/shared/types';
 import { isLikelyTransaction } from './utils';
 import { getParser } from './providers';
 import { getIgnorePatterns, matchesIgnorePattern } from './pattern-cache';
+import { normalizeParsedTransaction } from './normalize';
 
 export const parseEmail = async (
   emailBody: string,
@@ -26,5 +27,6 @@ export const parseEmail = async (
   }
 
   const parser = getParser();
-  return parser.parse(emailBody, sender, subject);
+  const result = await parser.parse(emailBody, sender, subject);
+  return { ...result, transactions: result.transactions.map(normalizeParsedTransaction) };
 };
