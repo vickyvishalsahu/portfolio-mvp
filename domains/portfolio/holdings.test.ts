@@ -252,4 +252,43 @@ describe('computeHoldings', () => {
     expect(holdings[0].prevValueLocal).toBe(14500);
   });
 
+  it('same ticker, conflicting asset_type — majority wins', async () => {
+    mockRows = [
+      makeTx({ ticker: 'ASHOKA', asset_type: 'stock', quantity: 5 }),
+      makeTx({ ticker: 'ASHOKA', asset_type: 'stock', quantity: 5 }),
+      makeTx({ ticker: 'ASHOKA', asset_type: 'mf', quantity: 5 }),
+    ];
+
+    const { holdings } = await computeHoldings();
+
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0].assetType).toBe('stock');
+    expect(holdings[0].quantity).toBe(15);
+  });
+
+  it('asset_type tie — equity label wins over mf', async () => {
+    mockRows = [
+      makeTx({ ticker: 'ASHOKA', name: 'Ashoka Buildcon Ltd', asset_type: 'mf', quantity: 5 }),
+      makeTx({ ticker: 'ASHOKA', name: 'Ashoka Buildcon Ltd', asset_type: 'stock', quantity: 5 }),
+    ];
+
+    const { holdings } = await computeHoldings();
+
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0].assetType).toBe('stock');
+  });
+
+  it('null tickers, names differ only by whitespace/case — merged into one holding', async () => {
+    mockRows = [
+      makeTx({ ticker: null, name: 'HDFC Large Cap Fund - Regular Plan', asset_type: 'mf', quantity: 100 }),
+      makeTx({ ticker: null, name: 'hdfc large cap fund - regular plan', asset_type: 'mf', quantity: 50 }),
+    ];
+
+    const { holdings } = await computeHoldings();
+
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0].quantity).toBe(150);
+    expect(holdings[0].assetType).toBe('mf');
+  });
+
 });

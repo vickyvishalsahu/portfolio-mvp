@@ -18,16 +18,42 @@ export type HoldingsResult = {
   orphanedSells: string[];
 };
 
+// Group by ticker when present, else by a whitespace/case-normalized name so the same
+// fund stops fragmenting. Share classes (Direct/Regular, Growth/IDCW) stay distinct —
+// they differ by words, not just spacing, so they hash to different keys.
+const groupKey = (transaction: TransactionRow): string =>
+  transaction.ticker ? transaction.ticker : transaction.name.replace(/\s+/g, ' ').trim().toLowerCase();
+
+// The same instrument can arrive with conflicting asset_type across emails. Take the
+// majority; on a tie prefer the equity label, since a corporate-suffixed name is a stock.
+const majorityAssetType = (transactions: TransactionRow[]): string => {
+  const counts = new Map<string, number>();
+  for (const transaction of transactions) {
+    counts.set(transaction.asset_type, (counts.get(transaction.asset_type) ?? 0) + 1);
+  }
+  let winner = transactions[0].asset_type;
+  let winnerCount = 0;
+  for (const [assetType, count] of counts) {
+    const beatsWinner = count > winnerCount;
+    const breaksTieToEquity = count === winnerCount && winner === 'mf' && assetType !== 'mf';
+    if (beatsWinner || breaksTieToEquity) {
+      winner = assetType;
+      winnerCount = count;
+    }
+  }
+  return winner;
+};
+
 export const computeHoldings = async (): Promise<HoldingsResult> => {
   const db = getDb();
   const transactions = db.prepare(
     'SELECT ticker, name, asset_type, quantity, price, currency, transaction_type, broker FROM transactions ORDER BY transaction_date ASC'
   ).all() as TransactionRow[];
 
-  // Group by ticker (or name if no ticker)
+  // Group by canonical identity (ticker, else normalized name)
   const groups = new Map<string, TransactionRow[]>();
   for (const tx of transactions) {
-    const key = tx.ticker || tx.name;
+    const key = groupKey(tx);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(tx);
   }
@@ -41,6 +67,7 @@ export const computeHoldings = async (): Promise<HoldingsResult> => {
     let totalCostLocal = 0;
     let sellDebt = 0;
     const first = txs[0];
+    const assetType = majorityAssetType(txs);
 
     for (const tx of txs) {
       const priceEur = await convertToEur(tx.price, tx.currency);
@@ -84,7 +111,7 @@ export const computeHoldings = async (): Promise<HoldingsResult> => {
     const avgCostLocal = totalCostLocal / totalQty;
 
     // Fetch current price
-    const priceData = await getPrice(key, first.asset_type, first.currency);
+    const priceData = await getPrice(key, assetType, first.currency);
     const currentPriceEur = priceData?.priceEur ?? avgCostEur;
     const currentPriceLocal = priceData?.priceLocal ?? avgCostLocal;
     const currentValueEur = totalQty * currentPriceEur;
@@ -102,7 +129,7 @@ export const computeHoldings = async (): Promise<HoldingsResult> => {
     holdings.push({
       ticker: first.ticker || key,
       name: first.name,
-      assetType: first.asset_type,
+      assetType,
       quantity: totalQty,
       avgCostEur,
       avgCostLocal,
