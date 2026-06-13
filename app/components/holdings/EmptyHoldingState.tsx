@@ -7,10 +7,10 @@ export const EmptyHoldingState = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">{t('holdings.title')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('holdings.title')}</h1>
       <p className="text-gray-500">
         {t('holdings.empty.description')}{' '}
-        <a href="/sync" className="text-blue-400 hover:underline">{t('holdings.empty.syncLink')}</a>{' '}
+        <a href="/sync" className="text-indigo-600 hover:underline">{t('holdings.empty.syncLink')}</a>{' '}
         {t('holdings.empty.toGetStarted')}
       </p>
     </div>

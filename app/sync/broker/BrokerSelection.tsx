@@ -28,7 +28,7 @@ export const BrokerSelection = ({
   const { t } = useTranslation();
 
   const renderCatalog = () => {
-    if (catalog.length === 0) return <p className="text-gray-500 text-sm">{t('sync.brokers.loading')}</p>;
+    if (catalog.length === 0) return <p className="text-gray-400 text-sm">{t('sync.brokers.loading')}</p>;
 
     return (
       <>
@@ -57,7 +57,7 @@ export const BrokerSelection = ({
             );
           })}
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-400">
           {t('sync.brokers.hint')}
         </p>
       </>
@@ -65,10 +65,10 @@ export const BrokerSelection = ({
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">{t('sync.brokers.title')}</h2>
-        {savingBrokers && <span className="text-xs text-gray-500">{t('sync.brokers.saving')}</span>}
+        <h2 className="text-base font-semibold text-gray-900">{t('sync.brokers.title')}</h2>
+        {savingBrokers && <span className="text-xs text-gray-400">{t('sync.brokers.saving')}</span>}
       </div>
       {renderCatalog()}
     </div>

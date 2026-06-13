@@ -12,10 +12,10 @@ export const GmailConnected = ({ onDisconnect }: Props) => {
   return (
     <div className="flex items-center gap-3">
       <span className="w-2 h-2 bg-green-500 rounded-full" />
-      <span className="text-green-400">{t('sync.gmail.connected')}</span>
+      <span className="text-emerald-600">{t('sync.gmail.connected')}</span>
       <button
         onClick={onDisconnect}
-        className="text-gray-600 hover:text-gray-400 text-xs transition"
+        className="text-gray-400 hover:text-gray-600 text-xs transition"
       >
         {t('sync.gmail.disconnect')}
       </button>

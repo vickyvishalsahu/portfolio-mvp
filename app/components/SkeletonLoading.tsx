@@ -5,7 +5,7 @@ type Props = {
 }
 
 export const SkeletonLoading = ({ classNameList }: Props) => {
-  const baseClass = 'animate-pulse bg-gray-800 rounded-lg'
+  const baseClass = 'animate-pulse bg-slate-200 rounded-2xl'
 
   const renderSingle = (className: string, key?: string | number) => (
     <div key={key} className={cn(baseClass, className)} />

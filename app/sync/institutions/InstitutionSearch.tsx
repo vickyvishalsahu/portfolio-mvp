@@ -55,22 +55,22 @@ export const InstitutionSearch = ({
 
     if (searching) {
       return (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg z-10 p-3">
-          <p className="text-gray-500 text-sm">{t('sync.institutions.searching')}</p>
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 p-3">
+          <p className="text-gray-400 text-sm">{t('sync.institutions.searching')}</p>
         </div>
       );
     }
 
     if (suggestions.length === 0) {
       return (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg z-10 p-3">
-          <p className="text-gray-500 text-sm">{t('sync.institutions.noResults')}</p>
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 p-3">
+          <p className="text-gray-400 text-sm">{t('sync.institutions.noResults')}</p>
           <button
             onClick={() => {
               setShowManual(true);
               setSearchQuery('');
             }}
-            className="text-blue-400 text-sm mt-1 hover:underline"
+            className="text-indigo-600 text-sm mt-1 hover:underline"
           >
             {t('sync.institutions.addManually')}
           </button>
@@ -79,18 +79,18 @@ export const InstitutionSearch = ({
     }
 
     return (
-      <ul className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg z-10 overflow-hidden">
+      <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
         {suggestions.map((suggestion) => (
           <li key={suggestion.domain}>
             <button
               onClick={() => handleSelectSuggestion(suggestion)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-700 transition text-left"
+              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition text-left"
             >
               {suggestion.logo && (
                 <img src={suggestion.logo} alt="" className="w-5 h-5 rounded object-contain" />
               )}
-              <span className="text-white text-sm">{suggestion.name}</span>
-              <span className="text-gray-500 text-xs ml-auto">{suggestion.domain}</span>
+              <span className="text-gray-900 text-sm">{suggestion.name}</span>
+              <span className="text-gray-400 text-xs ml-auto">{suggestion.domain}</span>
             </button>
           </li>
         ))}
@@ -103,7 +103,7 @@ export const InstitutionSearch = ({
       return (
         <button
           onClick={() => setShowManual(true)}
-          className="text-gray-500 text-xs hover:text-gray-300 transition"
+          className="text-gray-400 text-xs hover:text-gray-600 transition"
         >
           {t('sync.institutions.notFinding')}
         </button>
@@ -117,11 +117,11 @@ export const InstitutionSearch = ({
           onChange={(event) => setManualDomain(event.target.value)}
           onKeyDown={handleManualKeyDown}
           placeholder={t('sync.institutions.manualPlaceholder')}
-          className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-600 outline-none focus:border-gray-500"
+          className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-indigo-400"
         />
         <button
           onClick={handleAddManual}
-          className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded transition"
+          className="bg-slate-100 hover:bg-slate-200 text-gray-700 text-sm px-3 py-1.5 rounded-lg transition"
         >
           {t('sync.institutions.add')}
         </button>
@@ -130,7 +130,7 @@ export const InstitutionSearch = ({
             setShowManual(false);
             setManualDomain('');
           }}
-          className="text-gray-500 hover:text-gray-300 text-sm px-2"
+          className="text-gray-400 hover:text-gray-600 text-sm px-2"
         >
           {t('sync.institutions.cancel')}
         </button>
@@ -140,7 +140,7 @@ export const InstitutionSearch = ({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-1">{t('sync.institutions.title')}</h2>
+      <h2 className="text-base font-semibold text-gray-900 mb-1">{t('sync.institutions.title')}</h2>
       <p className="text-gray-500 text-sm mb-4">{t('sync.institutions.subtitle')}</p>
 
       {institutions.length > 0 && (
@@ -162,7 +162,7 @@ export const InstitutionSearch = ({
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder={t('sync.institutions.searchPlaceholder')}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 outline-none focus:border-gray-500"
+          className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none focus:border-indigo-400"
         />
         {renderSuggestions()}
       </div>

@@ -8,12 +8,12 @@ import type { Notification } from '@/domains/notifications/types';
 const NotificationIcon = ({ status }: { status: Notification['status'] }) => {
   if (status === 'in-progress') {
     return (
-      <div className="w-5 h-5 rounded-full border-2 border-blue-400 border-t-transparent animate-spin flex-shrink-0" />
+      <div className="w-5 h-5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin flex-shrink-0" />
     );
   }
   if (status === 'success') {
     return (
-      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+      <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
         <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
@@ -42,19 +42,19 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
   };
 
   return (
-    <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-800 transition">
+    <div className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition">
       <div className="mt-0.5">
         <NotificationIcon status={notification.status} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-white font-medium">{notification.title}</span>
+          <span className="text-sm text-gray-900 font-medium">{notification.title}</span>
           {!notification.read && (
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
           )}
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">{notification.detail}</p>
-        <p className="text-xs text-gray-600 mt-1">{formatRelativeTime(notification.timestamp)}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{notification.detail}</p>
+        <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(notification.timestamp)}</p>
       </div>
     </div>
   );
@@ -88,11 +88,11 @@ export const NotificationBell = () => {
   };
 
   const renderEmpty = () => (
-    <p className="text-sm text-gray-600 text-center py-8">{t('notifications.noActivity')}</p>
+    <p className="text-sm text-gray-400 text-center py-8">{t('notifications.noActivity')}</p>
   );
 
   const renderList = () => (
-    <div className="divide-y divide-gray-800">
+    <div className="divide-y divide-slate-100">
       {notifications.map((notification) => (
         <NotificationItem key={notification.id} notification={notification} />
       ))}
@@ -104,7 +104,7 @@ export const NotificationBell = () => {
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className="relative p-2 text-gray-400 hover:text-white transition"
+        className="relative p-2 text-gray-400 hover:text-gray-700 transition"
         aria-label={t('notifications.ariaLabel')}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -122,14 +122,14 @@ export const NotificationBell = () => {
       {open && (
         <div
           ref={panelRef}
-          className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-50 overflow-hidden"
+          className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-            <span className="text-sm font-medium text-white">{t('notifications.title')}</span>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <span className="text-sm font-medium text-gray-900">{t('notifications.title')}</span>
             {notifications.length > 0 && (
               <button
                 onClick={clearAll}
-                className="text-xs text-gray-500 hover:text-gray-300 transition"
+                className="text-xs text-gray-400 hover:text-gray-600 transition"
               >
                 {t('notifications.clearAll')}
               </button>

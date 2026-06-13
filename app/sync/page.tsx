@@ -34,38 +34,32 @@ const SyncPage = () => {
 
   const renderAutoDetectCallout = () => {
     if (detecting) {
-      return (
-        <p className="text-gray-400 text-sm mb-3 italic">{t('sync.institutions.detecting')}</p>
-      );
+      return <p className="text-gray-400 text-sm mb-3 italic">{t('sync.institutions.detecting')}</p>;
     }
     if (autoDetectDone && autoDetectedNames.length > 0) {
       return (
-        <p className="text-blue-400 text-sm mb-3">
+        <p className="text-indigo-600 text-sm mb-3">
           {t('sync.institutions.autoDetected', { names: autoDetectedNames.join(', ') })}
         </p>
       );
     }
     if (autoDetectDone && autoDetectedNames.length === 0) {
-      return (
-        <p className="text-gray-500 text-sm mb-3">{t('sync.institutions.autoDetectedNone')}</p>
-      );
+      return <p className="text-gray-400 text-sm mb-3">{t('sync.institutions.autoDetectedNone')}</p>;
     }
     return null;
   };
 
   const renderGmailStep = () => (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
-      <GmailConnection
-        status={status}
-        onDisconnect={handleDisconnect}
-      />
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+      <GmailConnection status={status} onDisconnect={handleDisconnect} />
     </div>
   );
 
   const renderInstitutionsStep = () => {
     const locked = !isConnected;
+    const lockClass = locked ? 'opacity-40 pointer-events-none' : '';
     return (
-      <div className={`bg-gray-900 border rounded-lg p-6 mb-6 transition ${locked ? 'border-gray-800 opacity-40 pointer-events-none' : 'border-gray-800'}`}>
+      <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 transition ${lockClass}`}>
         {renderAutoDetectCallout()}
         <InstitutionSearch
           institutions={institutions}
@@ -81,61 +75,57 @@ const SyncPage = () => {
     );
   };
 
-  const renderFetchStep = () => {
-    const locked = !isConnected;
+  const renderFetchProgress = () => {
+    if (!fetching || !fetchDetail) return null;
+    return <p className="text-indigo-600 text-sm mt-3">{fetchDetail}</p>;
+  };
+
+  const renderFetchedEmails = () => {
+    if (fetchedEmails.length === 0) return null;
     return (
-      <div className={`bg-gray-900 border rounded-lg p-6 mb-6 transition ${locked ? 'border-gray-800 opacity-40 pointer-events-none' : 'border-gray-800'}`}>
-        <h2 className="text-lg font-semibold mb-4">{t('sync.fetch.title')}</h2>
-        <div>
-          <button
-            onClick={handleFetch}
-            disabled={fetching || locked}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
-          >
-            {fetching ? t('sync.fetch.buttonSyncing') : t('sync.fetch.button')}
-          </button>
-          <p className="text-gray-500 text-xs mt-2">{t('sync.fetch.hint')}</p>
-        </div>
-        {fetching && fetchDetail && (
-          <p className="text-blue-400 text-sm mt-3">{fetchDetail}</p>
-        )}
-        {fetchedEmails.length > 0 && (
-          <div className="mt-4">
-            <FetchedEmailList emails={fetchedEmails} />
-          </div>
-        )}
+      <div className="mt-4">
+        <FetchedEmailList emails={fetchedEmails} />
       </div>
     );
   };
 
-  const renderParseStep = () => {
-    const locked = !isConnected || !hasSynced || unparsedCount === 0;
+  const renderFetchStep = () => {
+    const locked = !isConnected;
+    const lockClass = locked ? 'opacity-40 pointer-events-none' : '';
     return (
-      <div className={`bg-gray-900 border rounded-lg p-6 mb-6 transition ${locked ? 'border-gray-800 opacity-40 pointer-events-none' : 'border-gray-800'}`}>
-        <h2 className="text-lg font-semibold mb-4">{t('sync.parse.title')}</h2>
-        <button
-          onClick={handleParse}
-          disabled={parsing || locked}
-          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-6 py-2 rounded transition"
-        >
-          {parsing ? t('sync.parse.buttonParsing') : t('sync.parse.button', { count: unparsedCount })}
-        </button>
-        {parsing && parseProgress && (
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-              <span>{parseDetail}</span>
-              <span>{parseProgress.current}/{parseProgress.total}</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-1.5">
-              <div
-                className="bg-purple-500 h-1.5 rounded-full transition-all"
-                style={{ width: `${Math.round((parseProgress.current / parseProgress.total) * 100)}%` }}
-              />
-            </div>
-          </div>
-        )}
-        {!parsing && <p className="text-gray-500 text-xs mt-2">{t('sync.parse.progressHint')}</p>}
-        {renderParseResult()}
+      <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 transition ${lockClass}`}>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">{t('sync.fetch.title')}</h2>
+        <div>
+          <button
+            onClick={handleFetch}
+            disabled={fetching || locked}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg transition"
+          >
+            {fetching ? t('sync.fetch.buttonSyncing') : t('sync.fetch.button')}
+          </button>
+          <p className="text-gray-400 text-xs mt-2">{t('sync.fetch.hint')}</p>
+        </div>
+        {renderFetchProgress()}
+        {renderFetchedEmails()}
+      </div>
+    );
+  };
+
+  const renderParseProgress = () => {
+    if (!parsing || !parseProgress) return null;
+    const progressPct = Math.round((parseProgress.current / parseProgress.total) * 100);
+    return (
+      <div className="mt-3">
+        <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+          <span>{parseDetail}</span>
+          <span>{parseProgress.current}/{parseProgress.total}</span>
+        </div>
+        <div className="w-full bg-slate-200 rounded-full h-1.5">
+          <div
+            className="bg-indigo-500 h-1.5 rounded-full transition-all"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
       </div>
     );
   };
@@ -145,36 +135,36 @@ const SyncPage = () => {
 
     return (
       <div className="mt-4 space-y-2">
-        <div className="bg-gray-800 rounded p-4">
-          <p className="text-purple-400">
+        <div className="bg-slate-50 rounded-xl p-4">
+          <p className="text-indigo-600">
             {t('sync.parse.result.summary', { processed: parseResult.processed, transactions: parseResult.transactionsAdded })}
           </p>
         </div>
         {parseResult.patternSkipped > 0 && (
-          <div className="bg-gray-800 rounded p-3">
-            <p className="text-gray-400 text-sm">{t('sync.parse.result.patternSkipped', { count: parseResult.patternSkipped })}</p>
+          <div className="bg-slate-50 rounded-xl p-3">
+            <p className="text-gray-500 text-sm">{t('sync.parse.result.patternSkipped', { count: parseResult.patternSkipped })}</p>
           </div>
         )}
         {parseResult.skipped.length > 0 && (
-          <div className="bg-gray-800 rounded p-4">
-            <p className="text-yellow-400 text-sm mb-2">{t('sync.parse.result.skipped', { count: parseResult.skipped.length })}</p>
-            <ul className="text-gray-400 text-sm space-y-1">
+          <div className="bg-slate-50 rounded-xl p-4">
+            <p className="text-amber-600 text-sm mb-2">{t('sync.parse.result.skipped', { count: parseResult.skipped.length })}</p>
+            <ul className="text-gray-500 text-sm space-y-1">
               {parseResult.skipped.map((skippedItem) => (
                 <li key={skippedItem.emailId} className="truncate">
-                  <span className="text-gray-500">{skippedItem.subject}</span> — {skippedItem.reason}
+                  <span className="text-gray-400">{skippedItem.subject}</span> — {skippedItem.reason}
                 </li>
               ))}
             </ul>
           </div>
         )}
         {parseResult.errors.length > 0 && (
-          <div className="bg-red-950 border border-red-800 rounded p-4">
-            <p className="text-red-400 text-sm mb-2">{t('sync.parse.result.errors', { count: parseResult.errors.length })}</p>
-            <ul className="text-red-300 text-sm space-y-1">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <p className="text-red-600 text-sm mb-2">{t('sync.parse.result.errors', { count: parseResult.errors.length })}</p>
+            <ul className="text-red-500 text-sm space-y-1">
               {parseResult.errors.map((errorItem) => (
                 <li key={errorItem.emailId}>
-                  <span className="text-red-500">{errorItem.subject}</span> — {errorItem.error}
-                  <a href="/transactions/new" className="text-blue-400 hover:underline ml-2 text-xs">{t('sync.parse.result.addManually')}</a>
+                  <span className="text-red-400">{errorItem.subject}</span> — {errorItem.error}
+                  <a href="/transactions/new" className="text-indigo-600 hover:underline ml-2 text-xs">{t('sync.parse.result.addManually')}</a>
                 </li>
               ))}
             </ul>
@@ -184,13 +174,33 @@ const SyncPage = () => {
     );
   };
 
+  const renderParseStep = () => {
+    const locked = !isConnected || !hasSynced || unparsedCount === 0;
+    const lockClass = locked ? 'opacity-40 pointer-events-none' : '';
+    return (
+      <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 transition ${lockClass}`}>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">{t('sync.parse.title')}</h2>
+        <button
+          onClick={handleParse}
+          disabled={parsing || locked}
+          className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg transition"
+        >
+          {parsing ? t('sync.parse.buttonParsing') : t('sync.parse.button', { count: unparsedCount })}
+        </button>
+        {renderParseProgress()}
+        {!parsing && <p className="text-gray-400 text-xs mt-2">{t('sync.parse.progressHint')}</p>}
+        {renderParseResult()}
+      </div>
+    );
+  };
+
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">{t('sync.title')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('sync.title')}</h1>
 
       {error && (
-        <div className="bg-red-950 border border-red-800 rounded p-4 mb-6">
-          <p className="text-red-400">{error}</p>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+          <p className="text-red-600">{error}</p>
         </div>
       )}
 

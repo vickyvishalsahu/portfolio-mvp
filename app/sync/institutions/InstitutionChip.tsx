@@ -47,7 +47,7 @@ export const InstitutionChip = ({ institution, onRemove, onUpdateDomain }: Props
           onChange={(event) => setDraftDomain(event.target.value)}
           onBlur={handleCommit}
           onKeyDown={handleKeyDown}
-          className="bg-transparent border-b border-blue-400 text-blue-300 text-xs outline-none w-40"
+          className="bg-transparent border-b border-indigo-400 text-indigo-600 text-xs outline-none w-40"
         />
       );
     }
@@ -55,7 +55,7 @@ export const InstitutionChip = ({ institution, onRemove, onUpdateDomain }: Props
     return (
       <button
         onClick={handleDomainClick}
-        className="text-gray-400 text-xs hover:text-blue-400 transition"
+        className="text-gray-400 text-xs hover:text-indigo-500 transition"
         title={t('sync.institutions.chip.editTitle')}
       >
         {institution.domain}
@@ -64,13 +64,13 @@ export const InstitutionChip = ({ institution, onRemove, onUpdateDomain }: Props
   };
 
   return (
-    <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5">
-      <span className="text-sm text-white">{institution.name}</span>
-      <span className="text-gray-600">·</span>
+    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-3 py-1.5">
+      <span className="text-sm text-gray-900">{institution.name}</span>
+      <span className="text-gray-300">·</span>
       {renderDomain()}
       <button
         onClick={() => onRemove(institution.domain)}
-        className="text-gray-600 hover:text-red-400 transition ml-1 text-xs leading-none"
+        className="text-gray-400 hover:text-red-500 transition ml-1 text-xs leading-none"
         title={t('sync.institutions.chip.removeTitle')}
       >
         ×

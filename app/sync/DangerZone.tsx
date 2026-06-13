@@ -47,22 +47,22 @@ export const DangerZone = ({ onTokenReset, onDbCleared }: Props) => {
   };
 
   const renderTokenAction = () => {
-    if (loading === 'token') return <span className="text-gray-500 text-sm">{t('sync.danger.token.disconnecting')}</span>;
+    if (loading === 'token') return <span className="text-gray-400 text-sm">{t('sync.danger.token.disconnecting')}</span>;
 
     if (confirming === 'token') {
       return (
         <div className="space-y-2">
-          <p className="text-xs text-gray-400">{t('sync.danger.token.confirmText')}</p>
+          <p className="text-xs text-gray-500">{t('sync.danger.token.confirmText')}</p>
           <div className="flex gap-2">
             <button
               onClick={handleResetToken}
-              className="bg-red-700 hover:bg-red-600 text-white text-sm px-4 py-1.5 rounded transition"
+              className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded-lg transition"
             >
               {t('sync.danger.token.confirm')}
             </button>
             <button
               onClick={() => setConfirming(null)}
-              className="text-gray-400 hover:text-gray-200 text-sm px-4 py-1.5 rounded border border-gray-700 transition"
+              className="text-gray-500 hover:text-gray-700 text-sm px-4 py-1.5 rounded-lg border border-slate-200 transition"
             >
               {t('sync.danger.token.cancel')}
             </button>
@@ -77,7 +77,7 @@ export const DangerZone = ({ onTokenReset, onDbCleared }: Props) => {
           setConfirming('token');
           setError(null);
         }}
-        className="bg-gray-700 hover:bg-red-900 text-gray-300 hover:text-red-300 text-sm px-4 py-1.5 rounded transition border border-gray-600 hover:border-red-800"
+        className="bg-slate-100 hover:bg-red-50 text-gray-600 hover:text-red-600 text-sm px-4 py-1.5 rounded-lg transition border border-slate-200 hover:border-red-200"
       >
         {t('sync.danger.token.button')}
       </button>
@@ -85,22 +85,22 @@ export const DangerZone = ({ onTokenReset, onDbCleared }: Props) => {
   };
 
   const renderDbAction = () => {
-    if (loading === 'db') return <span className="text-gray-500 text-sm">{t('sync.danger.db.clearing')}</span>;
+    if (loading === 'db') return <span className="text-gray-400 text-sm">{t('sync.danger.db.clearing')}</span>;
 
     if (confirming === 'db') {
       return (
         <div className="space-y-2">
-          <p className="text-xs text-gray-400">{t('sync.danger.db.confirmText')}</p>
+          <p className="text-xs text-gray-500">{t('sync.danger.db.confirmText')}</p>
           <div className="flex gap-2">
             <button
               onClick={handleClearDb}
-              className="bg-red-700 hover:bg-red-600 text-white text-sm px-4 py-1.5 rounded transition"
+              className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded-lg transition"
             >
               {t('sync.danger.db.confirm')}
             </button>
             <button
               onClick={() => setConfirming(null)}
-              className="text-gray-400 hover:text-gray-200 text-sm px-4 py-1.5 rounded border border-gray-700 transition"
+              className="text-gray-500 hover:text-gray-700 text-sm px-4 py-1.5 rounded-lg border border-slate-200 transition"
             >
               {t('sync.danger.db.cancel')}
             </button>
@@ -115,7 +115,7 @@ export const DangerZone = ({ onTokenReset, onDbCleared }: Props) => {
           setConfirming('db');
           setError(null);
         }}
-        className="bg-gray-700 hover:bg-red-900 text-gray-300 hover:text-red-300 text-sm px-4 py-1.5 rounded transition border border-gray-600 hover:border-red-800"
+        className="bg-slate-100 hover:bg-red-50 text-gray-600 hover:text-red-600 text-sm px-4 py-1.5 rounded-lg transition border border-slate-200 hover:border-red-200"
       >
         {t('sync.danger.db.button')}
       </button>
@@ -123,13 +123,13 @@ export const DangerZone = ({ onTokenReset, onDbCleared }: Props) => {
   };
 
   return (
-    <div className="border border-dashed border-gray-700 rounded-lg p-4 mt-6">
-      <p className="text-xs text-gray-600 mb-3 uppercase tracking-wide">{t('sync.danger.zone')}</p>
+    <div className="border border-dashed border-slate-200 rounded-2xl p-4 mt-6">
+      <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">{t('sync.danger.zone')}</p>
       <div className="flex flex-col gap-4">
         <div>{renderTokenAction()}</div>
         <div>{renderDbAction()}</div>
       </div>
-      {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+      {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
     </div>
   );
 };

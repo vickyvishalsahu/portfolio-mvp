@@ -26,65 +26,65 @@ export const TaxSection = ({ jurisdiction, holdings }: Props) => {
   const subtitleKey = isIndia ? 'tax.india.subtitle' : 'tax.germany.subtitle';
   const emptyKey = isIndia ? 'tax.india.empty' : 'tax.germany.empty';
 
-  const totalGain = holdings.reduce((sum, h) => sum + h.unrealisedGain, 0);
+  const totalGain = holdings.reduce((sum, holding) => sum + holding.unrealisedGain, 0);
   const gainCurrency = holdings[0]?.currency ?? (isIndia ? 'INR' : 'EUR');
 
   const renderEmpty = () => (
-    <p className="text-gray-600 text-sm py-4">{t(emptyKey)}</p>
+    <p className="text-gray-400 text-sm py-4">{t(emptyKey)}</p>
   );
+
+  const renderRow = (holding: TaxHolding) => {
+    const gainColorClass = holding.unrealisedGain >= 0 ? 'text-emerald-600' : 'text-red-500';
+    return (
+      <tr key={`${holding.ticker}-${holding.broker}`} className="border-b border-slate-50">
+        <td className="py-3">
+          <span className="text-gray-900 font-medium">{holding.name}</span>
+          {holding.ticker && (
+            <span className="text-gray-400 text-xs ml-2">{holding.ticker}</span>
+          )}
+        </td>
+        <td className="py-3 text-gray-500">{formatHoldingPeriod(holding.holdingDays)}</td>
+        <td className={`py-3 text-right font-medium ${gainColorClass}`}>
+          {formatLocal(holding.unrealisedGain, holding.currency)}
+        </td>
+        <td className="py-3 text-right">
+          <TaxClassBadge taxClass={holding.taxClass} />
+        </td>
+      </tr>
+    );
+  };
 
   const renderTable = () => (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-gray-500 text-xs uppercase tracking-wider border-b border-gray-800">
+          <tr className="text-gray-400 text-xs uppercase tracking-wider border-b border-slate-100">
             <th className="text-left pb-3">{t('tax.columns.holding')}</th>
             <th className="text-left pb-3">{t('tax.columns.period')}</th>
             <th className="text-right pb-3">{t('tax.columns.gain')}</th>
             <th className="text-right pb-3">{t('tax.columns.class')}</th>
           </tr>
         </thead>
-        <tbody>
-          {holdings.map((holding) => {
-            const gainColor = holding.unrealisedGain >= 0 ? 'text-green-400' : 'text-red-400';
-            return (
-              <tr key={`${holding.ticker}-${holding.broker}`} className="border-b border-gray-800/50">
-                <td className="py-3">
-                  <span className="text-white font-medium">{holding.name}</span>
-                  {holding.ticker && (
-                    <span className="text-gray-500 text-xs ml-2">{holding.ticker}</span>
-                  )}
-                </td>
-                <td className="py-3 text-gray-400">{formatHoldingPeriod(holding.holdingDays)}</td>
-                <td className={`py-3 text-right font-medium ${gainColor}`}>
-                  {formatLocal(holding.unrealisedGain, holding.currency)}
-                </td>
-                <td className="py-3 text-right">
-                  <TaxClassBadge taxClass={holding.taxClass} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
+        <tbody>{holdings.map(renderRow)}</tbody>
       </table>
     </div>
   );
 
   const renderSummary = () => {
     if (holdings.length === 0) return null;
-    const gainColor = totalGain >= 0 ? 'text-green-400' : 'text-red-400';
+    const gainColorClass = totalGain >= 0 ? 'text-emerald-600' : 'text-red-500';
     return (
-      <p className={`text-sm mt-4 pt-4 border-t border-gray-800 ${gainColor}`}>
+      <p className={`text-sm mt-4 pt-4 border-t border-slate-100 ${gainColorClass}`}>
         {formatLocal(totalGain, gainCurrency)} unrealised gains
       </p>
     );
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">{t(titleKey)}</h2>
-        <p className="text-gray-500 text-xs mt-1">{t(subtitleKey)}</p>
+        <h2 className="text-base font-semibold text-gray-900">{t(titleKey)}</h2>
+        <p className="text-gray-400 text-xs mt-1">{t(subtitleKey)}</p>
       </div>
       {holdings.length === 0 ? renderEmpty() : renderTable()}
       {renderSummary()}

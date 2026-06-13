@@ -18,34 +18,34 @@ const TaxPage = () => {
   }, []);
 
   const renderDisclaimer = () => (
-    <div className="bg-amber-950 border border-amber-800 rounded p-4 mb-6 text-sm text-amber-300">
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm text-amber-700">
       {t('tax.disclaimer')}
     </div>
   );
 
   const renderDualJurisdictionNote = () => (
-    <div className="bg-gray-800 border border-gray-700 rounded p-3 mb-6 text-sm text-gray-400">
+    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-6 text-sm text-gray-600">
       {t('tax.dualJurisdictionNote')}
     </div>
   );
 
   const renderFootnote = () => (
-    <p className="text-gray-600 text-xs mt-4">{t('tax.holdingPeriodNote')}</p>
+    <p className="text-gray-400 text-xs mt-4">{t('tax.holdingPeriodNote')}</p>
   );
 
   if (loading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-6">{t('tax.title')}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('tax.title')}</h1>
         {renderDisclaimer()}
-        <p className="text-gray-500">{t('tax.loading')}</p>
+        <p className="text-gray-400">{t('tax.loading')}</p>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">{t('tax.title')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('tax.title')}</h1>
       {renderDisclaimer()}
       {data?.hasDualJurisdiction && renderDualJurisdictionNote()}
       <TaxSection jurisdiction="IN" holdings={data?.india ?? []} />

@@ -25,22 +25,24 @@ export const HoldingHeader = ({ loading, refreshing, priceAge, formatAge, onRefr
       );
     }
 
+    const priceAgeLabel = refreshing
+      ? t('holdings.priceAge.updating')
+      : t('holdings.priceAge.label', { age: formatAge(priceAge) });
+
     return (
       <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-500">
-          {refreshing ? t('holdings.priceAge.updating') : t('holdings.priceAge.label', { age: formatAge(priceAge) })}
-        </span>
+        <span className="text-xs text-gray-400">{priceAgeLabel}</span>
         <a
           href="/api/export"
           download
-          className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition"
+          className="bg-slate-100 hover:bg-slate-200 text-gray-700 text-sm px-4 py-2 rounded-lg transition"
         >
           {t('holdings.actions.exportCsv')}
         </a>
         <button
           onClick={onRefreshPrices}
           disabled={refreshing}
-          className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm px-4 py-2 rounded transition"
+          className="bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-gray-700 text-sm px-4 py-2 rounded-lg transition"
         >
           {refreshing ? t('holdings.actions.refreshing') : t('holdings.actions.refreshPrices')}
         </button>
@@ -50,7 +52,7 @@ export const HoldingHeader = ({ loading, refreshing, priceAge, formatAge, onRefr
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-      <h1 className="text-3xl font-bold">{t('holdings.title')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('holdings.title')}</h1>
       {renderActions()}
     </div>
   );

@@ -10,6 +10,15 @@ type Props = {
   holdings: Holding[];
 };
 
+type MoverItem = {
+  ticker: string;
+  name: string;
+  currency: string;
+  change: number;
+  changePct: number;
+  direction: 'gain' | 'loss';
+};
+
 export const DashboardMovers = ({ holdings }: Props) => {
   const { t } = useTranslation();
 
@@ -22,64 +31,48 @@ export const DashboardMovers = ({ holdings }: Props) => {
     }))
     .sort((holdingA, holdingB) => holdingB.change - holdingA.change);
 
-  const topGainers = withChange.slice(0, TOP_MOVERS_COUNT);
-  const topLosers = [...withChange].reverse().slice(0, TOP_MOVERS_COUNT).filter((holding) => holding.change < 0);
+  const topGainers: MoverItem[] = withChange
+    .slice(0, TOP_MOVERS_COUNT)
+    .map((holding) => ({ ...holding, direction: 'gain' }));
 
-  if (withChange.length === 0) return null;
+  const topLosers: MoverItem[] = [...withChange]
+    .reverse()
+    .slice(0, TOP_MOVERS_COUNT)
+    .filter((holding) => holding.change < 0)
+    .map((holding) => ({ ...holding, direction: 'loss' }));
 
-  const renderGainers = () => {
-    if (topGainers.length === 0) return <p className="text-gray-600 text-sm">{t('dashboard.movers.noGains')}</p>;
+  const movers: MoverItem[] = [...topGainers, ...topLosers];
+
+  if (movers.length === 0) return null;
+
+  const renderMoverItem = (mover: MoverItem) => {
+    const isGain = mover.direction === 'gain';
+    const dotClass = isGain ? 'bg-emerald-400' : 'bg-red-400';
+    const changeClass = isGain ? 'text-emerald-600' : 'text-red-500';
+    const changeSign = isGain ? '+' : '';
+    const changeText = `${changeSign}${formatLocal(mover.change, mover.currency)}`;
+    const changePctText = `${changeSign}${mover.changePct.toFixed(1)}%`;
+
     return (
-      <table className="w-full text-sm">
-        <tbody>
-          {topGainers.map((holding) => (
-            <tr key={holding.ticker} className="border-b border-gray-800/50">
-              <td className="py-2">
-                <span className="text-white">{holding.name}</span>
-                <span className="text-gray-500 text-xs ml-2">{holding.ticker}</span>
-              </td>
-              <td className="text-right text-green-400 font-medium">+{formatLocal(holding.change, holding.currency)}</td>
-              <td className="text-right text-green-500 text-xs w-16">+{holding.changePct.toFixed(1)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  };
-
-  const renderLosers = () => {
-    if (topLosers.length === 0) return <p className="text-gray-600 text-sm">{t('dashboard.movers.noLosses')}</p>;
-    return (
-      <table className="w-full text-sm">
-        <tbody>
-          {topLosers.map((holding) => (
-            <tr key={holding.ticker} className="border-b border-gray-800/50">
-              <td className="py-2">
-                <span className="text-white">{holding.name}</span>
-                <span className="text-gray-500 text-xs ml-2">{holding.ticker}</span>
-              </td>
-              <td className="text-right text-red-400 font-medium">{formatLocal(holding.change, holding.currency)}</td>
-              <td className="text-right text-red-500 text-xs w-16">{holding.changePct.toFixed(1)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div key={mover.ticker} className="flex items-center gap-3 py-3 border-b border-slate-50 last:border-0">
+        <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotClass}`} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 truncate">{mover.name}</p>
+          <p className="text-xs text-gray-400">{mover.ticker}</p>
+        </div>
+        <div className="text-right">
+          <p className={`text-sm font-semibold ${changeClass}`}>{changeText}</p>
+          <p className={`text-xs ${changeClass}`}>{changePctText}</p>
+        </div>
+      </div>
     );
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
-      <h2 className="text-lg font-semibold mb-4">{t('dashboard.movers.title')}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('dashboard.movers.gainers')}</p>
-          {renderGainers()}
-        </div>
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('dashboard.movers.losers')}</p>
-          {renderLosers()}
-        </div>
-      </div>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-full">
+      <h2 className="text-base font-semibold text-gray-900 mb-1">{t('dashboard.movers.title')}</h2>
+      <p className="text-xs text-gray-400 mb-4">{t('dashboard.movers.vsLast30d')}</p>
+      <div>{movers.map(renderMoverItem)}</div>
     </div>
   );
 };

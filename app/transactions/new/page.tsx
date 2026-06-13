@@ -6,8 +6,8 @@ import { KNOWN_BROKERS } from '@/domains/shared/constants';
 
 const OTHER_BROKER = '__other__';
 
-const FIELD_CLASS = 'w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500';
-const LABEL_CLASS = 'block text-xs text-gray-400 mb-1';
+const FIELD_CLASS = 'w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100';
+const LABEL_CLASS = 'block text-xs text-gray-500 mb-1';
 
 const NewTransactionPage = () => {
   const { t } = useTranslation();
@@ -42,7 +42,6 @@ const NewTransactionPage = () => {
       setError(t('transactions.errors.nameRequired'));
       return;
     }
-
     if (!qty || qty <= 0) {
       setError(t('transactions.errors.quantityInvalid'));
       return;
@@ -82,39 +81,52 @@ const NewTransactionPage = () => {
     }
   };
 
-  if (success) {
-    return (
-      <div>
-        <h1 className="text-3xl font-bold mb-6">{t('transactions.title')}</h1>
-        <div className="bg-green-950 border border-green-800 rounded-lg p-6 mb-6">
-          <p className="text-green-400 font-medium">{t('transactions.success')}</p>
-        </div>
-        <div className="flex gap-4 flex-wrap">
-          <button
-            onClick={() => {
-              setSuccess(false);
-              setForm((prevForm) => ({ ...prevForm, ticker: '', name: '', quantity: '', price: '' }));
-            }}
-            className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition"
-          >
-            {t('transactions.actions.addAnother')}
-          </button>
-          <a href="/holdings" className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded transition">
-            {t('transactions.actions.viewHoldings')}
-          </a>
-          <a href="/transactions" className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded transition">
-            {t('transactions.actions.viewTransactions')}
-          </a>
-        </div>
+  const renderSuccess = () => (
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('transactions.title')}</h1>
+      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-6">
+        <p className="text-emerald-700 font-medium">{t('transactions.success')}</p>
       </div>
+      <div className="flex gap-4 flex-wrap">
+        <button
+          onClick={() => {
+            setSuccess(false);
+            setForm((prevForm) => ({ ...prevForm, ticker: '', name: '', quantity: '', price: '' }));
+          }}
+          className="bg-slate-100 hover:bg-slate-200 text-gray-700 text-sm px-4 py-2 rounded-lg transition"
+        >
+          {t('transactions.actions.addAnother')}
+        </button>
+        <a href="/holdings" className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition">
+          {t('transactions.actions.viewHoldings')}
+        </a>
+        <a href="/transactions" className="bg-slate-100 hover:bg-slate-200 text-gray-700 text-sm px-4 py-2 rounded-lg transition">
+          {t('transactions.actions.viewTransactions')}
+        </a>
+      </div>
+    </div>
+  );
+
+  const renderBrokerOtherInput = () => {
+    if (brokerSelect !== OTHER_BROKER) return null;
+    return (
+      <input
+        className={`${FIELD_CLASS} mt-2`}
+        type="text"
+        placeholder={t('transactions.placeholders.broker')}
+        value={form.broker}
+        onChange={(event) => set('broker', event.target.value)}
+      />
     );
-  }
+  };
+
+  if (success) return renderSuccess();
 
   return (
     <div className="max-w-lg">
-      <h1 className="text-3xl font-bold mb-6">{t('transactions.title')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('transactions.title')}</h1>
 
-      <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-lg p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={LABEL_CLASS}>{t('transactions.fields.assetType')}</label>
@@ -137,7 +149,7 @@ const NewTransactionPage = () => {
         </div>
 
         <div>
-          <label className={LABEL_CLASS}>{t('transactions.fields.name')} <span className="text-gray-600">{t('transactions.required')}</span></label>
+          <label className={LABEL_CLASS}>{t('transactions.fields.name')} <span className="text-gray-400">{t('transactions.required')}</span></label>
           <input
             className={FIELD_CLASS}
             type="text"
@@ -148,7 +160,7 @@ const NewTransactionPage = () => {
         </div>
 
         <div>
-          <label className={LABEL_CLASS}>{t('transactions.fields.ticker')} <span className="text-gray-600">{t('transactions.optional')}</span></label>
+          <label className={LABEL_CLASS}>{t('transactions.fields.ticker')} <span className="text-gray-400">{t('transactions.optional')}</span></label>
           <input
             className={FIELD_CLASS}
             type="text"
@@ -217,25 +229,17 @@ const NewTransactionPage = () => {
             ))}
             <option value={OTHER_BROKER}>{t('transactions.placeholders.brokerOther')}</option>
           </select>
-          {brokerSelect === OTHER_BROKER && (
-            <input
-              className={`${FIELD_CLASS} mt-2`}
-              type="text"
-              placeholder={t('transactions.placeholders.broker')}
-              value={form.broker}
-              onChange={(event) => set('broker', event.target.value)}
-            />
-          )}
+          {renderBrokerOtherInput()}
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm">{error}</p>
+          <p className="text-red-500 text-sm">{error}</p>
         )}
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2 rounded transition"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg transition"
         >
           {submitting ? t('transactions.actions.saving') : t('transactions.actions.submit')}
         </button>
