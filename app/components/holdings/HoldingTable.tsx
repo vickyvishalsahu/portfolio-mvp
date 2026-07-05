@@ -91,7 +91,7 @@ export const HoldingTable = ({ loading, holdings, sortKey, sortAsc, onSort }: Pr
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden p-6">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
