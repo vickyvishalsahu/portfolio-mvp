@@ -18,6 +18,7 @@ export type PortfolioData = {
   holdings: Holding[];
   brokerAllocation: Record<string, number>;
   orphanedSells: string[];
+  priceCacheUpdatedAt: string | null;
 };
 
 export type TaxClass = 'LTCG' | 'STCG' | 'FLAT_30' | 'TAXABLE' | 'TAX_FREE';

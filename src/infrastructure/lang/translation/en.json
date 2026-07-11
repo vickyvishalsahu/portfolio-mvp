@@ -61,7 +61,22 @@
     "netWorth": {
       "title": "Net Worth Over Time",
       "portfolio": "Portfolio"
-    }
+    },
+    "priceAge": {
+      "updating": "Updating...",
+      "label": "Prices: {{age}}",
+      "never": "never",
+      "justNow": "just now",
+      "oneMinAgo": "1 min ago",
+      "minsAgo": "{{mins}} min ago",
+      "oneHourAgo": "1 hour ago",
+      "hoursAgo": "{{hrs}} hours ago"
+    },
+    "actions": {
+      "refreshPrices": "Refresh Prices",
+      "refreshing": "Refreshing..."
+    },
+    "failedPrices": "Failed to update prices for: {{tickers}}"
   },
   "holdings": {
     "title": "Holdings",

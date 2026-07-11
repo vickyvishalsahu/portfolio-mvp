@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next';
 import { computeNetWorthDelta } from '@/lib/snapshot-delta';
 import { usePortfolio } from '@/domains/portfolio/hooks/usePortfolio';
+import { DashboardHeader } from './DashboardHeader';
 import { DashboardSummaryCards } from './DashboardSummaryCards';
 import { DashboardAllocationChart } from './DashboardAllocationChart';
 import { DashboardTopHoldings } from './DashboardTopHoldings';
@@ -13,7 +14,7 @@ import { DashboardEmpty } from './dashboard.empty';
 
 export const Dashboard = () => {
   const { t } = useTranslation();
-  const { data, loading, snapshots } = usePortfolio();
+  const { data, loading, snapshots, priceAge, refreshing, failedTickers, handleRefreshPrices, formatAge } = usePortfolio();
 
   if (loading) return <DashboardLoading />;
 
@@ -30,7 +31,19 @@ export const Dashboard = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">{t('dashboard.title')}</h1>
+      <DashboardHeader
+        refreshing={refreshing}
+        priceAge={priceAge}
+        formatAge={formatAge}
+        onRefreshPrices={handleRefreshPrices}
+      />
+
+      {failedTickers.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4 text-sm text-amber-700">
+          {t('dashboard.failedPrices', { tickers: failedTickers.join(', ') })}
+        </div>
+      )}
+
       <DashboardSummaryCards summary={summary} netWorthDelta={netWorthDelta} primaryCurrency={primaryCurrency} />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">{renderNetWorthChart()}</div>
