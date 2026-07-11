@@ -5,9 +5,11 @@ import { formatEur, formatHolding, formatPercent } from '@/lib/format';
 import type { Holding } from '@/domains/shared/types';
 import type { SortKey } from '@/domains/portfolio/hooks/useHoldings';
 import { SkeletonLoading } from '@/app/components/SkeletonLoading';
+import { cn } from '@/domains/shared/utils';
 
 type Props = {
   loading?: boolean;
+  refreshing?: boolean;
   holdings: Holding[];
   sortKey: SortKey;
   sortAsc: boolean;
@@ -21,8 +23,15 @@ const TYPE_BADGE: Record<string, string> = {
   crypto: 'bg-emerald-50 text-emerald-600',
 };
 
-export const HoldingTable = ({ loading, holdings, sortKey, sortAsc, onSort }: Props) => {
+export const HoldingTable = ({ loading, refreshing, holdings, sortKey, sortAsc, onSort }: Props) => {
   const { t } = useTranslation();
+
+  const renderRefreshBadge = () => (
+    <div className="absolute top-4 right-4 flex items-center gap-2 bg-white border border-slate-100 shadow-sm rounded-full px-3 py-1 text-xs text-gray-500 z-10">
+      <div className="w-3 h-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+      {t('holdings.priceAge.updating')}
+    </div>
+  );
 
   const renderSkeletonRows = () =>
     Array.from({ length: 6 }).map((_, i) => (
@@ -91,8 +100,9 @@ export const HoldingTable = ({ loading, holdings, sortKey, sortAsc, onSort }: Pr
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden p-6">
-      <div className="overflow-x-auto">
+    <div className="relative bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden p-6">
+      {refreshing && renderRefreshBadge()}
+      <div className={cn('overflow-x-auto transition-opacity', refreshing && 'opacity-40 pointer-events-none')}>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-gray-400 border-b border-slate-100 text-xs uppercase tracking-wider">

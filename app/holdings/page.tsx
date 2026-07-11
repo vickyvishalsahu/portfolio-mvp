@@ -49,7 +49,14 @@ const HoldingsPage = () => {
         </div>
       )}
 
-      <HoldingTable loading={loading} holdings={holdings} sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+      <HoldingTable
+        loading={loading}
+        refreshing={refreshing}
+        holdings={holdings}
+        sortKey={sortKey}
+        sortAsc={sortAsc}
+        onSort={handleSort}
+      />
     </div>
   );
 };
