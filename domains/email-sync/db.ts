@@ -5,9 +5,27 @@ import {
   INSERT_RAW_EMAIL,
   GET_UNPARSED_EMAILS,
   MARK_EMAIL_PARSED,
+  MARK_EMAIL_FAILED,
+  GET_FAILED_EMAILS,
+  RETRY_EMAIL,
+  RESOLVE_EMAIL,
   GET_EMAIL_COUNT,
   GET_PARSED_EMAIL_COUNT,
 } from './constants';
+
+type RawEmailRow = {
+  id: string; sender: string; subject: string; body: string; received_at: string; parsed: number; parse_error: string | null;
+};
+
+const toRawEmail = (row: RawEmailRow): RawEmail => ({
+  id: row.id,
+  sender: row.sender,
+  subject: row.subject,
+  body: row.body,
+  receivedAt: row.received_at,
+  parsed: row.parsed,
+  parseError: row.parse_error,
+});
 
 export const insertRawEmail = (email: FetchedEmail) => {
   const db = getDb();
@@ -16,22 +34,34 @@ export const insertRawEmail = (email: FetchedEmail) => {
 
 export const getUnparsedEmails = (): RawEmail[] => {
   const db = getDb();
-  const rows = db.prepare(GET_UNPARSED_EMAILS).all() as Array<{
-    id: string; sender: string; subject: string; body: string; received_at: string; parsed: number;
-  }>;
-  return rows.map((row) => ({
-    id: row.id,
-    sender: row.sender,
-    subject: row.subject,
-    body: row.body,
-    receivedAt: row.received_at,
-    parsed: row.parsed,
-  }));
+  const rows = db.prepare(GET_UNPARSED_EMAILS).all() as RawEmailRow[];
+  return rows.map(toRawEmail);
 };
 
 export const markEmailParsed = (emailId: string) => {
   const db = getDb();
   db.prepare(MARK_EMAIL_PARSED).run(emailId);
+};
+
+export const markEmailFailed = (emailId: string, message: string) => {
+  const db = getDb();
+  db.prepare(MARK_EMAIL_FAILED).run(message, emailId);
+};
+
+export const getFailedEmails = (): RawEmail[] => {
+  const db = getDb();
+  const rows = db.prepare(GET_FAILED_EMAILS).all() as RawEmailRow[];
+  return rows.map(toRawEmail);
+};
+
+export const retryEmail = (emailId: string) => {
+  const db = getDb();
+  db.prepare(RETRY_EMAIL).run(emailId);
+};
+
+export const resolveEmail = (emailId: string) => {
+  const db = getDb();
+  db.prepare(RESOLVE_EMAIL).run(emailId);
 };
 
 export const getRawEmailCount = (): number => {

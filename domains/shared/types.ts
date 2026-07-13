@@ -21,6 +21,7 @@ export interface RawEmail {
   body: string;
   receivedAt: string;
   parsed: number;
+  parseError: string | null;
 }
 
 export interface Transaction {

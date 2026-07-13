@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUnparsedEmails, markEmailParsed } from '@/domains/email-sync/db';
+import { getUnparsedEmails, markEmailParsed, markEmailFailed } from '@/domains/email-sync/db';
 import { insertTransaction } from '@/domains/shared/db';
 import { parseEmail, learnPatternsFromSkipped } from '@/domains/transaction-parsing';
 import { createJob, updateJob } from '@/domains/notifications/jobStore';
@@ -71,11 +71,9 @@ export const POST = async () => {
 
         markEmailParsed(email.id);
       } catch (error: any) {
-        errors.push({
-          emailId: email.id,
-          subject: email.subject,
-          error: error.message || 'Parse failed',
-        });
+        const message = error.message || 'Parse failed';
+        errors.push({ emailId: email.id, subject: email.subject, error: message });
+        markEmailFailed(email.id, message);
       }
     }
 

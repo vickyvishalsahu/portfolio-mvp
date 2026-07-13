@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { KNOWN_BROKERS } from '@/domains/shared/constants';
 
@@ -9,8 +10,11 @@ const OTHER_BROKER = '__other__';
 const FIELD_CLASS = 'w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100';
 const LABEL_CLASS = 'block text-xs text-gray-500 mb-1';
 
-const NewTransactionPage = () => {
+const NewTransactionForm = () => {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const emailId = searchParams.get('emailId');
+  const emailSubject = searchParams.get('subject');
   const [form, setForm] = useState({
     assetType: 'stock',
     ticker: '',
@@ -66,7 +70,7 @@ const NewTransactionPage = () => {
       const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, broker: resolvedBroker, quantity: qty, price }),
+        body: JSON.stringify({ ...form, broker: resolvedBroker, quantity: qty, price, emailId }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -107,6 +111,17 @@ const NewTransactionPage = () => {
     </div>
   );
 
+  const renderFailedEmailBanner = () => {
+    if (!emailId) return null;
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <p className="text-amber-700 text-sm">
+          {t('transactions.fromFailedEmail', { subject: emailSubject || t('transactions.title') })}
+        </p>
+      </div>
+    );
+  };
+
   const renderBrokerOtherInput = () => {
     if (brokerSelect !== OTHER_BROKER) return null;
     return (
@@ -125,6 +140,7 @@ const NewTransactionPage = () => {
   return (
     <div className="max-w-lg">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('transactions.title')}</h1>
+      {renderFailedEmailBanner()}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -247,5 +263,11 @@ const NewTransactionPage = () => {
     </div>
   );
 };
+
+const NewTransactionPage = () => (
+  <Suspense fallback={null}>
+    <NewTransactionForm />
+  </Suspense>
+);
 
 export default NewTransactionPage;

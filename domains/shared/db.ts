@@ -15,7 +15,8 @@ export const initializeDb = (db: Database.Database) => {
       subject TEXT,
       body TEXT,
       received_at TEXT,
-      parsed INTEGER DEFAULT 0
+      parsed INTEGER DEFAULT 0,
+      parse_error TEXT
     );
 
     CREATE TABLE IF NOT EXISTS transactions (
@@ -66,6 +67,12 @@ export const initializeDb = (db: Database.Database) => {
   }
   if (!priceCacheCols.some((column) => column.name === 'prev_price_local')) {
     db.exec('ALTER TABLE price_cache ADD COLUMN prev_price_local REAL');
+  }
+
+  // raw_emails migration
+  const rawEmailCols = db.prepare('PRAGMA table_info(raw_emails)').all() as { name: string }[];
+  if (!rawEmailCols.some((column) => column.name === 'parse_error')) {
+    db.exec('ALTER TABLE raw_emails ADD COLUMN parse_error TEXT');
   }
 
   // snapshots migration: old schema had total_value_eur — drop and recreate

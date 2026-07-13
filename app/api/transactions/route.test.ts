@@ -3,9 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@/domains/shared/db', () => ({
   insertTransaction: vi.fn().mockReturnValue({ lastInsertRowid: 1 }),
 }));
+vi.mock('@/domains/email-sync/db', () => ({
+  resolveEmail: vi.fn(),
+}));
 
 import { POST } from './route';
 import { insertTransaction } from '@/domains/shared/db';
+import { resolveEmail } from '@/domains/email-sync/db';
 
 function makeRequest(body: unknown) {
   return new Request('http://localhost/api/transactions', {
@@ -77,5 +81,19 @@ describe('POST /api/transactions', () => {
     expect(insertTransaction).toHaveBeenCalledWith(
       expect.objectContaining({ ticker: null })
     );
+  });
+
+  it('passes emailId through and resolves it when entering manually from a failed email', async () => {
+    const res = await POST(makeRequest({ ...validBody, emailId: 'email-1' }));
+    expect(res.status).toBe(201);
+    expect(insertTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ emailId: 'email-1' })
+    );
+    expect(resolveEmail).toHaveBeenCalledWith('email-1');
+  });
+
+  it('does not call resolveEmail for a plain manual entry with no emailId', async () => {
+    await POST(makeRequest(validBody));
+    expect(resolveEmail).not.toHaveBeenCalled();
   });
 });

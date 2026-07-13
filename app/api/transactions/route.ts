@@ -1,4 +1,5 @@
 import { insertTransaction, getManualTransactions } from '@/domains/shared/db';
+import { resolveEmail } from '@/domains/email-sync/db';
 
 export const GET = async () => {
   try {
@@ -12,7 +13,7 @@ export const GET = async () => {
 export const POST = async (req: Request) => {
   try {
     const body = await req.json();
-    const { assetType, ticker, name, quantity, price, currency, transactionType, transactionDate, broker } = body;
+    const { assetType, ticker, name, quantity, price, currency, transactionType, transactionDate, broker, emailId } = body;
 
     if (!assetType || !name || !currency || !transactionType || !transactionDate || !broker) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -27,7 +28,7 @@ export const POST = async (req: Request) => {
     }
 
     insertTransaction({
-      emailId: 'manual',
+      emailId: emailId || 'manual',
       assetType,
       ticker: ticker || null,
       name,
@@ -40,6 +41,8 @@ export const POST = async (req: Request) => {
       rawText: '',
       confidence: 'high',
     });
+
+    if (emailId) resolveEmail(emailId);
 
     return Response.json({ success: true }, { status: 201 });
   } catch (error: any) {

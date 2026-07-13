@@ -5,9 +5,11 @@ import { useEffect } from 'react';
 import { useGmailSync } from '@/domains/email-sync/hooks/useGmailSync';
 import { useInstitutionSettings } from '@/domains/email-sync/hooks/useInstitutionSettings';
 import { useSyncJobs } from '@/domains/email-sync/hooks/useSyncJobs';
+import { useFailedEmails } from '@/domains/email-sync/hooks/useFailedEmails';
 import { GmailConnection } from './gmail/GmailConnection';
 import { InstitutionSearch } from './institutions/InstitutionSearch';
 import { FetchedEmailList } from './emails/FetchedEmailList';
+import { FailedEmailList } from './emails/FailedEmailList';
 import { SyncStats } from './SyncStats';
 import { DangerZone } from './DangerZone';
 
@@ -25,12 +27,17 @@ const SyncPage = () => {
     fetchDetail, parseDetail, parseProgress,
     handleFetch, handleParse, handleTokenReset, handleDbCleared, handleDisconnect,
   } = useSyncJobs({ status, syncError, handleSync, fetchStatus, t });
+  const { failedEmails, retryingId, retry, refetchFailedEmails } = useFailedEmails();
 
   useEffect(() => {
     if (isConnected && institutions.length === 0 && !autoDetectDone) {
       runAutoDetect();
     }
   }, [isConnected]);
+
+  useEffect(() => {
+    if (parseResult) refetchFailedEmails();
+  }, [parseResult, refetchFailedEmails]);
 
   const renderAutoDetectCallout = () => {
     if (detecting) {
@@ -47,6 +54,15 @@ const SyncPage = () => {
       return <p className="text-gray-400 text-sm mb-3">{t('sync.institutions.autoDetectedNone')}</p>;
     }
     return null;
+  };
+
+  const renderFailedEmails = () => {
+    if (failedEmails.length === 0) return null;
+    return (
+      <div className="mb-6">
+        <FailedEmailList emails={failedEmails} retryingId={retryingId} onRetry={retry} />
+      </div>
+    );
   };
 
   const renderGmailStep = () => (
@@ -161,12 +177,15 @@ const SyncPage = () => {
           <div className="bg-red-50 border border-red-200 rounded-xl p-4">
             <p className="text-red-600 text-sm mb-2">{t('sync.parse.result.errors', { count: parseResult.errors.length })}</p>
             <ul className="text-red-500 text-sm space-y-1">
-              {parseResult.errors.map((errorItem) => (
-                <li key={errorItem.emailId}>
-                  <span className="text-red-400">{errorItem.subject}</span> — {errorItem.error}
-                  <a href="/transactions/new" className="text-indigo-600 hover:underline ml-2 text-xs">{t('sync.parse.result.addManually')}</a>
-                </li>
-              ))}
+              {parseResult.errors.map((errorItem) => {
+                const manualEntryHref = `/transactions/new?emailId=${encodeURIComponent(errorItem.emailId)}&subject=${encodeURIComponent(errorItem.subject)}`;
+                return (
+                  <li key={errorItem.emailId}>
+                    <span className="text-red-400">{errorItem.subject}</span> — {errorItem.error}
+                    <a href={manualEntryHref} className="text-indigo-600 hover:underline ml-2 text-xs">{t('sync.parse.result.addManually')}</a>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
@@ -204,6 +223,7 @@ const SyncPage = () => {
         </div>
       )}
 
+      {renderFailedEmails()}
       {renderGmailStep()}
       {renderInstitutionsStep()}
       {renderFetchStep()}

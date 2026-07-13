@@ -196,13 +196,21 @@
         "from": "From",
         "subject": "Subject",
         "date": "Date",
-        "status": "Status"
+        "status": "Status",
+        "error": "Error"
       },
       "status": {
         "parsed": "parsed",
         "pending": "pending"
       },
-      "showAll": "Show all {{count}} emails ↓"
+      "showAll": "Show all {{count}} emails ↓",
+      "failed": {
+        "title_one": "Needs review ({{count}})",
+        "title_other": "Needs review ({{count}})",
+        "retry": "Retry",
+        "retrying": "Retrying…",
+        "enterManually": "Enter manually →"
+      }
     },
     "stats": {
       "rawEmails": "Raw Emails",
@@ -308,7 +316,8 @@
       "dateRequired": "Date is required",
       "generic": "Something went wrong",
       "network": "Network error — please try again"
-    }
+    },
+    "fromFailedEmail": "Filling in from a failed email — {{subject}}"
   },
   "tax": {
     "title": "Tax Exposure",

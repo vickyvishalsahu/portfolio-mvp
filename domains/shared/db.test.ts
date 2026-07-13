@@ -26,6 +26,32 @@ describe('price_cache schema', () => {
   });
 });
 
+describe('raw_emails schema', () => {
+  it('creates raw_emails with parse_error column', () => {
+    initializeDb(db);
+    const cols = (db.prepare('PRAGMA table_info(raw_emails)').all() as { name: string }[]).map(c => c.name);
+    expect(cols).toContain('parse_error');
+  });
+
+  it('migrates existing raw_emails missing parse_error', () => {
+    db.exec(`CREATE TABLE raw_emails (
+      id TEXT PRIMARY KEY, sender TEXT, subject TEXT, body TEXT, received_at TEXT, parsed INTEGER DEFAULT 0
+    )`);
+    initializeDb(db);
+    const cols = (db.prepare('PRAGMA table_info(raw_emails)').all() as { name: string }[]).map(c => c.name);
+    expect(cols).toContain('parse_error');
+  });
+
+  it('defaults parse_error to null on insert', () => {
+    initializeDb(db);
+    db.prepare(
+      'INSERT INTO raw_emails (id, sender, subject, body, received_at, parsed) VALUES (?, ?, ?, ?, ?, 0)'
+    ).run('email-1', 'broker@example.com', 'Trade confirmation', 'body', new Date().toISOString());
+    const row = db.prepare('SELECT parse_error FROM raw_emails WHERE id = ?').get('email-1') as { parse_error: string | null };
+    expect(row.parse_error).toBeNull();
+  });
+});
+
 describe('snapshots schema', () => {
   it('creates snapshots with (date, currency, total_value) — no total_value_eur', () => {
     initializeDb(db);
