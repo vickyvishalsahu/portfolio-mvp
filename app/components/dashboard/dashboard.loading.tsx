@@ -2,9 +2,7 @@
 
 import { SkeletonLoading } from '@/app/components/SkeletonLoading';
 
-export const DashboardLoading = () => {
-
-  return (
+export const DashboardLoading = () => (
     <div>
       <div className="h-8 w-36 bg-slate-200 rounded-xl animate-pulse mb-8" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -22,5 +20,4 @@ export const DashboardLoading = () => {
         <SkeletonLoading classNameList="h-64" />
       </div>
     </div>
-  );
-};
+);
