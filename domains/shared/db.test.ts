@@ -52,6 +52,31 @@ describe('raw_emails schema', () => {
   });
 });
 
+describe('price_history schema', () => {
+  it('creates price_history with (ticker, date) composite primary key', () => {
+    initializeDb(db);
+    const cols = (db.prepare('PRAGMA table_info(price_history)').all() as { name: string; pk: number }[]);
+    expect(cols.map(column => column.name)).toEqual(['ticker', 'date', 'price_local', 'currency']);
+    expect(cols.filter(column => column.pk > 0).map(column => column.name)).toEqual(['ticker', 'date']);
+  });
+
+  it('rejects a duplicate (ticker, date) row', () => {
+    initializeDb(db);
+    db.prepare('INSERT INTO price_history (ticker, date, price_local, currency) VALUES (?, ?, ?, ?)').run('AAPL', '2026-07-25', 210.5, 'USD');
+    expect(() => {
+      db.prepare('INSERT INTO price_history (ticker, date, price_local, currency) VALUES (?, ?, ?, ?)').run('AAPL', '2026-07-25', 211.0, 'USD');
+    }).toThrow();
+  });
+
+  it('allows the same date across different tickers', () => {
+    initializeDb(db);
+    db.prepare('INSERT INTO price_history (ticker, date, price_local, currency) VALUES (?, ?, ?, ?)').run('AAPL', '2026-07-25', 210.5, 'USD');
+    expect(() => {
+      db.prepare('INSERT INTO price_history (ticker, date, price_local, currency) VALUES (?, ?, ?, ?)').run('RELIANCE', '2026-07-25', 2900, 'INR');
+    }).not.toThrow();
+  });
+});
+
 describe('snapshots schema', () => {
   it('creates snapshots with (date, currency, total_value) — no total_value_eur', () => {
     initializeDb(db);

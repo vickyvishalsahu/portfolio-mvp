@@ -11,3 +11,7 @@ export const UPSERT_PRICE = `
   INSERT OR REPLACE INTO price_cache (ticker, price_eur, prev_price_eur, price_local, prev_price_local, currency, updated_at)
   VALUES (?, ?, ?, ?, ?, ?, ?)
 `;
+
+export const UPSERT_PRICE_HISTORY = 'INSERT OR IGNORE INTO price_history (ticker, date, price_local, currency) VALUES (?, ?, ?, ?)';
+export const GET_PRICE_HISTORY = 'SELECT ticker, date, price_local, currency FROM price_history WHERE ticker = ? ORDER BY date ASC';
+export const GET_LATEST_HISTORY_DATE = 'SELECT MAX(date) AS latest_date FROM price_history WHERE ticker = ?';

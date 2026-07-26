@@ -54,6 +54,14 @@ export const initializeDb = (db: Database.Database) => {
       UNIQUE(date, currency)
     );
 
+    CREATE TABLE IF NOT EXISTS price_history (
+      ticker TEXT NOT NULL,
+      date TEXT NOT NULL,
+      price_local REAL NOT NULL,
+      currency TEXT NOT NULL,
+      PRIMARY KEY (ticker, date)
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
