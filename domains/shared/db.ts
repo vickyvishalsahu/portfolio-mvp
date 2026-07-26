@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import type { Transaction } from './types';
-import { GET_SETTING, UPSERT_SETTING, DELETE_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_MANUAL_TRANSACTIONS, DELETE_MANUAL_TRANSACTION, GET_PRICE_CACHE_AGE, GET_EARLIEST_BUY_DATES } from './constants';
+import { GET_SETTING, UPSERT_SETTING, DELETE_SETTING, INSERT_TRANSACTION, GET_ALL_TRANSACTIONS, GET_MANUAL_TRANSACTIONS, DELETE_MANUAL_TRANSACTION, GET_PRICE_CACHE_AGE, GET_EARLIEST_BUY_DATES, GET_HISTORY_BACKFILL_TARGETS } from './constants';
 
 const DB_PATH = path.join(process.cwd(), 'portfolio.db');
 
@@ -207,6 +207,19 @@ export const getEarliestBuyDates = (): Record<string, string> => {
   const db = getDb();
   const rows = db.prepare(GET_EARLIEST_BUY_DATES).all() as { key: string; earliest_date: string }[];
   return Object.fromEntries(rows.map((row) => [row.key, row.earliest_date]));
+};
+
+export const getHistoryBackfillTargets = (): { ticker: string; assetType: string; currency: string; fromDate: string }[] => {
+  const db = getDb();
+  const rows = db.prepare(GET_HISTORY_BACKFILL_TARGETS).all() as {
+    key: string; asset_type: string; currency: string; earliest_date: string;
+  }[];
+  return rows.map((row) => ({
+    ticker: row.key,
+    assetType: row.asset_type,
+    currency: row.currency,
+    fromDate: row.earliest_date,
+  }));
 };
 
 export const getPriceCacheAge = (): string | null => {

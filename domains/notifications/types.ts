@@ -9,7 +9,7 @@ export type Notification = {
   read: boolean;
 };
 
-export type JobType = 'fetch' | 'parse';
+export type JobType = 'fetch' | 'parse' | 'history';
 
 export type Job = {
   id: string;

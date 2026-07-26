@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { Notification, Job } from '../types';
+import type { Notification, Job, JobType } from '../types';
+
+const JOB_TITLES: Record<JobType, string> = {
+  fetch: 'Fetch emails',
+  parse: 'Parse emails',
+  history: 'Price history',
+};
 
 const jobToNotification = (job: Job): Notification => ({
   id: job.id,
   status: job.status,
-  title: job.type === 'fetch' ? 'Fetch emails' : 'Parse emails',
+  title: JOB_TITLES[job.type],
   detail: job.detail,
   timestamp: new Date(job.startedAt),
   read: job.status !== 'in-progress',

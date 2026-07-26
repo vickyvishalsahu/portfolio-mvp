@@ -2,13 +2,19 @@ import type { Job, JobType } from './types';
 
 const store = new Map<string, Job>();
 
+const INITIAL_DETAIL: Record<JobType, string> = {
+  fetch: 'Fetching emails…',
+  parse: 'Starting parse…',
+  history: 'Backfilling price history…',
+};
+
 export const createJob = (type: JobType): Job => {
   const job: Job = {
     id: crypto.randomUUID(),
     type,
     status: 'in-progress',
     progress: null,
-    detail: type === 'fetch' ? 'Fetching emails…' : 'Starting parse…',
+    detail: INITIAL_DETAIL[type],
     startedAt: new Date(),
   };
   store.set(job.id, job);

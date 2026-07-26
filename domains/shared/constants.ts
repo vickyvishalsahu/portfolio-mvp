@@ -29,3 +29,8 @@ export const GET_EARLIEST_BUY_DATES = `
   WHERE transaction_type IN ('buy', 'sip')
   GROUP BY COALESCE(ticker, name)
 `;
+export const GET_HISTORY_BACKFILL_TARGETS = `
+  SELECT COALESCE(ticker, name) AS key, asset_type, currency, MIN(transaction_date) AS earliest_date
+  FROM transactions
+  GROUP BY COALESCE(ticker, name)
+`;
