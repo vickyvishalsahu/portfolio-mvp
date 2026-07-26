@@ -56,7 +56,7 @@
       "losers": "Losers",
       "noGains": "No gains since last refresh",
       "noLosses": "No losses since last refresh",
-      "vsLast30d": "vs last 30d"
+      "sinceLastRefresh": "since last price refresh"
     },
     "netWorth": {
       "title": "Net Worth Over Time",

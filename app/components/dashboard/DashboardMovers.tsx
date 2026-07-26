@@ -2,46 +2,18 @@
 
 import { useTranslation } from 'react-i18next';
 import { formatLocal } from '@/lib/format';
+import { computeMovers } from '@/domains/portfolio/movers';
+import type { MoverItem } from '@/domains/portfolio/movers';
 import type { Holding } from '@/domains/shared/types';
-
-const TOP_MOVERS_COUNT = 3;
 
 type Props = {
   holdings: Holding[];
 };
 
-type MoverItem = {
-  ticker: string;
-  name: string;
-  currency: string;
-  change: number;
-  changePct: number;
-  direction: 'gain' | 'loss';
-};
-
 export const DashboardMovers = ({ holdings }: Props) => {
   const { t } = useTranslation();
 
-  const withChange = holdings
-    .filter((holding) => holding.prevValueLocal !== null)
-    .map((holding) => ({
-      ...holding,
-      change: holding.currentValueLocal - holding.prevValueLocal!,
-      changePct: ((holding.currentValueLocal - holding.prevValueLocal!) / holding.prevValueLocal!) * 100,
-    }))
-    .sort((holdingA, holdingB) => holdingB.change - holdingA.change);
-
-  const topGainers: MoverItem[] = withChange
-    .slice(0, TOP_MOVERS_COUNT)
-    .map((holding) => ({ ...holding, direction: 'gain' }));
-
-  const topLosers: MoverItem[] = [...withChange]
-    .reverse()
-    .slice(0, TOP_MOVERS_COUNT)
-    .filter((holding) => holding.change < 0)
-    .map((holding) => ({ ...holding, direction: 'loss' }));
-
-  const movers: MoverItem[] = [...topGainers, ...topLosers];
+  const movers = computeMovers(holdings);
 
   if (movers.length === 0) return null;
 
@@ -71,7 +43,7 @@ export const DashboardMovers = ({ holdings }: Props) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-full">
       <h2 className="text-base font-semibold text-gray-900 mb-1">{t('dashboard.movers.title')}</h2>
-      <p className="text-xs text-gray-400 mb-4">{t('dashboard.movers.vsLast30d')}</p>
+      <p className="text-xs text-gray-400 mb-4">{t('dashboard.movers.sinceLastRefresh')}</p>
       <div>{movers.map(renderMoverItem)}</div>
     </div>
   );
