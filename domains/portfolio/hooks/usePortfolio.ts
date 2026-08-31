@@ -32,7 +32,7 @@ export const usePortfolio = () => {
     if (!data) return;
     const primaryCurrency = data.summary.byCurrency[0]?.currency;
     if (!primaryCurrency) return;
-    fetch(`/api/snapshots?currency=${primaryCurrency}`)
+    fetch(`/api/portfolio/history?currency=${primaryCurrency}`)
       .then((response) => response.json())
       .then((snapshotData) => {
         if (Array.isArray(snapshotData)) setSnapshots(snapshotData);

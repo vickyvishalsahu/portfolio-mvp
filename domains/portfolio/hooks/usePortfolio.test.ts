@@ -57,17 +57,17 @@ describe('usePortfolio', () => {
     expect(result.current.data).toBeNull();
   });
 
-  it('fetches snapshots for the primary currency once portfolio data resolves', async () => {
+  it('fetches net worth history for the primary currency once portfolio data resolves', async () => {
     (fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+      if (url.startsWith('/api/portfolio/history')) return Promise.resolve(jsonResponse([{ date: '2026-07-01', totalValue: 90 }]));
       if (url.startsWith('/api/portfolio')) return Promise.resolve(jsonResponse(PORTFOLIO_RESPONSE));
-      if (url.startsWith('/api/snapshots')) return Promise.resolve(jsonResponse([{ date: '2026-07-01', totalValue: 90 }]));
       return Promise.resolve(jsonResponse([]));
     });
 
     const { result } = renderHook(() => usePortfolio());
 
     await waitFor(() => expect(result.current.snapshots).toHaveLength(1));
-    expect(fetch).toHaveBeenCalledWith('/api/snapshots?currency=EUR');
+    expect(fetch).toHaveBeenCalledWith('/api/portfolio/history?currency=EUR');
   });
 
   it('refreshes prices then refetches the portfolio, updating priceAge', async () => {
