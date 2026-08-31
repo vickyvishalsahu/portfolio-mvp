@@ -21,7 +21,9 @@ export type HoldingsResult = {
 // Group by ticker when present, else by a whitespace/case-normalized name so the same
 // fund stops fragmenting. Share classes (Direct/Regular, Growth/IDCW) stay distinct —
 // they differ by words, not just spacing, so they hash to different keys.
-const groupKey = (transaction: TransactionRow): string =>
+// Exported so any module deriving holding identity (portfolio history, tax view, ...)
+// shares this one rule instead of re-implementing it.
+export const groupKey = (transaction: { ticker: string | null; name: string }): string =>
   transaction.ticker ? transaction.ticker : transaction.name.replace(/\s+/g, ' ').trim().toLowerCase();
 
 // The same instrument can arrive with conflicting asset_type across emails. Take the
