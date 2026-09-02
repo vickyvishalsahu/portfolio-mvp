@@ -1,6 +1,8 @@
 import { getDb } from '@/domains/shared/db';
 import { getPrice, convertToEur, getPrevPrice } from '@/domains/pricing';
 import type { Holding } from '@/domains/shared/types';
+import { xirr, buildCashflows } from './xirr';
+import type { Cashflow } from './xirr';
 
 type TransactionRow = {
   ticker: string;
@@ -10,12 +12,14 @@ type TransactionRow = {
   price: number;
   currency: string;
   transaction_type: string;
+  transaction_date: string;
   broker: string;
 }
 
 export type HoldingsResult = {
   holdings: Holding[];
   orphanedSells: string[];
+  currencyXirrPct: Record<string, number | null>;
 };
 
 // Group by ticker when present, else by a whitespace/case-normalized name so the same
@@ -46,10 +50,12 @@ const majorityAssetType = (transactions: TransactionRow[]): string => {
   return winner;
 };
 
-export const computeHoldings = async (): Promise<HoldingsResult> => {
+export const computeHoldings = async (
+  today: string = new Date().toISOString().slice(0, 10)
+): Promise<HoldingsResult> => {
   const db = getDb();
   const transactions = db.prepare(
-    'SELECT ticker, name, asset_type, quantity, price, currency, transaction_type, broker FROM transactions ORDER BY transaction_date ASC'
+    'SELECT ticker, name, asset_type, quantity, price, currency, transaction_type, transaction_date, broker FROM transactions ORDER BY transaction_date ASC'
   ).all() as TransactionRow[];
 
   // Group by canonical identity (ticker, else normalized name)
@@ -62,6 +68,7 @@ export const computeHoldings = async (): Promise<HoldingsResult> => {
 
   const holdings: Holding[] = [];
   const orphanedSells: string[] = [];
+  const cashflowsByCurrency = new Map<string, Cashflow[]>();
 
   for (const [key, txs] of groups) {
     let totalQty = 0;
@@ -128,6 +135,24 @@ export const computeHoldings = async (): Promise<HoldingsResult> => {
     const prevValueEur = prevPriceEur !== null ? totalQty * prevPriceEur : null;
     const prevValueLocal = prevPriceLocal !== null ? totalQty * prevPriceLocal : null;
 
+    // A holding priced from the avgCost fallback has no real current value, so any
+    // "return" computed from it is fake — never surface it, per-holding or pooled.
+    let xirrPct: number | null = null;
+    if (priceData) {
+      const cashflowTransactions = txs.map((tx) => ({
+        transactionType: tx.transaction_type,
+        transactionDate: tx.transaction_date,
+        quantity: tx.quantity,
+        price: tx.price,
+      }));
+      const cashflows = buildCashflows(cashflowTransactions, currentValueLocal, today);
+      const rate = xirr(cashflows);
+      xirrPct = rate !== null ? rate * 100 : null;
+
+      if (!cashflowsByCurrency.has(first.currency)) cashflowsByCurrency.set(first.currency, []);
+      cashflowsByCurrency.get(first.currency)!.push(...cashflows);
+    }
+
     holdings.push({
       ticker: first.ticker || key,
       name: first.name,
@@ -144,12 +169,19 @@ export const computeHoldings = async (): Promise<HoldingsResult> => {
       pnl,
       pnlLocal,
       pnlPct,
+      xirrPct,
       currency: first.currency,
       broker: first.broker,
     });
   }
 
+  const currencyXirrPct: Record<string, number | null> = {};
+  for (const [currency, cashflows] of cashflowsByCurrency) {
+    const rate = xirr(cashflows);
+    currencyXirrPct[currency] = rate !== null ? rate * 100 : null;
+  }
+
   // Sort by value descending
   holdings.sort((a, b) => b.currentValueEur - a.currentValueEur);
-  return { holdings, orphanedSells };
+  return { holdings, orphanedSells, currencyXirrPct };
 };

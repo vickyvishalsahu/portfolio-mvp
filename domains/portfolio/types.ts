@@ -5,6 +5,7 @@ export type CurrencySummary = {
   totalValue: number;
   totalPnl: number;
   totalPnlPct: number;
+  xirrPct: number | null;
 };
 
 export type Summary = {

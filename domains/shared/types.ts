@@ -64,6 +64,7 @@ export interface Holding {
   pnl: number;
   pnlLocal: number;
   pnlPct: number;
+  xirrPct: number | null;
   currency: string;
   broker: string;
 }

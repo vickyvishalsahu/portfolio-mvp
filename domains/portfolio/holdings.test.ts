@@ -43,6 +43,7 @@ const makeTx = (overrides: Partial<Record<string, unknown>> = {}): Record<string
   quantity: 10,
   price: 10,
   transaction_type: 'buy',
+  transaction_date: '2025-01-01',
   ...overrides,
 });
 
@@ -289,6 +290,75 @@ describe('computeHoldings', () => {
     expect(holdings).toHaveLength(1);
     expect(holdings[0].quantity).toBe(150);
     expect(holdings[0].assetType).toBe('mf');
+  });
+
+  describe('xirrPct', () => {
+    it('computes annualised return from the buy price and current market price', async () => {
+      const { getPrice } = await import('@/domains/pricing');
+      vi.mocked(getPrice).mockResolvedValueOnce({ priceEur: 110, priceLocal: 110, currency: 'EUR' });
+
+      mockRows = [makeTx({ quantity: 10, price: 100, transaction_date: '2025-01-01' })];
+
+      const { holdings } = await computeHoldings('2026-01-01');
+
+      expect(holdings[0].xirrPct).toBeCloseTo(10, 4);
+    });
+
+    it('is null when the price came from the avgCost fallback rather than a real quote', async () => {
+      const { getPrice } = await import('@/domains/pricing');
+      vi.mocked(getPrice).mockResolvedValueOnce(null as any);
+
+      mockRows = [makeTx({ quantity: 10, price: 100, transaction_date: '2025-01-01' })];
+
+      const { holdings } = await computeHoldings('2026-01-01');
+
+      expect(holdings[0].xirrPct).toBeNull();
+    });
+
+    it('pools cashflows across holdings sharing a currency for currencyXirrPct', async () => {
+      const { getPrice } = await import('@/domains/pricing');
+      vi.mocked(getPrice)
+        .mockResolvedValueOnce({ priceEur: 110, priceLocal: 110, currency: 'EUR' })
+        .mockResolvedValueOnce({ priceEur: 110, priceLocal: 110, currency: 'EUR' });
+
+      mockRows = [
+        makeTx({ ticker: 'AAPL', quantity: 10, price: 100, transaction_date: '2025-01-01' }),
+        makeTx({ ticker: 'MSFT', quantity: 10, price: 100, transaction_date: '2025-01-01' }),
+      ];
+
+      const { currencyXirrPct } = await computeHoldings('2026-01-01');
+
+      // Two identical -1000/+1100 legs pool to the same 10% rate as either one alone.
+      expect(currencyXirrPct.EUR).toBeCloseTo(10, 4);
+    });
+
+    it('excludes a fallback-priced holding from the pooled currency XIRR instead of diluting it', async () => {
+      const { getPrice } = await import('@/domains/pricing');
+      vi.mocked(getPrice)
+        .mockResolvedValueOnce(null as any)
+        .mockResolvedValueOnce({ priceEur: 110, priceLocal: 110, currency: 'EUR' });
+
+      mockRows = [
+        makeTx({ ticker: 'AAPL', quantity: 10, price: 100, transaction_date: '2025-01-01' }),
+        makeTx({ ticker: 'MSFT', quantity: 10, price: 100, transaction_date: '2025-01-01' }),
+      ];
+
+      const { holdings, currencyXirrPct } = await computeHoldings('2026-01-01');
+
+      expect(holdings.find((h) => h.ticker === 'AAPL')!.xirrPct).toBeNull();
+      expect(currencyXirrPct.EUR).toBeCloseTo(10, 4);
+    });
+
+    it('has no entry for a currency where every holding is fallback-priced', async () => {
+      const { getPrice } = await import('@/domains/pricing');
+      vi.mocked(getPrice).mockResolvedValueOnce(null as any);
+
+      mockRows = [makeTx({ quantity: 10, price: 100, transaction_date: '2025-01-01' })];
+
+      const { currencyXirrPct } = await computeHoldings('2026-01-01');
+
+      expect(currencyXirrPct.EUR).toBeUndefined();
+    });
   });
 
 });

@@ -18,6 +18,7 @@ const makeHolding = (overrides: Partial<Holding> = {}): Holding => ({
   pnl: 100,
   pnlLocal: 100,
   pnlPct: 10,
+  xirrPct: null,
   currency: 'EUR',
   broker: 'scalable',
   ...overrides,

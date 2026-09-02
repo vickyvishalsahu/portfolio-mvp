@@ -4,7 +4,7 @@ import { computeHoldings, recordSnapshot } from '@/domains/portfolio';
 
 export const GET = async () => {
   try {
-    const { holdings, orphanedSells } = await computeHoldings();
+    const { holdings, orphanedSells, currencyXirrPct } = await computeHoldings();
     const transactions = getAllTransactions();
 
     // Group totals by source currency — never convert, never sum across currencies
@@ -21,6 +21,7 @@ export const GET = async () => {
       totalValue: value,
       totalPnl: value - cost,
       totalPnlPct: cost > 0 ? ((value - cost) / cost) * 100 : 0,
+      xirrPct: currencyXirrPct[currency] ?? null,
     }));
 
     const brokerAllocation = holdings.reduce<Record<string, number>>((acc, h) => {

@@ -18,6 +18,7 @@ const TWO_INR_HOLDINGS = [
     currentValueLocal: 15000, currentValueEur: 165,
     prevValueEur: null, prevValueLocal: null,
     pnl: 21, pnlLocal: 2000, pnlPct: 15.38,
+    xirrPct: null,
     currency: 'INR', broker: 'cams',
   },
   {
@@ -27,12 +28,17 @@ const TWO_INR_HOLDINGS = [
     currentValueLocal: 9000, currentValueEur: 99.5,
     prevValueEur: null, prevValueLocal: null,
     pnl: -11, pnlLocal: -1000, pnlPct: -10,
+    xirrPct: null,
     currency: 'INR', broker: 'cams',
   },
 ];
 
 beforeEach(() => {
-  vi.mocked(computeHoldings).mockResolvedValue({ holdings: TWO_INR_HOLDINGS, orphanedSells: [] } as any);
+  vi.mocked(computeHoldings).mockResolvedValue({
+    holdings: TWO_INR_HOLDINGS,
+    orphanedSells: [],
+    currencyXirrPct: { INR: 12.5 },
+  } as any);
   vi.mocked(recordSnapshot).mockClear();
 });
 
@@ -83,5 +89,25 @@ describe('GET /api/portfolio', () => {
     const data = await res.json();
 
     expect(data.brokerAllocation.cams).toBe(24000);
+  });
+
+  it('surfaces the pooled XIRR on the currency summary', async () => {
+    const res = await GET();
+    const data = await res.json();
+
+    expect(data.summary.byCurrency[0].xirrPct).toBe(12.5);
+  });
+
+  it('falls back to null when a currency has no pooled XIRR', async () => {
+    vi.mocked(computeHoldings).mockResolvedValueOnce({
+      holdings: TWO_INR_HOLDINGS,
+      orphanedSells: [],
+      currencyXirrPct: {},
+    } as any);
+
+    const res = await GET();
+    const data = await res.json();
+
+    expect(data.summary.byCurrency[0].xirrPct).toBeNull();
   });
 });
