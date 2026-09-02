@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { formatLocal } from '@/lib/format';
+import { formatLocal, formatPercent } from '@/lib/format';
 import type { NetWorthDelta } from '@/lib/snapshot-delta';
 import type { Summary } from '@/domains/portfolio/types';
 
@@ -34,6 +34,7 @@ export const DashboardSummaryCards = ({ summary, netWorthDelta, primaryCurrency 
     const isPrimary = currencySummary.currency === primaryCurrency;
     const delta = isPrimary ? netWorthDelta : null;
     const pnlColorClass = currencySummary.totalPnl >= 0 ? 'text-emerald-600' : 'text-red-500';
+    const xirrLabel = currencySummary.xirrPct !== null ? formatPercent(currencySummary.xirrPct) : '—';
 
     return (
       <div key={currencySummary.currency} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
@@ -52,6 +53,9 @@ export const DashboardSummaryCards = ({ summary, netWorthDelta, primaryCurrency 
           </p>
           {renderChangeBadge(currencySummary.totalPnlPct)}
         </div>
+        <p className="text-xs text-gray-400 mt-2">
+          {t('dashboard.summary.xirr')} · {xirrLabel}
+        </p>
       </div>
     );
   };

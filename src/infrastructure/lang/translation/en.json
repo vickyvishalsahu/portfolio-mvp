@@ -29,6 +29,7 @@
     "summary": {
       "totalValue": "Total Value",
       "totalPnl": "Total P&L",
+      "xirr": "Annualised (XIRR)",
       "holdings": "Holdings",
       "transactions": "Transactions"
     },
@@ -113,6 +114,7 @@
       "price": "Price",
       "value": "Value",
       "pnlPct": "P&L %",
+      "xirr": "Annualised (XIRR)",
       "broker": "Broker"
     }
   },

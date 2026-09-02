@@ -44,6 +44,7 @@ export const HoldingTable = ({ loading, refreshing, holdings, sortKey, sortAsc, 
         <td className="py-3"><SkeletonLoading classNameList="h-4 w-16 ml-auto" /></td>
         <td className="py-3"><SkeletonLoading classNameList="h-4 w-20 ml-auto" /></td>
         <td className="py-3"><SkeletonLoading classNameList="h-4 w-14 ml-auto" /></td>
+        <td className="py-3"><SkeletonLoading classNameList="h-4 w-14 ml-auto" /></td>
         <td className="py-3"><SkeletonLoading classNameList="h-3 w-16" /></td>
       </tr>
     ));
@@ -63,6 +64,7 @@ export const HoldingTable = ({ loading, refreshing, holdings, sortKey, sortAsc, 
     const quantityFormatted = holding.quantity < 1
       ? holding.quantity.toFixed(6)
       : holding.quantity.toFixed(2);
+    const xirrLabel = holding.xirrPct !== null ? formatPercent(holding.xirrPct) : '—';
 
     return (
       <tr key={holding.ticker} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
@@ -94,6 +96,7 @@ export const HoldingTable = ({ loading, refreshing, holdings, sortKey, sortAsc, 
             {formatHolding(holding.pnlLocal, holding.pnl, holding.currency)}
           </div>
         </td>
+        <td className="py-3 text-right text-gray-700">{xirrLabel}</td>
         <td className="py-3 text-gray-400 text-xs">{holding.broker}</td>
       </tr>
     );
@@ -114,6 +117,7 @@ export const HoldingTable = ({ loading, refreshing, holdings, sortKey, sortAsc, 
               <th className="text-right pb-3">{t('holdings.columns.price')}</th>
               {renderSortHeader(t('holdings.columns.value'), 'currentValueEur')}
               {renderSortHeader(t('holdings.columns.pnlPct'), 'pnlPct')}
+              <th className="text-right pb-3">{t('holdings.columns.xirr')}</th>
               {renderSortHeader(t('holdings.columns.broker'), 'broker')}
             </tr>
           </thead>
