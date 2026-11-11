@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gmail to Portfolio</title>
+<style>
+  :root {
+    --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0; --text: #111827;
+    --muted: #64748b; --accent: #2563eb; --accent-soft: #dbeafe;
+    --store: #059669; --store-soft: #d1fae5; --warn: #b45309; --warn-soft: #fef3c7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --border: #334155; --text: #f1f5f9;
+      --muted: #94a3b8; --accent: #60a5fa; --accent-soft: #1e3a8a;
+      --store: #34d399; --store-soft: #064e3b; --warn: #fbbf24; --warn-soft: #451a03;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 12px; }
+  h2 { font-size: 1.2rem; margin: 40px 0 12px; }
+  p { margin: 0 0 12px; overflow-wrap: anywhere; }
+  .lede { font-size: 1.1rem; color: var(--muted); max-width: 680px; }
+  .lede strong { color: var(--text); }
+  code { font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--border); padding: 1px 5px; border-radius: 4px; }
+  figure { margin: 28px 0 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 12px 12px; }
+  figcaption { color: var(--muted); font-size: 0.9rem; padding: 8px 8px 0; }
+  svg { width: 100%; height: auto; display: block; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+  .card h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .step { display: inline-block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .card p { font-size: 0.95rem; }
+  .card ul { margin: 8px 0 0; padding-left: 18px; font-size: 0.95rem; }
+  .card li { margin-bottom: 4px; }
+  .note { border-left: 4px solid var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+  .note strong { display: block; margin-bottom: 2px; }
+  .files { color: var(--muted); font-size: 0.9rem; }
+  .files li { margin-bottom: 4px; }
+  pre { margin: 0 0 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font: 0.85rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 760px) { .split { grid-template-columns: minmax(0, 1fr); } }
+  .tag { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-bottom: 8px; }
+  .tag-no { background: var(--store-soft); color: var(--store); }
+  .tag-yes { background: var(--accent-soft); color: var(--accent); }
+</style>
+<script type="application/json" data-lavish-revisions>
+[{ "id": "r1", "label": "Round 1", "timestamp": "2026-11-10T18:00:00Z", "summary": "Where the prompt lives: Gmail search query vs Groq prompt, plus empty broker list bug" },
+ { "id": "r2", "label": "Round 2", "timestamp": "2026-11-11T11:40:00Z", "summary": "Broker filter fixed; Groq model retired" }]
+</script>
+</head>
+<body>
+<main>
+
+<section id="answer">
+  <h1>How your Gmail becomes a portfolio</h1>
+  <p class="lede">
+    <strong>The app gets read-only access to your Gmail, pulls broker emails into a local SQLite table, then asks an LLM to turn each email into buy/sell/dividend rows.</strong>
+    The dashboard is built from those rows. You trigger each step yourself from the Sync page.
+  </p>
+</section>
+
+<figure id="flow">
+  <svg viewBox="0 0 1000 250" role="img" aria-labelledby="flow-title">
+    <title id="flow-title">Gmail to dashboard pipeline</title>
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+      </marker>
+    </defs>
+    <style>
+      .node { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+      .act { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+      .db { fill: var(--store-soft); stroke: var(--store); stroke-width: 1.5; }
+      .label { fill: var(--text); font: 600 16px system-ui, sans-serif; text-anchor: middle; }
+      .sub { fill: var(--muted); font: 13px system-ui, sans-serif; text-anchor: middle; }
+      .edge { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+      .edge-label { fill: var(--muted); font: 12px system-ui, sans-serif; text-anchor: middle; }
+    </style>
+
+    <g id="node-gmail"><title>Your Gmail inbox</title>
+      <rect class="node" x="10" y="40" width="140" height="80" rx="10"/>
+      <text class="label" x="80" y="76">Gmail</text>
+      <text class="sub" x="80" y="98">read-only</text>
+    </g>
+    <g id="node-fetch"><title>Fetch step: search and download emails</title>
+      <rect class="act" x="210" y="40" width="140" height="80" rx="10"/>
+      <text class="label" x="280" y="76">1. Fetch</text>
+      <text class="sub" x="280" y="98">search + download</text>
+    </g>
+    <g id="node-raw"><title>raw_emails table in portfolio.db</title>
+      <rect class="db" x="410" y="40" width="160" height="80" rx="10"/>
+      <text class="label" x="490" y="76">raw_emails</text>
+      <text class="sub" x="490" y="98">SQLite, local</text>
+    </g>
+    <g id="node-parse"><title>Parse step: filter then LLM extraction</title>
+      <rect class="act" x="630" y="40" width="140" height="80" rx="10"/>
+      <text class="label" x="700" y="76">2. Parse</text>
+      <text class="sub" x="700" y="98">filter + LLM</text>
+    </g>
+    <g id="node-tx"><title>transactions table in portfolio.db</title>
+      <rect class="db" x="830" y="40" width="160" height="80" rx="10"/>
+      <text class="label" x="910" y="76">transactions</text>
+      <text class="sub" x="910" y="98">SQLite, local</text>
+    </g>
+
+    <path id="edge-gmail-fetch" class="edge" d="M150 80 H206" marker-end="url(#arrow)"/>
+    <path id="edge-fetch-raw" class="edge" d="M350 80 H406" marker-end="url(#arrow)"/>
+    <path id="edge-raw-parse" class="edge" d="M570 80 H626" marker-end="url(#arrow)"/>
+    <path id="edge-parse-tx" class="edge" d="M770 80 H826" marker-end="url(#arrow)"/>
+
+    <g id="node-llm"><title>External LLM: Groq or Gemini</title>
+      <rect class="node" x="620" y="170" width="160" height="60" rx="10" stroke-dasharray="5 4"/>
+      <text class="label" x="700" y="198">Groq / Gemini</text>
+      <text class="sub" x="700" y="217">email body sent here</text>
+    </g>
+    <path id="edge-parse-llm" class="edge" d="M700 120 V166" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+
+    <g id="node-dash"><title>Dashboard built from transactions plus live prices</title>
+      <rect class="node" x="830" y="170" width="160" height="60" rx="10"/>
+      <text class="label" x="910" y="198">Dashboard</text>
+      <text class="sub" x="910" y="217">+ live prices</text>
+    </g>
+    <path id="edge-tx-dash" class="edge" d="M910 120 V166" marker-end="url(#arrow)"/>
+  </svg>
+  <figcaption>Blue boxes are the two buttons you press on the Sync page. Green boxes are tables in <code>portfolio.db</code>. The dashed box is the only part that runs outside your machine (besides Gmail itself).</figcaption>
+</figure>
+
+<h2>The three pieces</h2>
+<div class="grid">
+  <article class="card" id="step-connect">
+    <span class="step">Once</span>
+    <h3>Connect Gmail</h3>
+    <p>Standard Google sign-in (OAuth) asking for the <strong>read-only</strong> Gmail scope. The app can't send, delete or modify mail.</p>
+    <p>Google hands back a long-lived refresh token, which is saved in the <code>settings</code> table so you don't have to log in again.</p>
+  </article>
+
+  <article class="card" id="step-fetch">
+    <span class="step">Step 1</span>
+    <h3>Fetch</h3>
+    <p>Runs a Gmail search roughly like:</p>
+    <p><code>category:purchases OR from:broker-domain …</code></p>
+    <ul>
+      <li>Broker domains come from the brokers you picked plus a built-in list.</li>
+      <li>Each match is downloaded, and sender, subject, date and body (first 10k chars) are stored in <code>raw_emails</code>.</li>
+      <li>Already-seen emails are skipped, so re-running is safe.</li>
+    </ul>
+  </article>
+
+  <article class="card" id="step-parse">
+    <span class="step">Step 2</span>
+    <h3>Parse</h3>
+    <p>Goes through every email not yet parsed, cheapest check first:</p>
+    <ul>
+      <li><strong>Quick filter:</strong> is it from a known broker, or does the subject say "order", "dividend", "SIP" and so on? If not, skip.</li>
+      <li><strong>Learned skips:</strong> drops senders/subjects it has learned are newsletters or other noise.</li>
+      <li><strong>LLM:</strong> otherwise sends the email to the AI model, which returns structured trades (ticker, qty, price, currency, date, broker).</li>
+    </ul>
+    <p>Trades land in <code>transactions</code>. Failures are kept so you can retry them.</p>
+  </article>
+</div>
+
+<section id="where-prompt" data-lavish-revision="r1">
+<h2>Where the "instructions" actually live</h2>
+<p>Choosing which emails to grab doesn't use a prompt or any AI. It's a normal Gmail search, the same kind you'd type in the Gmail search bar. Groq only gets involved later, once the emails are already on your machine. (Groq is the fast-inference service, not xAI's Grok.)</p>
+<div class="split">
+  <article class="card" id="fetch-query">
+    <span class="tag tag-no">Fetch: no LLM</span>
+    <h3>The Gmail search</h3>
+    <p>The Fetch button sends this to the Gmail API (built in <code>buildSearchQuery</code>):</p>
+<pre>category:purchases OR (
+  from:zerodha.com OR from:camsonline.com
+  OR from:angelone.in OR from:scalable.capital
+  OR from:binance.com OR from:coinbase.com
+  OR from:camsmail.com OR from:groww.in
+  OR from:angelbroking.com OR from:mail.binance.com
+  OR from:mail.coinbase.com )</pre>
+    <p>The first six domains are the brokers you picked in setup. The rest come from the app's built-in broker list, which gets added because the UI always runs a full-history fetch. <code>category:purchases</code> is Gmail's own "Purchases" tab, so it also pulls in Amazon orders, receipts and so on. The parse step weeds those out.</p>
+  </article>
+  <article class="card" id="parse-prompt">
+    <span class="tag tag-yes">Parse: Groq + prompt</span>
+    <h3>The LLM call</h3>
+    <p><code>AI_PROVIDER=groq</code>, model <code>llama-3.1-8b-instant</code>, JSON mode. Each email gets a system prompt plus the email itself:</p>
+<pre>system: You are a financial transaction parser.
+  Extract investment transaction data from broker
+  confirmation emails. Return ONLY valid JSON …
+  + rules: stock vs etf vs mf vs crypto,
+    ticker must be a real symbol/ISIN or null,
+    per-unit price, unparseable=true for marketing
+
+user: Parse this broker email:
+  From: …  Subject: …  Body: …</pre>
+    <p>The full prompt is in <code>domains/transaction-parsing/providers/constants/prompts.ts</code>.</p>
+  </article>
+</div>
+<div class="note" id="note-empty-catalog" data-lavish-revision="r2">
+  <strong>Fixed (staged): the quick filter's broker list was empty.</strong>
+  The filter now trusts the same domains the fetch searches (your selected institutions plus the built-in broker list). In a test copy of your data, dropped CAMS statements now reach the LLM.
+</div>
+<div class="note" id="note-model-gone" data-lavish-revision="r2">
+  <strong>New blocker: Groq no longer serves <code>llama-3.1-8b-instant</code>.</strong>
+  Every parse call fails with <code>model_not_found</code>. 1,609 emails in your DB have already failed this way. Models your key can use include <code>openai/gpt-oss-20b</code>, <code>openai/gpt-oss-120b</code> and <code>qwen/qwen3.8-27b</code>.
+</div>
+<div class="note" id="note-empty-catalog-original">
+  <strong>Original finding:</strong>
+  The parse step's first check is meant to wave through anything from a known broker domain, but <code>BROKER_CATALOG</code> in <code>domains/shared/constants.ts</code> is <code>[]</code>. In practice only the subject-keyword check works, so a broker email whose subject lacks words like "order", "trade" or "dividend" (say, a contract note titled "Your statement for 05-Nov") is skipped and never reaches Groq. I haven't fixed this. The other list, <code>KNOWN_BROKERS</code>, already has these domains.
+</div>
+</section>
+
+<h2>Worth knowing</h2>
+<div class="note" id="note-provider">
+  <strong>It's not Claude doing the parsing.</strong>
+  The project docs say "Claude parsing", but the code uses Groq (Llama 3.1 8B) or Google Gemini, picked by <code>AI_PROVIDER</code> in <code>.env.local</code>. Either the docs or the code is out of date.
+</div>
+<div class="note" id="note-privacy">
+  <strong>Your email bodies leave your machine at one point.</strong>
+  Everything is stored locally except during Parse, when the full text of each candidate email goes to the LLM provider. Emails the quick filter or learned skips reject are never sent.
+</div>
+<div class="note" id="note-learning">
+  <strong>It quietly learns what to ignore.</strong>
+  After a parse run, if the LLM rejected 3+ emails from the same sender, a second small LLM call pulls out subject keywords, so similar emails get skipped next time without an LLM call.
+</div>
+
+<h2>Where to look in the code</h2>
+<ul class="files">
+  <li>Connect: <code>app/api/gmail/auth</code>, <code>app/api/gmail/callback</code>, <code>domains/email-sync/client.ts</code></li>
+  <li>Fetch: <code>app/api/gmail/sync/route.ts</code>, <code>domains/email-sync/utils.ts</code> (search query)</li>
+  <li>Parse: <code>app/api/parse/route.ts</code>, <code>domains/transaction-parsing/parser.ts</code>, <code>providers/</code></li>
+  <li>Not covered here: how transactions turn into holdings, prices and EUR values (<code>domains/portfolio</code>, <code>domains/pricing</code>).</li>
+</ul>
+
+</main>
+</body>
+</html>
