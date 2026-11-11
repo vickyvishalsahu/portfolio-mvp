@@ -1,7 +1,3 @@
-import type { BrokerDefinition } from './types';
-
-export const BROKER_CATALOG: BrokerDefinition[] = [];
-
 export const KNOWN_BROKERS: { id: string; name: string; senderDomains: string[] }[] = [
   { id: 'zerodha',  name: 'Zerodha',          senderDomains: ['zerodha.com'] },
   { id: 'cams',     name: 'CAMS',             senderDomains: ['camsonline.com', 'camsmail.com'] },
