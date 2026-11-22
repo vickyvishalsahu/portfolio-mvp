@@ -5,7 +5,7 @@ import { Nav } from '@/app/components/Nav';
 import { Footer } from '@/app/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'Portfolio MVP',
+  title: 'Inbox Ledger',
   description: 'Personal portfolio tracker',
 };
 

@@ -1,4 +1,4 @@
-# Portfolio MVP
+# Inbox Ledger
 
 Personal investment portfolio tracker that automatically parses broker confirmation emails from Gmail, extracts transactions using AI, and displays holdings with real-time pricing in EUR.
 
